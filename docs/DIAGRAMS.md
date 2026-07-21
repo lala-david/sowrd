@@ -20,7 +20,7 @@
 
 액터 4(러너 = 신자·구도자 공통 / 그룹·교회 리더 / 콘텐츠 작가 / 신학 검수자)와 기능. 러닝·여정은 MVP, 공동체·운영은 이후 단계.
 
-<p align="center"><img src="diagrams/01-usecase.png" alt="유즈케이스 다이어그램" width="330"></p>
+<p align="center"><img src="assets/diagrams/01-usecase.png" alt="유즈케이스 다이어그램" width="330"></p>
 
 ---
 
@@ -28,7 +28,7 @@
 
 가장 중요한 도면. **핵심 결정 세 가지** — ① 성경(`BibleReference`) ↔ 묵상(`Meditation`) **분리**(저작권·검수 독립) ② `ReviewRecord.versionHash`로 수정 시 승인 자동 무효 ③ `Episode.mood`로 콘텐츠별 톤 프리셋 구동. (필드는 대표만 표기)
 
-<p align="center"><img src="diagrams/02-class.png" alt="도메인 클래스 다이어그램" width="880"></p>
+<p align="center"><img src="assets/diagrams/02-class.png" alt="도메인 클래스 다이어그램" width="880"></p>
 
 ---
 
@@ -36,7 +36,7 @@
 
 장면(Reveal)은 **멈춰야만** 열린다 — 달리며 화면을 보지 않게 하는 안전 설계.
 
-<p align="center"><img src="diagrams/03-state-run.png" alt="러닝 세션 상태 다이어그램" width="300"></p>
+<p align="center"><img src="assets/diagrams/03-state-run.png" alt="러닝 세션 상태 다이어그램" width="300"></p>
 
 ---
 
@@ -44,7 +44,7 @@
 
 “복음서는 폭식하지 않는다.” 거리뿐 아니라 **시간(하루 경계)**으로도 게이팅.
 
-<p align="center"><img src="diagrams/04-state-episode.png" alt="에피소드 진행 상태 다이어그램" width="480"></p>
+<p align="center"><img src="assets/diagrams/04-state-episode.png" alt="에피소드 진행 상태 다이어그램" width="480"></p>
 
 ---
 
@@ -52,7 +52,7 @@
 
 작성 → 성경 → 신학 → 번역 → 현지 → 게시. 게시 후 **한 글자만 수정해도** versionHash가 바뀌어 승인 자동 무효.
 
-<p align="center"><img src="diagrams/05-state-review.png" alt="콘텐츠 검수 워크플로 상태 다이어그램" width="400"></p>
+<p align="center"><img src="assets/diagrams/05-state-review.png" alt="콘텐츠 검수 워크플로 상태 다이어그램" width="400"></p>
 
 ---
 
@@ -60,7 +60,7 @@
 
 Gospel Journey 모드. 로컬 우선(IndexedDB) — 개인 GPS 원본은 서버로 나가지 않는다.
 
-<p align="center"><img src="diagrams/06-seq-run.png" alt="개인 러닝 세션 시퀀스 다이어그램" width="540"></p>
+<p align="center"><img src="assets/diagrams/06-seq-run.png" alt="개인 러닝 세션 시퀀스 다이어그램" width="540"></p>
 
 ---
 
@@ -68,7 +68,7 @@ Gospel Journey 모드. 로컬 우선(IndexedDB) — 개인 GPS 원본은 서버�
 
 하루 상한으로 장거리 러너 독점 방지. 개인 GPS가 아니라 **추상 색실**만 합산·동기화.
 
-<p align="center"><img src="diagrams/07-seq-community.png" alt="공동 여정 기여 시퀀스 다이어그램" width="480"></p>
+<p align="center"><img src="assets/diagrams/07-seq-community.png" alt="공동 여정 기여 시퀀스 다이어그램" width="480"></p>
 
 ---
 
@@ -76,7 +76,7 @@ Gospel Journey 모드. 로컬 우선(IndexedDB) — 개인 GPS 원본은 서버�
 
 인용문은 본문 DB와 자동 대조(오탈자·절 오기 차단). 승인 순간 versionHash 기록.
 
-<p align="center"><img src="diagrams/08-seq-review.png" alt="콘텐츠 검수 시퀀스 다이어그램" width="500"></p>
+<p align="center"><img src="assets/diagrams/08-seq-review.png" alt="콘텐츠 검수 시퀀스 다이어그램" width="500"></p>
 
 ---
 
@@ -84,7 +84,7 @@ Gospel Journey 모드. 로컬 우선(IndexedDB) — 개인 GPS 원본은 서버�
 
 온보딩 → 홈 → 러닝 → 리빌 → 묵상 → 수집(수직 흐름). 공동체는 이후 분기.
 
-<p align="center"><img src="diagrams/09-ia.png" alt="정보구조 화면 맵" width="440"></p>
+<p align="center"><img src="assets/diagrams/09-ia.png" alt="정보구조 화면 맵" width="440"></p>
 
 ---
 
@@ -92,7 +92,7 @@ Gospel Journey 모드. 로컬 우선(IndexedDB) — 개인 GPS 원본은 서버�
 
 1단계는 백엔드 최소/무(無) — 로컬 우선(IndexedDB), 콘텐츠는 정적 JSON+SVG. 2단계부터 동기화 서버.
 
-<p align="center"><img src="diagrams/10-architecture.png" alt="아키텍처 개요 다이어그램" width="700"></p>
+<p align="center"><img src="assets/diagrams/10-architecture.png" alt="아키텍처 개요 다이어그램" width="700"></p>
 
 ---
 

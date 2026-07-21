@@ -1,7 +1,26 @@
 # 소셜 공유 카드 — PROJECT THE WAY
 
 > 2026-07-21 · 인스타·스레드 "인증" 공유 기능 기획. Nike Run Club·Strava처럼 자랑하고 싶게, 단 우리답게.
-> 카드 시안(4종)은 아티팩트로 별도 게시. 관련: [[GROWTH]](유통 루프), [[CONTENT-UX]](톤), [[ART-DIRECTION]].
+> 렌더 시안은 아래 갤러리 · 에셋 [`docs/assets/share/`](assets/share). 관련: [[GROWTH]](유통 루프), [[CONTENT-UX]](톤), [[ART-DIRECTION]].
+
+---
+
+## 시안 (실제 사진 위 렌더)
+
+실제 사진 위에 얹은 **최소 투명 오버레이** — 대형 거리 숫자 + 확실한 루트 라인 "조각"(끝점만 앰버) + 최소 메타. 색은 흰색 위주, 배경(누끼) 없음. *(사진은 플레이스홀더 스톡)*
+
+<table>
+<tr>
+<td align="center" width="33%"><img src="assets/share/01-road.png" width="230"><br><sub><b>순례 기본형</b> · 산길</sub></td>
+<td align="center" width="33%"><img src="assets/share/02-fjord.png" width="230"><br><sub><b>이적(wonder)</b> · 물</sub></td>
+<td align="center" width="33%"><img src="assets/share/03-forest.png" width="230"><br><sub><b>가르침</b> · 숲</sub></td>
+</tr>
+<tr>
+<td align="center"><img src="assets/share/04-verse.png" width="230"><br><sub><b>성구</b> 옵션(opt-in)</sub></td>
+<td align="center"><img src="assets/share/05-intercession.png" width="230"><br><sub><b>품은 사람</b> 카드</sub></td>
+<td align="center"><img src="assets/share/06-sticker.png" width="230"><br><sub><b>투명 스티커</b> · 배경 없음</sub></td>
+</tr>
+</table>
 
 ---
 
