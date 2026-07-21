@@ -27,9 +27,10 @@
 | [`docs/ART-DIRECTION.md`](ART-DIRECTION.md) | Nike풍 미니멀 애슬레틱 아트 방향, 프롬프트 템플릿, 일관성 워크플로 | ✅ |
 | [`docs/BRAINSTORM.md`](BRAINSTORM.md) | 3렌즈 브레인스토밍(러너 경험·신앙 형성·컨셉) — The Line/Lamp/Reveal, 호흡 기도 등 | ✅ |
 | [`docs/GROWTH.md`](GROWTH.md) | 수요·유통·신앙 온램프 전략 — "디지털 순례길" 포지셔닝(수익 모델 제외) | ✅ |
+| [`docs/ENGINEERING.md`](ENGINEERING.md) | SE 설계 — 프로세스 모델, 유즈케이스·클래스·상태·시퀀스 다이어그램, IA, CRM 범위 | ✅ |
 | `docs/STATUS.md` | (이 문서) 현황·결정·남은 과제 인덱스 | ✅ |
 
-*(개발 착수 시 추가 예정: 정보구조/화면 흐름, 데이터 모델·API, 콘텐츠 스키마, 기술 아키텍처.)*
+*(개발 착수 시 추가 예정: 화면별 상세 스펙, API 계약, 콘텐츠 스키마 세부.)*
 
 ---
 
