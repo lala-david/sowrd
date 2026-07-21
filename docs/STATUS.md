@@ -25,6 +25,7 @@
 | [`docs/PLANNING.md`](PLANNING.md) | **전체 기획서 17장** — 서비스 정의, 신학 기준, 공생애 타임라인 9시즌, 개인·공동체 모드, 러닝 중 콘텐츠, 게임화 원칙, 글로벌 전략, 개인정보·안전, MVP, 단계별 확장, 수익 모델, 운영 조직, KPI | ✅ |
 | [`docs/DESIGN-TOOLING.md`](DESIGN-TOOLING.md) | 디자인/UI/이미지·아이콘 MCP 20여종 조사 + 추천 스택 | ✅ |
 | [`docs/ART-DIRECTION.md`](ART-DIRECTION.md) | Nike풍 미니멀 애슬레틱 아트 방향, 프롬프트 템플릿, 일관성 워크플로 | ✅ |
+| [`docs/DESIGN-PHILOSOPHY.md`](DESIGN-PHILOSOPHY.md) | **디자인 철학** — "어둠 위 등불", 7원칙, AI-slop 금지 목록, 토큰. 모든 화면 심사 기준 | ✅ |
 | [`docs/BRAINSTORM.md`](BRAINSTORM.md) | 3렌즈 브레인스토밍(러너 경험·신앙 형성·컨셉) — The Line/Lamp/Reveal, 호흡 기도 등 | ✅ |
 | [`docs/GROWTH.md`](GROWTH.md) | 수요·유통·신앙 온램프 전략 — "디지털 순례길" 포지셔닝(수익 모델 제외) | ✅ |
 | [`docs/ENGINEERING.md`](ENGINEERING.md) | SE 설계 — 프로세스 모델, 유즈케이스·클래스·상태·시퀀스 다이어그램, IA, CRM 범위 | ✅ |
