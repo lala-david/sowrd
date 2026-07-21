@@ -73,7 +73,7 @@ export default function App() {
       <div className="relative flex min-h-full w-full max-w-[440px] flex-col overflow-hidden">
         <header className="relative z-10 flex items-baseline justify-between px-7" style={{ paddingTop: 'max(3.5rem, env(safe-area-inset-top))' }}>
           <span className="font-display text-[17px] font-medium tracking-[0.34em] text-gold-deep">THE&nbsp;WAY</span>
-          <span className="text-[11px] text-muted">여정 3년째 · 오늘</span>
+          <span className="font-display text-[12px] uppercase tracking-[0.18em] text-muted" style={{ fontFeatureSettings: "'onum' 1" }}>Tue · 21</span>
         </header>
 
         {/* HERO — one focal point */}
@@ -106,9 +106,9 @@ export default function App() {
 
         {/* PRIMARY ACTION */}
         <div className="relative z-10 px-7">
-          <button className="flex w-full items-center justify-between rounded-2xl bg-ink py-4 pl-7 pr-4 text-paper-raised shadow-[0_1px_2px_rgba(60,45,25,.14),0_18px_38px_-20px_rgba(60,45,25,.5)] transition active:scale-[0.99]">
+          <button className="flex w-full items-center justify-between rounded-2xl bg-lapis py-4 pl-7 pr-4 text-paper-raised shadow-[0_1px_2px_rgba(38,53,115,.2),0_18px_40px_-18px_rgba(38,53,115,.55)] transition active:scale-[0.99]">
             <span className="font-serif text-[18px]">달리기 시작</span>
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gold text-ink">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gold-bright text-ink shadow-[0_0_16px_rgba(214,175,91,.5)]">
               <Play size={18} className="translate-x-[1px] fill-ink" />
             </span>
           </button>
