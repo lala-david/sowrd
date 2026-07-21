@@ -1,35 +1,60 @@
-import { Play, Compass, LayoutGrid, Flame, Heart, ChevronRight } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { Play, Heart, ChevronRight, Compass, LayoutGrid, Flame } from 'lucide-react'
 
 const TOTAL = 12
 const CURRENT = 8
 
 function JourneyLine() {
-  const W = 300
-  const H = 56
-  const pad = 12
+  const doneRef = useRef<SVGPathElement>(null)
+  useEffect(() => {
+    const el = doneRef.current
+    if (!el) return
+    const len = el.getTotalLength()
+    el.style.strokeDasharray = String(len)
+    el.style.strokeDashoffset = String(len)
+    el.getBoundingClientRect()
+    el.style.animation = 'draw 1000ms cubic-bezier(0.22,1,0.36,1) forwards'
+  }, [])
+
+  const W = 340
+  const H = 60
+  const pad = 6
   const pts = Array.from({ length: TOTAL }, (_, i) => {
     const x = pad + ((W - 2 * pad) * i) / (TOTAL - 1)
-    const y = H / 2 + Math.sin(i * 0.85 + 0.4) * 11
+    const y = H / 2 + Math.sin(i * 0.8 + 0.5) * 12
     return [x, y] as const
   })
-  const d = (arr: readonly (readonly [number, number])[]) =>
+  const path = (arr: readonly (readonly [number, number])[]) =>
     arr.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')
+
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
-      <path d={d(pts)} fill="none" stroke="#ece7da" strokeOpacity={0.24} strokeWidth={1.6} />
-      <path d={d(pts.slice(0, CURRENT))} fill="none" stroke="#ece7da" strokeWidth={2.2} strokeLinecap="round" />
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full overflow-visible">
+      <path d={path(pts)} fill="none" stroke="#1b1d24" strokeOpacity={0.16} strokeWidth={1.4} />
+      <path ref={doneRef} d={path(pts.slice(0, CURRENT))} fill="none" stroke="#1b1d24" strokeOpacity={0.85} strokeWidth={1.8} strokeLinecap="round" />
       {pts.map((p, i) => {
         if (i === CURRENT - 1)
           return (
             <g key={i}>
-              <circle cx={p[0]} cy={p[1]} r={9} fill="none" stroke="#f0b24a" strokeOpacity={0.5} strokeWidth={1.4} />
-              <circle cx={p[0]} cy={p[1]} r={5} fill="#f0b24a" />
+              <circle cx={p[0]} cy={p[1]} r={9} fill="none" stroke="#bd8320" strokeWidth={1.2} style={{ transformOrigin: `${p[0]}px ${p[1]}px`, animation: 'glow 4s ease-in-out infinite' }} />
+              <circle cx={p[0]} cy={p[1]} r={4.5} fill="#bd8320" />
             </g>
           )
-        if (i < CURRENT - 1) return <circle key={i} cx={p[0]} cy={p[1]} r={2.8} fill="#ece7da" />
-        return <circle key={i} cx={p[0]} cy={p[1]} r={2.4} fill="none" stroke="#ece7da" strokeOpacity={0.4} strokeWidth={1.3} />
+        if (i < CURRENT - 1) return <circle key={i} cx={p[0]} cy={p[1]} r={2.6} fill="#1b1d24" />
+        return <circle key={i} cx={p[0]} cy={p[1]} r={2.4} fill="none" stroke="#1b1d24" strokeOpacity={0.3} strokeWidth={1.2} />
       })}
     </svg>
+  )
+}
+
+function HeroBackdrop() {
+  return (
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[62%] overflow-hidden">
+      <div className="absolute -top-16 right-[-14%] h-[300px] w-[300px]" style={{ background: 'radial-gradient(circle, rgba(210,154,55,.14), transparent 62%)' }} />
+      <svg viewBox="0 0 430 360" preserveAspectRatio="xMidYMax slice" className="absolute inset-0 h-full w-full" style={{ opacity: 0.06 }}>
+        <path d="M0,300 C90,250 150,300 220,262 C300,220 360,262 430,232 L430,360 L0,360 Z" fill="#1b1d24" />
+        <path d="M0,330 C120,300 220,332 320,300 C370,284 400,300 430,292 L430,360 L0,360 Z" fill="#1b1d24" />
+      </svg>
+    </div>
   )
 }
 
@@ -40,103 +65,85 @@ function TabBar() {
     { icon: Flame, label: '쉼터', active: false },
   ]
   return (
-    <div className="absolute inset-x-0 bottom-0 px-4 pb-3">
-      <nav className="flex items-center gap-1 rounded-[28px] border border-line bg-surface/80 p-1.5 backdrop-blur-md">
-        {tabs.map(({ icon: Icon, label, active }) => (
-          <button
-            key={label}
-            className={`flex flex-1 flex-col items-center gap-1 rounded-[22px] py-2.5 transition ${
-              active ? 'bg-lamp/12 text-lamp-soft' : 'text-muted-2'
-            }`}
-          >
-            <Icon size={21} strokeWidth={active ? 2.4 : 2} />
-            <span className="text-[10px] tracking-wide">{label}</span>
-          </button>
-        ))}
-      </nav>
-    </div>
+    <nav className="relative z-10 mt-6 flex items-stretch border-t border-line px-8 pb-6 pt-3">
+      {tabs.map(({ icon: Icon, label, active }) => (
+        <button key={label} className={`flex flex-1 flex-col items-center gap-1.5 ${active ? 'text-ink' : 'text-muted'}`}>
+          <Icon size={20} strokeWidth={active ? 2.2 : 1.8} />
+          <span className={`text-[10px] tracking-wide ${active ? 'text-gold' : ''}`}>{label}</span>
+        </button>
+      ))}
+    </nav>
   )
 }
 
 export default function App() {
   return (
-    <div className="flex min-h-full justify-center bg-ground text-ink">
+    <div className="flex min-h-full justify-center bg-paper text-ink">
       <div className="relative flex min-h-full w-full max-w-[430px] flex-col overflow-hidden">
-        {/* ambient lamp glow */}
-        <div
-          className="pointer-events-none absolute -top-28 right-[-12%] h-[420px] w-[420px]"
-          style={{ background: 'radial-gradient(circle, rgba(240,178,74,.16), transparent 60%)' }}
-        />
-        <div
-          className="pointer-events-none absolute top-40 left-[-18%] h-[360px] w-[360px]"
-          style={{ background: 'radial-gradient(circle, rgba(233,138,107,.08), transparent 60%)' }}
-        />
+        <HeroBackdrop />
 
-        <main className="relative flex-1 overflow-y-auto px-6 pt-14 pb-28">
-          {/* header */}
+        <header className="relative z-10 flex items-center justify-between px-7 pt-14">
           <div className="flex items-center gap-2.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-lamp shadow-[0_0_10px_2px_rgba(240,178,74,.7)]" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-lamp">The Way</span>
+            <span className="h-1 w-1 rounded-full bg-gold" />
+            <span className="font-display text-[15px] font-semibold tracking-[0.42em] text-gold">THE&nbsp;WAY</span>
           </div>
-          <h1 className="mt-5 font-serif text-[30px] leading-tight text-ink">
-            다시 오셨네요.
+          <span className="text-[11px] tracking-wide text-muted">오늘 · 여정 3년째</span>
+        </header>
+
+        {/* HERO — single focal point */}
+        <section className="relative z-10 px-7 pt-11">
+          <p className="font-display text-[13px] uppercase tracking-[0.34em] text-gold">여덟 번째 자리</p>
+          <h1 className="mt-3 font-serif text-[46px] font-bold leading-[1.06] tracking-[-0.01em]">갈릴리 호숫가</h1>
+          <p className="mt-2.5 font-serif text-[17px] italic text-ink-2">물 위를 걷다</p>
+
+          <div className="mt-10">
+            <JourneyLine />
+            <div className="mt-4 flex items-baseline justify-between">
+              <span className="font-display text-[13px] uppercase tracking-[0.24em] text-muted">Station</span>
+              <span className="font-display leading-none">
+                <span className="text-[40px] font-semibold text-ink">08</span>
+                <span className="text-[22px] text-muted"> / 12</span>
+              </span>
+            </div>
+          </div>
+
+          <p className="mt-11 max-w-[28ch] font-serif text-[16.5px] leading-relaxed text-ink-2">
+            “빛이 어둠에 비치되,
             <br />
-            <span className="text-parchment">오늘도 함께 걸어요.</span>
-          </h1>
+            어둠이 깨닫지 못하더라.”
+          </p>
+          <p className="mt-2 font-display text-[12px] uppercase tracking-[0.24em] text-gold">John 1:5</p>
+        </section>
 
-          {/* today card */}
-          <section className="mt-8 rounded-3xl border border-line bg-surface/70 p-6">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] uppercase tracking-[0.18em] text-muted">오늘의 여정</span>
-              <span className="text-[11px] text-muted-2">8 / 12 자리</span>
-            </div>
-            <h2 className="mt-3 font-serif text-2xl text-ink">갈릴리 호숫가</h2>
-            <p className="mt-0.5 text-sm text-lamp-soft">여덟 번째 자리 · 물 위를 걷다</p>
+        <div className="flex-1" />
 
-            <div className="mt-6">
-              <JourneyLine />
-            </div>
-
-            <p className="mt-6 border-t border-line pt-4 font-serif text-[15px] italic leading-relaxed text-parchment">
-              “빛이 어둠에 비치되, 어둠이 깨닫지 못하더라.”
-              <span className="mt-1 block font-sans text-[10px] not-italic uppercase tracking-[0.16em] text-muted-2">
-                요한복음 1:5
-              </span>
-            </p>
-          </section>
-
-          {/* start button */}
-          <button className="mt-6 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-b from-lamp-soft to-lamp py-4 font-semibold text-ground shadow-[0_16px_40px_-16px_rgba(240,178,74,.7)] active:scale-[0.99]">
-            <Play size={18} className="fill-ground" />
-            달리기 시작
+        {/* PRIMARY ACTION */}
+        <div className="relative z-10 px-7">
+          <button className="flex w-full items-center justify-between rounded-[20px] bg-ink py-4 pl-7 pr-4 text-paper shadow-[0_22px_44px_-22px_rgba(27,29,36,.55)] transition active:scale-[0.99]">
+            <span className="font-serif text-[18px]">달리기 시작</span>
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gold text-ink">
+              <Play size={18} className="fill-ink translate-x-[1px]" />
+            </span>
           </button>
+        </div>
 
-          {/* modes */}
-          <div className="mt-4 flex flex-wrap gap-2">
-            {['Gospel Journey', 'Prayer Run', 'Free Run', 'Reflection Walk'].map((m, i) => (
-              <span
-                key={m}
-                className={`rounded-full border px-3.5 py-1.5 text-xs ${
-                  i === 0 ? 'border-lamp/40 bg-lamp/8 text-lamp-soft' : 'border-line text-muted'
-                }`}
-              >
+        {/* SECONDARY — quiet, tight */}
+        <div className="relative z-10 mt-5 px-7">
+          <div className="flex gap-6 text-[13.5px]">
+            {['여정', '기도', '자유', '묵상'].map((m, i) => (
+              <button key={m} className={i === 0 ? 'border-b-[1.5px] border-gold pb-2 font-medium text-ink' : 'pb-2 text-muted'}>
                 {m}
-              </span>
+              </button>
             ))}
           </div>
-
-          {/* 품은 사람 */}
-          <button className="mt-6 flex w-full items-center gap-3 rounded-2xl border border-line bg-surface/40 px-4 py-3.5 text-left">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-coral/20 text-coral">
-              <Heart size={18} />
+          <button className="mt-4 flex w-full items-center gap-3 border-t border-line py-4 text-left">
+            <span className="text-coral">
+              <Heart size={17} />
             </span>
-            <span className="flex-1">
-              <span className="block text-sm text-ink">오늘 품고 달릴 사람</span>
-              <span className="block text-xs text-muted">한 사람을 마음에 두고 달려요</span>
-            </span>
-            <ChevronRight size={18} className="text-muted-2" />
+            <span className="flex-1 text-[14px] text-ink-2">오늘 품고 달릴 사람</span>
+            <ChevronRight size={16} className="text-muted" />
           </button>
-        </main>
+        </div>
 
         <TabBar />
       </div>

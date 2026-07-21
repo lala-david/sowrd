@@ -1,22 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ground: #0b1020;
-  --color-ground-2: #0d1428;
-  --color-surface: #131a2e;
-  --color-surface-2: #1a2338;
-  --color-line: #ece7da14;
-  --color-ink: #ece7da;
-  --color-ink-dim: #cfc9bb;
-  --color-muted: #9aa3bd;
-  --color-muted-2: #6c7699;
-  --color-lamp: #f0b24a;
-  --color-lamp-soft: #f6cf86;
-  --color-coral: #e98a6b;
-  --color-parchment: #ede3ce;
+  /* light — warm editorial white (not stark, not soft-cream-blog) */
+  --color-paper: #f5f2ea;
+  --color-paper-2: #fbf9f3;
+  --color-ink: #1b1d24;
+  --color-ink-2: #4c505c;
+  --color-muted: #8c877a;
+  --color-line: #1b1d2418;
+  --color-line-strong: #1b1d2433;
+  --color-gold: #bd8320;
+  --color-gold-soft: #d29a37;
+  --color-coral: #c56a49;
 
-  --font-serif: "Nanum Myeongjo", "Gowun Batang", "Batang", Georgia, serif;
-  --font-sans: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --font-serif: "Gowun Batang", "Nanum Myeongjo", "Batang", serif;
+  --font-display: "Cormorant Garamond", "Gowun Batang", serif;
+  --font-sans: "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 html,
@@ -26,8 +25,32 @@ body,
 }
 body {
   margin: 0;
-  background: var(--color-ground);
+  background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: var(--len);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes glow {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+  }
 }
