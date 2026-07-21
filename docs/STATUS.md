@@ -29,6 +29,7 @@
 | [`docs/GROWTH.md`](GROWTH.md) | 수요·유통·신앙 온램프 전략 — "디지털 순례길" 포지셔닝(수익 모델 제외) | ✅ |
 | [`docs/ENGINEERING.md`](ENGINEERING.md) | SE 설계 — 프로세스 모델, 유즈케이스·클래스·상태·시퀀스 다이어그램, IA, CRM 범위 | ✅ |
 | [`docs/CONTENT-UX.md`](CONTENT-UX.md) | 콘텐츠별 톤 프리셋 6종(일상·광야·이적·긍휼·수난·부활) — 하나의 시스템 안에서 결을 바꾸는 법 | ✅ |
+| [`docs/DIAGRAMS.md`](DIAGRAMS.md) | 설계 다이어그램 10장(PNG 렌더) — 유즈케이스·클래스·상태·시퀀스·IA·아키텍처 | ✅ |
 | `docs/STATUS.md` | (이 문서) 현황·결정·남은 과제 인덱스 | ✅ |
 
 *(개발 착수 시 추가 예정: 화면별 상세 스펙, API 계약, 콘텐츠 스키마 세부.)*
