@@ -26,7 +26,7 @@
 | [`docs/DESIGN-TOOLING.md`](DESIGN-TOOLING.md) | 디자인/UI/이미지·아이콘 MCP 20여종 조사 + 추천 스택 | ✅ |
 | [`docs/ART-DIRECTION.md`](ART-DIRECTION.md) | Nike풍 미니멀 애슬레틱 아트 방향, 프롬프트 템플릿, 일관성 워크플로 | ✅ |
 | [`docs/DESIGN-PHILOSOPHY.md`](DESIGN-PHILOSOPHY.md) | **디자인 철학** — "빛이 이긴 길"(라이트), 7원칙, AI-slop 금지 목록, 토큰. 모든 화면 심사 기준 | ✅ |
-| [`docs/GLOBAL-MARKET.md`](GLOBAL-MARKET.md) | 글로벌 시장 전략 — 크리스천 많은 지역 우선, 단계적 진출(한·미→라틴→SEA·아프리카→유럽), 시장별 변수 | ✅ |
+| [`docs/GLOBAL-MARKET.md`](GLOBAL-MARKET.md) | **데이터 기반 국가 우선순위** — 리치×시장성 스코어링, 통계 그래프 2종(인구 막대·사분면), Phase 1 = 미국(앵커)·한국(검증)·브라질(리치), 회피 리스트(나이지리아·콩고·에티오피아·인도), 데이터 출처 | ✅ |
 | [`docs/BRAINSTORM.md`](BRAINSTORM.md) | 3렌즈 브레인스토밍(러너 경험·신앙 형성·컨셉) — The Line/Lamp/Reveal, 호흡 기도 등 | ✅ |
 | [`docs/GROWTH.md`](GROWTH.md) | 수요·유통·신앙 온램프 전략 — "디지털 순례길" 포지셔닝(수익 모델 제외) | ✅ |
 | [`docs/ENGINEERING.md`](ENGINEERING.md) | SE 설계 — 프로세스 모델, 유즈케이스·클래스·상태·시퀀스 다이어그램, IA, CRM 범위 | ✅ |
