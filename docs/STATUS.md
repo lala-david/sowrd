@@ -1,7 +1,7 @@
 # 프로젝트 현황 — PROJECT THE WAY
 
 > 최종 갱신: 2026-07-21
-> 현재 단계: **개발 착수** — 리서치 스택(React 19 + Vite + Tailwind v4 + Lucide + Zustand + PWA)으로 스캐폴딩 완료, 첫 UI 시안(홈 화면) 코드로 제작. 빌드 통과.
+> 현재 단계: **개발 — S0 프로토타입 동작.** 홈 · 러닝(다크 "촛불 밤 필사본" 등불) · 리빌 화면 + 네비게이션(달리기 시작 → THE LAMP → THE REVEAL → 홈 루프)을 "The Illuminated Path" 디자인 시스템으로 구현. 유저 플로우(PLANNING §7) 반영. React 19 + Vite + Tailwind v4 + Zustand + PWA. 빌드 통과.
 
 이 문서는 프로젝트의 현재 위치, 지금까지 확정된 결정, 남은 과제를 한눈에 보는 인덱스다. 세부 내용은 각 문서를 참조한다.
 

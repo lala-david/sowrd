@@ -37,6 +37,24 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* dark — "촛불 아래 밤의 필사본" (immersive run / reveal) */
+[data-theme="dark"] {
+  --color-paper-sunk: #100c07;
+  --color-paper: #16120c;
+  --color-paper-raised: #201b13;
+  --color-ink: #ece6d6;
+  --color-ink-soft: #b3ab96;
+  --color-muted: #7b7360;
+  --color-line: #322b1f;
+  --color-line-strong: #453c2c;
+  --color-gold: #d6af5b;
+  --color-gold-deep: #d6af5b;
+  --color-gold-bright: #e7c878;
+  --color-lapis: #7488db;
+  --color-lapis-deep: #8e9ee6;
+  --color-rubric: #d06a5e;
+}
+
 /* signature Versal — illuminated drop-cap */
 .versal {
   float: left;
