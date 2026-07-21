@@ -5,39 +5,20 @@
 
 ---
 
-## 시안
+## 시안 (실제 사진 위 · 글로벌)
 
-### ① 스티커 세트 (투명 · 배경 없음) — 우리만의 순례 정체성
-
-일반 러닝앱 스탯 카드와 다른, **디지털 순례**만의 9종. 실제 파일은 배경 투명(`assets/stickers/`), 아래는 체커보드 미리보기.
+글자 최소 — **숫자·기호·최소 영문**으로 언어 장벽 없이. 우아한 세리프(Cormorant Garamond) + 금빛 + 따뜻한 빛, 실제 사진 위. 스티커는 배경 투명(`assets/stickers/`)이라 사용자가 **자기 사진** 위에 얹음. 아래는 샘플 사진 위 미리보기. 루트는 **내가 실제 뛴 GPS 경로**.
 
 <table>
 <tr>
-<td align="center" width="33%"><img src="assets/stickers/preview/01-journey.png" width="250"><br><sub><b>여정</b> · 12자리 중 8번째 ⭐</sub></td>
-<td align="center" width="33%"><img src="assets/stickers/preview/02-seal.png" width="250"><br><sub><b>순례 인장</b> · 자리 도장 + 성구</sub></td>
-<td align="center" width="33%"><img src="assets/stickers/preview/03-lamp.png" width="250"><br><sub><b>등불</b> · 빛이 어둠에 비치되</sub></td>
+<td align="center" width="33%"><img src="assets/stickers/preview/01-run.png" width="250"><br><sub><b>THE RUN</b><br>실제 GPS 경로 + 거리</sub></td>
+<td align="center" width="33%"><img src="assets/stickers/preview/02-journey.png" width="250"><br><sub><b>JOURNEY</b> ⭐<br>순례 진척 08 / 12</sub></td>
+<td align="center" width="33%"><img src="assets/stickers/preview/03-seal.png" width="250"><br><sub><b>STATION</b><br>순례 인장 · VIII</sub></td>
 </tr>
 <tr>
-<td align="center"><img src="assets/stickers/preview/04-intercession.png" width="250"><br><sub><b>품은 사람</b> · 품고 ○○</sub></td>
-<td align="center"><img src="assets/stickers/preview/05-verse.png" width="250"><br><sub><b>성구</b></sub></td>
-<td align="center"><img src="assets/stickers/preview/06-season.png" width="250"><br><sub><b>시즌 완주</b></sub></td>
-</tr>
-<tr>
-<td align="center"><img src="assets/stickers/preview/07-community.png" width="250"><br><sub><b>공동체</b> · 함께 짜는 하나의 길</sub></td>
-<td align="center"><img src="assets/stickers/preview/08-rest.png" width="250"><br><sub><b>안식·애통</b> · 스탯 없음(톤 인지)</sub></td>
-<td align="center"><img src="assets/stickers/preview/09-route.png" width="250"><br><sub>미니멀 GPS 루트 · 옵션</sub></td>
-</tr>
-</table>
-
-### ② 사용 예시 (사진 위)
-
-스티커를 실제 사진에 얹으면 이렇게 보인다. *(사진은 플레이스홀더 스톡)*
-
-<table>
-<tr>
-<td align="center"><img src="assets/share/01-road.png" width="220"></td>
-<td align="center"><img src="assets/share/02-fjord.png" width="220"></td>
-<td align="center"><img src="assets/share/05-intercession.png" width="220"></td>
+<td align="center"><img src="assets/stickers/preview/04-lamp.png" width="250"><br><sub><b>LAMP</b><br>빛의 불꽃</sub></td>
+<td align="center"><img src="assets/stickers/preview/05-season.png" width="250"><br><sub><b>SEASON</b><br>시즌 완주 · IV</sub></td>
+<td align="center"><img src="assets/stickers/preview/06-together.png" width="250"><br><sub><b>TOGETHER</b><br>함께 · 512 KM</sub></td>
 </tr>
 </table>
 
