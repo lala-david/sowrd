@@ -1,7 +1,7 @@
 # 소프트웨어 공학 설계 — PROJECT THE WAY
 
 > 2026-07-21 · 개발 착수 전 SE 설계. 기획 문서([[PLANNING]], [[BRAINSTORM]], [[GROWTH]])는 **폐기하지 않는다** — 이 문서는 그 기획을 구현 가능한 구조로 번역한 것이다.
-> 다이어그램은 Mermaid(깃허브에서 바로 렌더).
+> 다이어그램은 Mermaid(깃허브에서 바로 렌더). 렌더된 PNG 모음은 [`docs/DIAGRAMS.md`](DIAGRAMS.md) 참조.
 
 **이 문서의 판단 원칙:** 1인/소규모 + 경험 중심 제품이다. 가치 높은 SE 산출물은 제대로 하고, 대기업 워터폴식 과잉 문서는 뺀다. 각 절 끝에 "지금 하는 것 / 나중 / 안 하는 것"을 명시한다.
 
@@ -43,42 +43,47 @@
 
 ```mermaid
 graph LR
-  Runner((러너<br/>신자·구도자))
-  Leader((그룹·교회<br/>리더))
-  Author((콘텐츠<br/>작가))
-  Reviewer((신학<br/>검수자))
-
-  subgraph 러닝·여정
-    UC1[러닝 세션 시작·기록]
+  Runner((러너))
+  Leader((리더))
+  Author((작가))
+  Reviewer((검수자))
+  subgraph G1 [러닝·여정]
+    UC1[러닝 세션 기록]
     UC2[품은 사람 선택]
-    UC3[에피소드 자리 도달·해금]
-    UC4[리빌·묵상 남기기]
-    UC5[여정·여권·수집 보기]
+    UC3[자리 도달·해금]
+    UC4[리빌·묵상]
+    UC5[여권·수집 보기]
   end
-  subgraph 공동체
-    UC6[그룹 참여·초대]
+  subgraph G2 [공동체]
+    UC6[그룹 참여]
     UC7[공동 여정 기여]
-    UC8[기도 주제·릴레이]
-    UC9[격려 보내기]
+    UC8[기도 릴레이]
   end
-  subgraph 운영
-    UC10[공동 여정·주제 개설]
-    UC11[멤버·초대코드 관리]
-    UC12[익명 집계 리포트]
+  subgraph G3 [운영]
+    UC9[공동 여정 개설]
+    UC10[멤버 관리]
+    UC11[익명 리포트]
   end
-  subgraph 콘텐츠
-    UC13[에피소드·묵상 작성]
-    UC14[검수 상태 진행]
-    UC15[성경 인용·번역본 관리]
+  subgraph G4 [콘텐츠]
+    UC12[에피소드 작성]
+    UC13[검수 진행]
   end
-
-  Runner --> UC1 & UC2 & UC3 & UC4 & UC5 & UC6 & UC7 & UC8 & UC9
-  Leader --> UC10 & UC11 & UC12
-  Author --> UC13 & UC15
-  Reviewer --> UC14
+  Runner --> UC1
+  Runner --> UC2
+  Runner --> UC3
+  Runner --> UC4
+  Runner --> UC5
+  Runner --> UC6
+  Runner --> UC7
+  Runner --> UC8
+  Leader --> UC9
+  Leader --> UC10
+  Leader --> UC11
+  Author --> UC12
+  Reviewer --> UC13
 ```
 
-**지금:** UC1~UC5(러닝·여정) MVP 핵심. **나중:** UC6~UC12(공동체·운영)는 2단계. **안 함:** 결제·랭킹 유즈케이스.
+**지금:** 러닝·여정(UC1–5) MVP 핵심. **나중:** 공동체·운영(UC6–11)은 2단계. **안 함:** 결제·랭킹 유즈케이스.
 
 ---
 
@@ -92,7 +97,7 @@ classDiagram
     +id
     +authProvider
     +alias
-    +unit  // km|mi
+    +unit
     +locale
     +isGuest
   }
@@ -104,7 +109,7 @@ classDiagram
   }
   class RunSession {
     +id
-    +mode  // Gospel|Prayer|Free|Reflection
+    +mode
     +startedAt
     +endedAt
     +distance
@@ -138,7 +143,7 @@ classDiagram
     +book
     +chapter
     +verse
-    +perspective  // Mt|Mk|Lk|Jn
+    +perspective
   }
   class BibleTranslation {
     +name
@@ -152,7 +157,7 @@ classDiagram
     +reviewStatus
   }
   class JourneyProgress {
-    +status  // locked|available|inProgress|completed
+    +status
     +accumulatedDistance
     +completedAt
     +playCount
@@ -163,12 +168,12 @@ classDiagram
     +isPrivate = true
   }
   class Group {
-    +type  // friends|smallgroup|church|...
+    +type
     +name
     +inviteCode
   }
   class Membership {
-    +role  // member|admin
+    +role
     +joinedAt
   }
   class CommunityJourney {
