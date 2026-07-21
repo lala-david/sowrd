@@ -26,6 +26,8 @@
 | [`docs/DESIGN-TOOLING.md`](DESIGN-TOOLING.md) | 디자인/UI/이미지·아이콘 MCP 20여종 조사 + 추천 스택 | ✅ |
 | [`docs/ART-DIRECTION.md`](ART-DIRECTION.md) | Nike풍 미니멀 애슬레틱 아트 방향, 프롬프트 템플릿, 일관성 워크플로 | ✅ |
 | [`docs/DESIGN-PHILOSOPHY.md`](DESIGN-PHILOSOPHY.md) | **디자인 철학** — "빛이 이긴 길"(라이트), 7원칙, AI-slop 금지 목록, 토큰. 모든 화면 심사 기준 | ✅ |
+| [`docs/DESIGN-DETAILS.md`](DESIGN-DETAILS.md) | 세부 디자인 리서치 — "The Illuminated Path"(채색 필사본) 시그니처(라피스 여정 라인·Versal·일루미네이션), 팔레트·타이포·그레인 세부 | ✅ |
+| [`docs/DESIGN-HANDOFF.md`](DESIGN-HANDOFF.md) | **디자인 재작업 핸드오프** — 코드 baseline → Pencil(.pen) 전면 재작업 준비물: 토큰→변수(Light/Dark), 시그니처 4요소, 화면·컴포넌트 인벤토리, 연결 절차 | ✅ |
 | [`docs/GLOBAL-MARKET.md`](GLOBAL-MARKET.md) | **데이터 기반 국가 우선순위** — 리치×시장성 스코어링, 통계 그래프 2종(인구 막대·사분면), Phase 1 = 미국(앵커)·한국(검증)·브라질(리치), 회피 리스트(나이지리아·콩고·에티오피아·인도), 데이터 출처 | ✅ |
 | [`docs/BRAINSTORM.md`](BRAINSTORM.md) | 3렌즈 브레인스토밍(러너 경험·신앙 형성·컨셉) — The Line/Lamp/Reveal, 호흡 기도 등 | ✅ |
 | [`docs/GROWTH.md`](GROWTH.md) | 수요·유통·신앙 온램프 전략 — "디지털 순례길" 포지셔닝(수익 모델 제외) | ✅ |
@@ -35,7 +37,9 @@
 | [`docs/SOCIAL-SHARE.md`](SOCIAL-SHARE.md) | 인스타·스레드 공유 카드 기획 — 경쟁사(Strava·NRC) 분석 + 카드 4종 + 프라이버시 | ✅ |
 | `docs/STATUS.md` | (이 문서) 현황·결정·남은 과제 인덱스 | ✅ |
 
-*(개발 착수 시 추가 예정: 화면별 상세 스펙, API 계약, 콘텐츠 스키마 세부.)*
+*(추가 예정: 콘텐츠 데이터 스키마, 화면별 상세 스펙, API 계약 — 기본 시스템 다음 단계.)*
+
+**코드/시안:** `src/`(React 앱) · `docs/assets/ui/`(화면 시안) · `docs/assets/diagrams/`(설계 PNG) · `docs/assets/market/`(시장 그래프) · `docs/assets/stickers/`(공유 스티커).
 
 ---
 
@@ -77,16 +81,31 @@
 
 ---
 
-## 5. 다음 단계 후보 (기획 이후)
+## 5. 구현 현황 (기본 시스템 — S0 프로토타입)
 
-지금은 여기서 멈춤. 이후 진행할 때의 자연스러운 순서:
+> ⚠️ **이것은 "첫 기획·첫 UI·첫 시스템"이다.** 뼈대와 톤을 잡는 게 목적이고, 화면·데이터·디자인은 이후 하나씩 교체할 예정. 지금 목표는 *전부 문서화 + 돌아가는 기본 루프*.
 
-- **정보구조·화면 흐름 정의** → 저사양·모바일 우선 IA, 핵심 화면 목록.
-- **디자인 착수** — 무료 MCP 3종 설치 → Recraft로 러너 실루엣 style_id 확립 → 핵심 화면 목업.
-- **기술 스캐폴딩** — Vite + React + TS + PWA 뼈대, 데이터/콘텐츠 스키마.
-- **MVP 에피소드** — 복음서 사건 1~2개로 "러닝 → 해금 → 묵상" 루프 검증.
+**동작하는 것 (React + Vite + TS + Tailwind v4 + Zustand + PWA):**
 
-> 작업 원칙(이전 프로젝트 교훈): 문서·검증 자료를 잔뜩 쌓기 전에, 작게라도 돌아가는 것을 먼저 만들어 감을 볼 것.
+| 화면 | 파일 | 상태 | 시안 |
+|---|---|:--:|---|
+| **홈** — 오늘의 자리·여정 라인·성구·달리기 시작 | `src/screens/Home.tsx` | ✅ | `assets/ui/01-home.png` |
+| **러닝(THE LAMP)** — 다크 "촛불 밤 필사본", 거리=등불, 구간 진행 | `src/screens/Run.tsx` | ✅ | `assets/ui/02-run.png` |
+| **리빌(THE REVEAL)** — 사건 장면 + Versal 성구 + 묵상 | `src/screens/Reveal.tsx` | ✅ | `assets/ui/03-reveal.png` |
+| 네비게이션 루프 | `src/store.ts`(Zustand) | ✅ | 홈→러닝→리빌→홈 |
+| 공통 컴포넌트 | `IlluminatedLine` · `TabBar` | ✅ | — |
+| 디자인 토큰 | `src/index.css`(@theme + 다크) | ✅ | [[DESIGN-PHILOSOPHY]] |
+
+- **유저 플로우:** 홈 `달리기 시작` → 러닝 `멈추기` → 리빌 `계속 걷기` → 홈 (PLANNING §7 반영).
+- **실행:** `npm install` → `npm run dev` (빌드 검증 `npm run build` = `tsc --noEmit && vite build`, 통과).
+- **아직 없음(의도적):** 실제 GPS 트래킹, 콘텐츠 데이터 스키마, 공동체·기도 모드, 온보딩, 계정. → 다음 단계.
+
+### 다음 단계 (기본 시스템 다음)
+- **콘텐츠 스키마** — 복음서 사건 1~2개를 데이터로(자리·성구·mood·톤) → 화면이 데이터에서 렌더되게.
+- **실제 GPS 러닝** — geolocation + 거리 누적 → 여정 진행 연결.
+- **화면·디자인 반복 교체** — 첫 UI를 기준선 삼아 하나씩 고도화.
+
+> 작업 원칙(이전 프로젝트 교훈): 문서·검증 자료를 잔뜩 쌓기 전에, 작게라도 돌아가는 것을 먼저 만들어 감을 볼 것. — **지금 이 원칙대로 기본 루프가 돈다.**
 
 ---
 
