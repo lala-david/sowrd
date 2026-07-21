@@ -131,6 +131,7 @@ classDiagram
     +reflectionQuestion
     +prayerTheme
     +todayPractice
+    +mood
     +reviewStatus
   }
   class BibleReference {
@@ -212,6 +213,7 @@ classDiagram
 - **ReviewRecord.versionHash** — 콘텐츠 한 글자만 바뀌어도 해시가 달라져 승인 자동 무효화. 검수는 1회 이벤트가 아니라 상설 게이트(BRAINSTORM 신학 원칙).
 - **RouteTrace.isPrivate 기본 true**, PrayerSubject.isPrivate 기본 true — 기획서 §11 보수적 기본값.
 - **Contribution.dailyCapped** — 하루 기여 상한(장거리 러너 독점 방지).
+- **Episode.mood** — 콘텐츠별 톤 프리셋 6종 enum(everyday·wilderness·wonder·compassion·lament·joy). `ToneProvider`가 읽어 팔레트·모션·mechanic on/off 적용. `mood==='lament'`이면 축하·배지·거리 UI를 끄도록 Zod refine으로 강제(십자가 비-게임화). 상세: [[CONTENT-UX]].
 
 **지금:** User~JourneyProgress~PrayerSubject 구현. **나중:** Group~Contribution(2단계). **안 함:** 결제/구독 엔티티.
 

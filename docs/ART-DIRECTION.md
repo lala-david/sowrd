@@ -112,6 +112,19 @@ busy background, clip art, stock illustration, watermark, text, signature, extra
 
 ---
 
+## PART 3 — 콘텐츠별 톤 프리셋 (하나의 시스템 안에서 결을 바꾸기)
+
+위의 화풍·팔레트는 **뼈대**다. 그 위에서 콘텐츠마다 강조색·모션·연출이 바뀐다. 단, 손으로 다 다르게 만드는 게 아니라 **6종 톤 프리셋**으로 관리한다(everyday·wilderness·wonder·compassion·lament·joy).
+
+- **바뀌는 것:** 팔레트 강조색·명도, 모션 강도, 게임 요소 on/off, 카피 톤.
+- **고정되는 것:** 얼굴 없는 실루엣, 타입 시스템, 접근성, 코어 루프.
+- **광야(wilderness):** 저채도 모래·석양 + 넓은 여백 = 시험·인내. **수난(lament):** 무채·저조도 + 게임 OFF = 애통. 둘 다 절제되지만 결이 다르다.
+- 십자가 계열의 "게임 요소 OFF"는 취향이 아니라 신학 요건 — 데이터(`Episode.mood`)로 강제한다.
+
+전체 프리셋 표·시즌 매핑·bespoke 세트피스(사순절 인터페이스 금식, 부활절 빈 무덤 리빌)는 [[CONTENT-UX]] 참조.
+
+---
+
 ## 소스
 - Malika Favre — commarts.com/features/malika-favre
 - Tom Haugomat — handsomefrank.com/illustrators/tom-haugomat

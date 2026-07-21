@@ -28,6 +28,7 @@
 | [`docs/BRAINSTORM.md`](BRAINSTORM.md) | 3렌즈 브레인스토밍(러너 경험·신앙 형성·컨셉) — The Line/Lamp/Reveal, 호흡 기도 등 | ✅ |
 | [`docs/GROWTH.md`](GROWTH.md) | 수요·유통·신앙 온램프 전략 — "디지털 순례길" 포지셔닝(수익 모델 제외) | ✅ |
 | [`docs/ENGINEERING.md`](ENGINEERING.md) | SE 설계 — 프로세스 모델, 유즈케이스·클래스·상태·시퀀스 다이어그램, IA, CRM 범위 | ✅ |
+| [`docs/CONTENT-UX.md`](CONTENT-UX.md) | 콘텐츠별 톤 프리셋 6종(일상·광야·이적·긍휼·수난·부활) — 하나의 시스템 안에서 결을 바꾸는 법 | ✅ |
 | `docs/STATUS.md` | (이 문서) 현황·결정·남은 과제 인덱스 | ✅ |
 
 *(개발 착수 시 추가 예정: 화면별 상세 스펙, API 계약, 콘텐츠 스키마 세부.)*
@@ -52,6 +53,7 @@
 ### 디자인·아트 (자세히는 DESIGN-TOOLING / ART-DIRECTION)
 - **툴 스택(역할별 조합):** shadcn/ui MCP(컴포넌트) + Context7 MCP(문서) + Recraft MCP(일러스트) + Lucide/Iconify MCP(아이콘). 모두 무료 또는 저비용.
 - **아트 무드:** Nike/Strava풍 플랫 지오메트릭 벡터 + **얼굴 없는 실루엣 인물** + 절제된 팔레트 + 은은한 그레인.
+- **콘텐츠별 톤 프리셋 6종(everyday·wilderness·wonder·compassion·lament·joy):** 하나의 뼈대 위에서 콘텐츠 mood에 따라 팔레트·모션·게임 on/off가 바뀜. 수난=게임 OFF(신학 요건, 데이터로 강제). `Episode.mood` + ToneProvider. (CONTENT-UX.md)
 - **절대 금지:** 코퍼릿 멤피스(Alegria) 삽화체 = "AI 티/유치함"의 정체. 네거티브 프롬프트로 차단.
 - 일관성: Recraft `style_id` 락 + 시드 고정 + 골든셋 큐레이션. AI 출력은 80% 원재료 → Figma 손마감.
 
