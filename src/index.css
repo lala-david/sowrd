@@ -1,21 +1,25 @@
 @import "tailwindcss";
 
+/* THE WAY — "The Illuminated Path": vellum + warm sepia ink + brass gold + liturgical lapis */
 @theme {
-  /* light — warm editorial white (not stark, not soft-cream-blog) */
-  --color-paper: #f5f2ea;
-  --color-paper-2: #fbf9f3;
-  --color-ink: #1b1d24;
-  --color-ink-2: #4c505c;
-  --color-muted: #8c877a;
-  --color-line: #1b1d2418;
-  --color-line-strong: #1b1d2433;
-  --color-gold: #bd8320;
-  --color-gold-soft: #d29a37;
-  --color-coral: #c56a49;
+  --color-paper-sunk: #ede8dc;
+  --color-paper: #f4f1e8;
+  --color-paper-raised: #fbf9f2;
+  --color-ink: #201c15; /* warm sepia-black */
+  --color-ink-soft: #4e4739;
+  --color-muted: #857c6b;
+  --color-line: #e4ded0;
+  --color-line-strong: #d3cbb8;
+  --color-gold: #a67f27; /* burnished brass — UI/graphic */
+  --color-gold-deep: #6e5417; /* gold text (AA) */
+  --color-gold-bright: #c39a3e;
+  --color-lapis: #2e3f8f; /* THE WAY — path, holy emphasis */
+  --color-lapis-deep: #263573;
+  --color-rubric: #9e2b25;
 
-  --font-serif: "Gowun Batang", "Nanum Myeongjo", "Batang", serif;
-  --font-display: "Cormorant Garamond", "Gowun Batang", serif;
-  --font-sans: "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Gowun Batang", "Nanum Myeongjo", serif; /* Korean voice */
+  --font-display: "Newsreader", "Gowun Batang", Georgia, serif; /* Latin display · scripture · numerals */
+  --font-sans: "Pretendard", "Noto Sans KR", system-ui, -apple-system, sans-serif;
 }
 
 html,
@@ -28,29 +32,48 @@ body {
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  word-break: keep-all;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-@keyframes draw {
-  from {
-    stroke-dashoffset: var(--len);
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
+/* signature Versal — illuminated drop-cap */
+.versal {
+  float: left;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 62px;
+  line-height: 0.72;
+  margin: 6px 12px 0 0;
+  color: var(--color-gold);
 }
+
+/* subtle vellum grain — kills the flat/AI look */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
 @keyframes glow {
   0%,
   100% {
-    opacity: 0.55;
+    opacity: 0.5;
   }
   50% {
     opacity: 1;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  ::before,
+  ::after {
     animation: none !important;
+    transition: none !important;
   }
 }
