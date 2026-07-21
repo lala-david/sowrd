@@ -5,20 +5,34 @@
 
 ---
 
-## 시안 (실제 사진 위 렌더)
+## 시안
 
-실제 사진 위에 얹은 **최소 투명 오버레이** — 대형 거리 숫자 + 확실한 루트 라인 "조각"(끝점만 앰버) + 최소 메타. 색은 흰색 위주, 배경(누끼) 없음. *(사진은 플레이스홀더 스톡)*
+### ① 스티커 (투명 · 배경 없음)
+
+사용자 사진 위에 얹는 **최소 오버레이** — 대형 거리 숫자 + 확실한 루트 라인 "조각"(끝점만 앰버) + 최소 메타. 길·자리마다, 그리고 품은 사람 버전. 실제 파일은 **배경 투명**(`assets/stickers/`), 아래는 체커보드 위 미리보기.
 
 <table>
 <tr>
-<td align="center" width="33%"><img src="assets/share/01-road.png" width="230"><br><sub><b>순례 기본형</b> · 산길</sub></td>
-<td align="center" width="33%"><img src="assets/share/02-fjord.png" width="230"><br><sub><b>이적(wonder)</b> · 물</sub></td>
-<td align="center" width="33%"><img src="assets/share/03-forest.png" width="230"><br><sub><b>가르침</b> · 숲</sub></td>
+<td align="center" width="33%"><img src="assets/stickers/preview/01-galilee.png" width="240"><br><sub>갈릴리 호숫가</sub></td>
+<td align="center" width="33%"><img src="assets/stickers/preview/02-water.png" width="240"><br><sub>물 위를 걷다</sub></td>
+<td align="center" width="33%"><img src="assets/stickers/preview/03-sower.png" width="240"><br><sub>씨 뿌리는 자</sub></td>
 </tr>
 <tr>
-<td align="center"><img src="assets/share/04-verse.png" width="230"><br><sub><b>성구</b> 옵션(opt-in)</sub></td>
-<td align="center"><img src="assets/share/05-intercession.png" width="230"><br><sub><b>품은 사람</b> 카드</sub></td>
-<td align="center"><img src="assets/share/06-sticker.png" width="230"><br><sub><b>투명 스티커</b> · 배경 없음</sub></td>
+<td align="center"><img src="assets/stickers/preview/04-verse.png" width="240"><br><sub>성구 옵션(opt-in)</sub></td>
+<td align="center"><img src="assets/stickers/preview/05-intercession.png" width="240"><br><sub>품은 사람 · 품고 ○○</sub></td>
+<td align="center"><sub>루트 라인 "조각"은<br>자리마다 다르게</sub></td>
+</tr>
+</table>
+
+### ② 사용 예시 (사진 위)
+
+스티커를 실제 사진에 얹으면 이렇게 보인다. *(사진은 플레이스홀더 스톡)*
+
+<table>
+<tr>
+<td align="center"><img src="assets/share/01-road.png" width="220"></td>
+<td align="center"><img src="assets/share/02-fjord.png" width="220"></td>
+<td align="center"><img src="assets/share/05-intercession.png" width="220"></td>
 </tr>
 </table>
 
