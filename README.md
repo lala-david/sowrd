@@ -51,11 +51,14 @@
 
 | 문서 | 내용 |
 |---|---|
-| [`docs/PLANNING.md`](docs/PLANNING.md) | **전체 기획서** — 서비스 정의, 신학 기준, 공생애 타임라인 9시즌, 서비스 구조, MVP 범위, 글로벌 전략, 수익 모델, 지표 |
+| [`docs/STATUS.md`](docs/STATUS.md) | **현황·결정·남은 과제 인덱스** — 여기부터 보면 됩니다 |
+| [`docs/PLANNING.md`](docs/PLANNING.md) | **전체 기획서 17장** — 서비스 정의, 신학 기준, 공생애 타임라인 9시즌, 서비스 구조, MVP 범위, 글로벌 전략, 수익 모델, 지표 |
+| [`docs/DESIGN-TOOLING.md`](docs/DESIGN-TOOLING.md) | 디자인/UI/이미지·아이콘 MCP 조사 + 추천 툴 스택 |
+| [`docs/ART-DIRECTION.md`](docs/ART-DIRECTION.md) | 아트 방향(Nike풍 미니멀) — 프롬프트 템플릿, 일관성 워크플로 |
 
 ## 현재 상태
 
-기획 단계. 개발 착수 전.
+**기획 단계.** 개발 착수 전. 상세 현황은 [`docs/STATUS.md`](docs/STATUS.md).
 
 **착수 전 확인이 필요한 사항**
 
