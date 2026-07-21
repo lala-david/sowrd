@@ -7,20 +7,20 @@
 
 ## 시안
 
-### ① 스티커 (투명 · 배경 없음)
+### ① 스티커 (투명 · 배경 없음) — 우리만의 순례 정체성
 
-사용자 사진 위에 얹는 **최소 오버레이** — 대형 거리 숫자 + **루트 라인(내가 뛴 실제 GPS 경로 모양, 시작=흰 링·끝=앰버)** + 최소 메타. 지도·좌표 없이 경로 선만. 길·자리마다, 그리고 품은 사람 버전. 실제 파일은 **배경 투명**(`assets/stickers/`), 아래는 체커보드 위 미리보기.
+일반 러닝앱 스탯 카드와 다른, **디지털 순례**만의 것: 예수 생애 **여정 진척**(12자리 중 지금 몇 번째), 순례자 **인장(stamp)**, **등불**(빛이 어둠에 비치되), **품은 사람**. 미니멀 GPS 루트는 옵션. 실제 파일은 배경 투명(`assets/stickers/`), 아래는 체커보드 미리보기.
 
 <table>
 <tr>
-<td align="center" width="33%"><img src="assets/stickers/preview/01-galilee.png" width="240"><br><sub>갈릴리 호숫가</sub></td>
-<td align="center" width="33%"><img src="assets/stickers/preview/02-water.png" width="240"><br><sub>물 위를 걷다</sub></td>
-<td align="center" width="33%"><img src="assets/stickers/preview/03-sower.png" width="240"><br><sub>씨 뿌리는 자</sub></td>
+<td align="center" width="33%"><img src="assets/stickers/preview/01-journey.png" width="250"><br><sub><b>여정</b> · 12자리 중 8번째<br>(가장 우리다운 것)</sub></td>
+<td align="center" width="33%"><img src="assets/stickers/preview/02-seal.png" width="250"><br><sub><b>순례 인장</b> · 자리 도장 + 성구</sub></td>
+<td align="center" width="33%"><img src="assets/stickers/preview/03-lamp.png" width="250"><br><sub><b>등불</b> · 빛이 어둠에 비치되</sub></td>
 </tr>
 <tr>
-<td align="center"><img src="assets/stickers/preview/04-verse.png" width="240"><br><sub>성구 옵션(opt-in)</sub></td>
-<td align="center"><img src="assets/stickers/preview/05-intercession.png" width="240"><br><sub>품은 사람 · 품고 ○○</sub></td>
-<td align="center"><sub>루트 = 실제 뛴 경로<br>(매번 다름)</sub></td>
+<td align="center"><img src="assets/stickers/preview/04-intercession.png" width="250"><br><sub><b>품은 사람</b> · 품고 ○○</sub></td>
+<td align="center"><img src="assets/stickers/preview/05-route.png" width="250"><br><sub>미니멀(실제 GPS 경로) · 옵션</sub></td>
+<td align="center"><sub>순례 여정·인장·등불이<br>남들에겐 없는 특이점</sub></td>
 </tr>
 </table>
 
