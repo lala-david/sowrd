@@ -1,7 +1,7 @@
 # 프로젝트 현황 — PROJECT THE WAY
 
-> 최종 갱신: 2026-07-21
-> 현재 단계: **개발 — S0 프로토타입 동작.** 홈 · 러닝(다크 "촛불 밤 필사본" 등불) · 리빌 화면 + 네비게이션(달리기 시작 → THE LAMP → THE REVEAL → 홈 루프)을 "The Illuminated Path" 디자인 시스템으로 구현. 유저 플로우(PLANNING §7) 반영. React 19 + Vite + Tailwind v4 + Zustand + PWA. 빌드 통과.
+> 최종 갱신: 2026-07-22
+> 현재 단계: **개발 — S1 데이터 구동 앱 동작.** 디자인을 C안(따뜻한 순례길)으로 전환하고, 하드코딩 프로토타입(S0)을 **데이터에서 렌더되는 앱**으로 재작업. 7화면(홈·코스선택·Setup·러닝/THE LAMP·리빌·수집/여권·프로필), 37 스테이션 + 7 거리별 코스(1·3·5·10·21·42·50km), 영속 스토어(zustand+persist), 시뮬레이션 러닝 엔진, 커스텀 SVG 아이콘 세트, Recraft 아트 6종(얼굴 없는 뒷모습·1세기 근동). NRC 벤치마킹(거대 거리 숫자·스플릿·요약) 반영. `tsc --noEmit` + `vite build` 통과. 상세 구조는 [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 이 문서는 프로젝트의 현재 위치, 지금까지 확정된 결정, 남은 과제를 한눈에 보는 인덱스다. 세부 내용은 각 문서를 참조한다.
 
@@ -34,6 +34,7 @@
 | [`docs/ENGINEERING.md`](ENGINEERING.md) | SE 설계 — 프로세스 모델, 유즈케이스·클래스·상태·시퀀스 다이어그램, IA, CRM 범위 | ✅ |
 | [`docs/CONTENT-UX.md`](CONTENT-UX.md) | 콘텐츠별 톤 프리셋 6종(일상·광야·이적·긍휼·수난·부활) — 하나의 시스템 안에서 결을 바꾸는 법 | ✅ |
 | [`docs/DIAGRAMS.md`](DIAGRAMS.md) | 설계 다이어그램 10장(PNG 렌더) — 유즈케이스·클래스·상태·시퀀스·IA·아키텍처 | ✅ |
+| [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) | **S1 구현 아키텍처** — 실제 코드 기준 클래스·유즈케이스·시퀀스·상태·모듈 다이어그램(mermaid) + 로드맵 | ✅ |
 | [`docs/SOCIAL-SHARE.md`](SOCIAL-SHARE.md) | 인스타·스레드 공유 카드 기획 — 경쟁사(Strava·NRC) 분석 + 카드 4종 + 프라이버시 | ✅ |
 | `docs/STATUS.md` | (이 문서) 현황·결정·남은 과제 인덱스 | ✅ |
 
@@ -81,31 +82,40 @@
 
 ---
 
-## 5. 구현 현황 (기본 시스템 — S0 프로토타입)
+## 5. 구현 현황 (S1 — 데이터 구동 앱)
 
-> ⚠️ **이것은 "첫 기획·첫 UI·첫 시스템"이다.** 뼈대와 톤을 잡는 게 목적이고, 화면·데이터·디자인은 이후 하나씩 교체할 예정. 지금 목표는 *전부 문서화 + 돌아가는 기본 루프*.
+> S0(하드코딩 3화면 프로토타입) → **S1(데이터에서 렌더되는 7화면 앱)**으로 재작업 완료. 화면·데이터·디자인은 여전히 반복 고도화 대상.
 
-**동작하는 것 (React + Vite + TS + Tailwind v4 + Zustand + PWA):**
+**동작하는 것 (React 19 + Vite 6 + TS + Tailwind v4 + Zustand+persist + PWA):**
 
-| 화면 | 파일 | 상태 | 시안 |
-|---|---|:--:|---|
-| **홈** — 오늘의 자리·여정 라인·성구·달리기 시작 | `src/screens/Home.tsx` | ✅ | `assets/ui/01-home.png` |
-| **러닝(THE LAMP)** — 다크 "촛불 밤 필사본", 거리=등불, 구간 진행 | `src/screens/Run.tsx` | ✅ | `assets/ui/02-run.png` |
-| **리빌(THE REVEAL)** — 사건 장면 + Versal 성구 + 묵상 | `src/screens/Reveal.tsx` | ✅ | `assets/ui/03-reveal.png` |
-| 네비게이션 루프 | `src/store.ts`(Zustand) | ✅ | 홈→러닝→리빌→홈 |
-| 공통 컴포넌트 | `IlluminatedLine` · `TabBar` | ✅ | — |
-| 디자인 토큰 | `src/index.css`(@theme + 다크) | ✅ | [[DESIGN-PHILOSOPHY]] |
+| 영역 | 파일 | 상태 |
+|---|---|:--:|
+| **데이터** — 37 스테이션(사역순·mood) + 7 거리별 코스 | `src/data/journey.ts` | ✅ |
+| **성경** — 개역한글 원문 37 본문 발췌 + 접근/출처표기 | `src/data/passages.json` · `scripture.ts` · `scripts/extract-passages.mjs` | ✅ |
+| **영속 상태** — 진도·수집·런히스토리·스트릭·단위·품은사람 | `src/state/pilgrim.ts` (localStorage) | ✅ |
+| **러닝 세션** — 시뮬 GPS 틱·자리통과·스플릿·finish→commit | `src/state/run.ts` | ✅ |
+| **유틸** — 거리/페이스/시간 포맷 · mood 톤(lament 축하차단) | `src/lib/format.ts` · `mood.ts` | ✅ |
+| **홈** — 다음 자리·THE LINE 진도·실 성구·연속·품은사람 | `src/screens/Home.tsx` | ✅ |
+| **코스 선택** — 7 순례길·진도·거리 | `src/screens/Courses.tsx` | ✅ |
+| **Setup(러닝 전)** — 모드 세그먼트·목표·닿을 자리 프리뷰 | `src/screens/Setup.tsx` | ✅ |
+| **러닝(THE LAMP)** — 거대 거리 숫자·다음자리 게이지·호흡기도·잠금/멈춤 | `src/screens/Run.tsx` | ✅ |
+| **리빌(THE REVEAL)** — 자리 공개·Versal 성구·묵상·런요약·스플릿 | `src/screens/Reveal.tsx` | ✅ |
+| **수집(여권)** — 음각 인장 그리드·수집 구절 | `src/screens/Collection.tsx` | ✅ |
+| **프로필** — 통계·여정 진도/단계·PR·히스토리·설정 | `src/screens/Profile.tsx` | ✅ |
+| **커스텀 아이콘** — 손그림 SVG 세트(순례 모티프) | `src/components/icons.tsx` | ✅ |
+| **아트** — Recraft 6종(얼굴 없는 뒷모습·1세기) | `src/assets/art/*` | ✅ |
 
-- **유저 플로우:** 홈 `달리기 시작` → 러닝 `멈추기` → 리빌 `계속 걷기` → 홈 (PLANNING §7 반영).
-- **실행:** `npm install` → `npm run dev` (빌드 검증 `npm run build` = `tsc --noEmit && vite build`, 통과).
-- **아직 없음(의도적):** 실제 GPS 트래킹, 콘텐츠 데이터 스키마, 공동체·기도 모드, 온보딩, 계정. → 다음 단계.
+- **유저 플로우:** 홈/FAB `순례 시작` → Setup → 러닝 `멈추기` → 리빌 `계속 걷기` → 홈. 자리 통과 시 햅틱+플래시.
+- **NRC 벤치마킹 반영:** 거대 거리 숫자 위계, km 스플릿, 요약 3-업, 스트릭/PR/여정 진도%/단계, 활동 히스토리. 스포티 네온 → 웜 골드·세리프로 재도색.
+- **실행:** `npm run dev` (검증 `npm run build` = `tsc --noEmit && vite build`, 통과).
+- **아직 없음:** 실 GPS(현재 시뮬), 공유 카드 실 export, 공동체·온보딩, 계정. → S2~S5 (ARCHITECTURE §8).
 
-### 다음 단계 (기본 시스템 다음)
-- **콘텐츠 스키마** — 복음서 사건 1~2개를 데이터로(자리·성구·mood·톤) → 화면이 데이터에서 렌더되게.
-- **실제 GPS 러닝** — geolocation + 거리 누적 → 여정 진행 연결.
-- **화면·디자인 반복 교체** — 첫 UI를 기준선 삼아 하나씩 고도화.
+### 다음 단계
+- **실 GPS 연동** — geolocation → `useRun.tick` 대체(그 지점만 교체하면 됨).
+- **공유 카드** — 캔버스 PNG export + 프라이버시 트리밍.
+- **온보딩·공동 여정** — 첫 순례 입문 + 교회/소그룹 합산.
 
-> 작업 원칙(이전 프로젝트 교훈): 문서·검증 자료를 잔뜩 쌓기 전에, 작게라도 돌아가는 것을 먼저 만들어 감을 볼 것. — **지금 이 원칙대로 기본 루프가 돈다.**
+> 작업 원칙: 문서만 쌓지 말고 돌아가는 것을 먼저. — **S1은 데이터 구동으로 실제 순례 루프가 돈다.**
 
 ---
 

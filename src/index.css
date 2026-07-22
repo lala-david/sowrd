@@ -1,23 +1,31 @@
 @import "tailwindcss";
 
-/* THE WAY — "The Illuminated Path": vellum + warm sepia ink + brass gold + liturgical lapis */
+/* THE WAY — "따뜻한 순례길 / The Pilgrim Road"
+   golden-hour earth: warm sand + terracotta clay road + olive sage + sun-gold light */
 @theme {
-  --color-paper-sunk: #ede8dc;
-  --color-paper: #f4f1e8;
-  --color-paper-raised: #fbf9f2;
-  --color-ink: #201c15; /* warm sepia-black */
-  --color-ink-soft: #4e4739;
-  --color-muted: #857c6b;
-  --color-line: #e4ded0;
-  --color-line-strong: #d3cbb8;
-  --color-gold: #a67f27; /* burnished brass — UI/graphic */
-  --color-gold-deep: #6e5417; /* gold text (AA) */
-  --color-gold-bright: #c39a3e;
-  --color-lapis: #2e3f8f; /* THE WAY — path, holy emphasis */
-  --color-lapis-deep: #263573;
-  --color-rubric: #9e2b25;
+  --color-sand-sunk: #ebe0cd;
+  --color-sand: #f4ead7; /* warm sand base */
+  --color-sand-raised: #fbf4e7;
+  --color-ink: #2c2118; /* warm umber-black */
+  --color-ink-soft: #5f4f3f;
+  --color-muted: #978878;
+  --color-line: #e6d9c2;
+  --color-line-strong: #d6c4a6;
 
-  --font-serif: "Gowun Batang", "Nanum Myeongjo", serif; /* Korean voice */
+  --color-clay: #c05a30; /* terracotta — THE road / primary */
+  --color-clay-deep: #9c4522; /* clay text (AA on sand) */
+  --color-clay-bright: #dd7748;
+
+  --color-olive: #6e7a4c; /* sage — growth / rest / secondary */
+  --color-olive-deep: #55603a;
+
+  --color-sun: #e0a53f; /* golden hour highlight */
+  --color-sun-deep: #a5731c; /* gold text */
+  --color-sun-bright: #f0c368;
+
+  --color-rubric: #a8382c; /* warm red — prayer / held emphasis */
+
+  --font-serif: "Gowun Batang", "Nanum Myeongjo", serif; /* Korean voice — warm serif */
   --font-display: "Newsreader", "Gowun Batang", Georgia, serif; /* Latin display · scripture · numerals */
   --font-sans: "Pretendard", "Noto Sans KR", system-ui, -apple-system, sans-serif;
 }
@@ -29,7 +37,7 @@ body,
 }
 body {
   margin: 0;
-  background: var(--color-paper);
+  background: var(--color-sand);
   color: var(--color-ink);
   font-family: var(--font-sans);
   word-break: keep-all;
@@ -37,25 +45,32 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* dark — "촛불 아래 밤의 필사본" (immersive run / reveal) */
+/* dark — "밤의 순례길 · 등불"(immersive run). warm ember night, not cold charcoal */
 [data-theme="dark"] {
-  --color-paper-sunk: #100c07;
-  --color-paper: #16120c;
-  --color-paper-raised: #201b13;
-  --color-ink: #ece6d6;
-  --color-ink-soft: #b3ab96;
-  --color-muted: #7b7360;
-  --color-line: #322b1f;
-  --color-line-strong: #453c2c;
-  --color-gold: #d6af5b;
-  --color-gold-deep: #d6af5b;
-  --color-gold-bright: #e7c878;
-  --color-lapis: #7488db;
-  --color-lapis-deep: #8e9ee6;
-  --color-rubric: #d06a5e;
+  --color-sand-sunk: #120d08;
+  --color-sand: #191108;
+  --color-sand-raised: #241a0f;
+  --color-ink: #f0e6d4;
+  --color-ink-soft: #bcae95;
+  --color-muted: #837458;
+  --color-line: #362818;
+  --color-line-strong: #4b3922;
+
+  --color-clay: #db7a4a;
+  --color-clay-deep: #e08a5c;
+  --color-clay-bright: #ec9968;
+
+  --color-olive: #9aa66d;
+  --color-olive-deep: #b0bb82;
+
+  --color-sun: #ecc069; /* the lamp glow */
+  --color-sun-deep: #ecc069;
+  --color-sun-bright: #f6d891;
+
+  --color-rubric: #d9695a;
 }
 
-/* signature Versal — illuminated drop-cap */
+/* signature Versal — illuminated drop-cap, now sun-gold */
 .versal {
   float: left;
   font-family: var(--font-display);
@@ -63,17 +78,17 @@ body {
   font-size: 62px;
   line-height: 0.72;
   margin: 6px 12px 0 0;
-  color: var(--color-gold);
+  color: var(--color-clay);
 }
 
-/* subtle vellum grain — kills the flat/AI look */
+/* subtle paper/earth grain — kills the flat/AI look */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 60;
   pointer-events: none;
-  opacity: 0.05;
+  opacity: 0.055;
   mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }

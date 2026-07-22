@@ -13,8 +13,8 @@ export default defineConfig({
       manifest: {
         name: 'THE WAY',
         short_name: 'THE WAY',
-        theme_color: '#0B1020',
-        background_color: '#0B1020',
+        theme_color: '#c05a30',
+        background_color: '#f4ead7',
         display: 'standalone',
         orientation: 'portrait',
       },

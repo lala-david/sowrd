@@ -1,0 +1,119 @@
+import { useState } from 'react'
+import { useNav } from '../store'
+import { usePilgrim, progressFor } from '../state/pilgrim'
+import { useRun, RUN_MODES, type RunMode } from '../state/run'
+import { courseById, progressOf } from '../data/journey'
+import { fmtDistance, fmtDuration } from '../lib/format'
+import { toneOf } from '../lib/mood'
+import { arcIcon, IconArrow, IconHeld, IconStep } from '../components/icons'
+import { SectionLabel } from '../components/ui'
+
+export default function Setup() {
+  const go = useNav((s) => s.go)
+  const { activeCourseId, units, prayerSubject } = usePilgrim()
+  const pilgrim = usePilgrim()
+  const configure = useRun((s) => s.configure)
+  const course = courseById(activeCourseId)!
+  const startKm = progressFor(pilgrim, activeCourseId).cumulativeKm
+  const prog = progressOf(course, startKm)
+
+  const [mode, setMode] = useState<RunMode>('guided')
+  const [goalKm, setGoalKm] = useState(5)
+  const [goalMin, setGoalMin] = useState(30)
+
+  const next = prog.nextStation
+  const NextIcon = next ? arcIcon(next.mood === 'lament' ? 'passion' : next.arc) : IconStep
+  const tone = next ? toneOf(next.mood) : toneOf('everyday')
+
+  const begin = () => {
+    configure({
+      mode, courseId: activeCourseId,
+      goalKm: mode === 'goalDistance' ? goalKm : undefined,
+      goalSec: mode === 'goalTime' ? goalMin * 60 : undefined,
+      prayerFor: prayerSubject,
+    })
+    go('run')
+  }
+
+  return (
+    <div className="relative flex flex-1 flex-col px-6" style={{ paddingTop: 'max(2.5rem, env(safe-area-inset-top))', paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+      <button onClick={() => go('home')} className="mb-5 flex items-center gap-2 text-[13px] text-muted transition active:scale-95">
+        <IconArrow size={16} className="rotate-180" /> 여정
+      </button>
+
+      <SectionLabel>오늘 걸을 길</SectionLabel>
+      <h1 className="mt-2 font-serif text-[30px] font-bold leading-tight">{course.name}</h1>
+      <p className="mt-1 text-[13px] text-muted">{course.arcLabel} · 전체 {fmtDistance(course.distanceKm, units, course.distanceKm % 1 === 0 ? 0 : 1)}{units}</p>
+
+      {/* 모드 세그먼트 */}
+      <div className="mt-6 grid grid-cols-2 gap-2">
+        {RUN_MODES.map((m) => {
+          const on = m.id === mode
+          return (
+            <button key={m.id} onClick={() => setMode(m.id)} className={`rounded-xl border px-4 py-3 text-left transition active:scale-[0.98] ${on ? 'border-clay/50 bg-sand-raised shadow-[0_10px_24px_-18px_rgba(156,69,34,.6)]' : 'border-line bg-sand-raised/30'}`}>
+              <div className={`font-serif text-[15px] ${on ? 'text-ink' : 'text-ink-soft'}`}>{m.label}</div>
+              <div className="mt-0.5 text-[11.5px] text-muted">{m.hint}</div>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* 목표 스테퍼 / 자리 프리뷰 */}
+      <div className="mt-5 rounded-2xl border border-line bg-sand-raised/40 p-5">
+        {mode === 'goalDistance' && (
+          <Stepper label="목표 거리" value={`${goalKm}`} unit={units} onDec={() => setGoalKm((v) => Math.max(1, v - 1))} onInc={() => setGoalKm((v) => Math.min(50, v + 1))} />
+        )}
+        {mode === 'goalTime' && (
+          <Stepper label="목표 시간" value={fmtDuration(goalMin * 60)} unit="" onDec={() => setGoalMin((v) => Math.max(5, v - 5))} onInc={() => setGoalMin((v) => Math.min(240, v + 5))} />
+        )}
+        {(mode === 'guided' || mode === 'free') && (
+          next ? (
+            <div className="flex items-center gap-4">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full" style={{ background: 'var(--color-sand-sunk)', color: tone.accent }}>
+                <NextIcon size={24} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[11.5px] tracking-[0.1em] text-muted">이번 길에서 닿을 자리</p>
+                <p className="mt-0.5 font-serif text-[17px] leading-tight text-ink">{next.place} · {next.title}</p>
+                <p className="mt-0.5 text-[12px] text-clay-deep" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>{fmtDistance(prog.toNextKm, units)}{units} 앞</p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-[13px] text-ink-soft">이 순례길의 모든 자리에 닿았습니다. 다시 걸으며 그 길을 회상해요.</p>
+          )
+        )}
+      </div>
+
+      {/* 오늘 품고 달릴 사람 */}
+      <button onClick={() => go('profile')} className="mt-4 flex items-center gap-3 rounded-xl border border-line bg-sand-raised/30 px-4 py-3.5 text-left transition active:scale-[0.99]">
+        <span className="text-rubric"><IconHeld size={19} /></span>
+        <span className="flex-1 text-[13.5px] text-ink-soft">{prayerSubject ? `${prayerSubject}를 품고 달립니다` : '오늘 품고 달릴 사람 (선택)'}</span>
+      </button>
+
+      <div className="flex-1 min-h-8" />
+
+      {/* START */}
+      <button onClick={begin} className="mx-auto flex h-[132px] w-[132px] flex-col items-center justify-center rounded-full bg-clay text-sand-raised shadow-[0_2px_4px_rgba(192,90,48,.3),0_26px_48px_-16px_rgba(156,69,34,.7)] transition active:scale-95">
+        <IconStep size={34} strokeWidth={1.6} />
+        <span className="mt-2 font-serif text-[17px]">시작</span>
+      </button>
+      <p className="mt-4 text-center text-[12px] text-muted">멈추면 오늘의 자리가 열립니다</p>
+    </div>
+  )
+}
+
+function Stepper({ label, value, unit, onDec, onInc }: { label: string; value: string; unit: string; onDec: () => void; onInc: () => void }) {
+  return (
+    <div className="flex items-center justify-between">
+      <button onClick={onDec} className="flex h-11 w-11 items-center justify-center rounded-full border border-line-strong text-ink-soft text-[22px] leading-none transition active:scale-90">−</button>
+      <div className="flex flex-col items-center">
+        <span className="text-[11.5px] tracking-[0.1em] text-muted">{label}</span>
+        <div className="flex items-baseline gap-1">
+          <span className="font-display text-[38px] font-medium leading-none text-ink" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>{value}</span>
+          {unit && <span className="font-display text-[14px] text-muted">{unit}</span>}
+        </div>
+      </div>
+      <button onClick={onInc} className="flex h-11 w-11 items-center justify-center rounded-full border border-line-strong text-ink-soft text-[22px] leading-none transition active:scale-90">+</button>
+    </div>
+  )
+}
