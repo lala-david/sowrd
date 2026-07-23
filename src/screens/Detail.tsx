@@ -6,9 +6,11 @@ import { passageOf, SCRIPTURE_ATTRIBUTION } from '../data/scripture'
 import { peopleOf } from '../data/people'
 import { toneOf } from '../lib/mood'
 import { arcIcon, IconArrow, IconHeld } from '../components/icons'
-import { heroArt } from '../assets/art'
+import { heroArt, stationArt } from '../assets/art'
 
 export default function Detail() {
+  /* 뒤로가기는 하드코딩된 collection이 아니라 **여기를 연 화면**으로 돌아간다. */
+  const backTo = useNav((s) => s.from) ?? 'collection'
   const go = useNav((s) => s.go)
   const detailId = useNav((s) => s.detailId)
   const activeCourseId = usePilgrim((s) => s.activeCourseId)
@@ -18,7 +20,7 @@ export default function Detail() {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
         <p className="text-[14px] text-muted">자리를 찾을 수 없어요.</p>
-        <button onClick={() => go('collection')} className="rounded-xl bg-clay px-5 py-2.5 text-[14px] text-sand-raised">여권으로</button>
+        <button onClick={() => go(backTo)} className="rounded-xl bg-clay-deep px-5 py-2.5 text-[14px] text-sand-raised">여권으로</button>
       </div>
     )
   }
@@ -35,9 +37,9 @@ export default function Detail() {
   return (
     <div className="relative flex flex-1 flex-col overflow-y-auto bg-sand text-ink">
       <div className="relative h-[240px] w-full overflow-hidden">
-        <img src={heroArt(hero)} alt={station.place} className="h-full w-full object-cover" />
+        <img src={stationArt(detailId) ?? heroArt(hero)} alt="" className="h-full w-full object-cover" decoding="async" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24" style={{ background: 'linear-gradient(to top, var(--color-sand), transparent)' }} />
-        <button onClick={() => go('collection')} className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))] flex h-9 w-9 items-center justify-center rounded-full bg-black/30 text-sand-raised backdrop-blur-[2px] transition active:scale-90" aria-label="뒤로">
+        <button onClick={() => go(backTo)} className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))] flex h-11 w-11 items-center justify-center rounded-full bg-[#201C15]/85 text-sand-raised backdrop-blur-[2px] transition active:scale-90" aria-label="뒤로">
           <IconArrow size={17} className="rotate-180" />
         </button>
       </div>
@@ -56,7 +58,7 @@ export default function Detail() {
             <p className="font-display text-[12px] uppercase tracking-[0.18em] text-clay-deep">{p.refLatin}</p>
             <div className="flex overflow-hidden rounded-lg border border-line-strong">
               {(['kr', 'en'] as const).map((l) => (
-                <button key={l} onClick={() => setLang(l)} className={`px-2.5 py-1 text-[11px] uppercase ${lang === l ? 'bg-clay text-sand-raised' : 'text-muted'}`}>{l === 'kr' ? '개역한글' : 'KJV'}</button>
+                <button key={l} onClick={() => setLang(l)} className={`min-h-[44px] px-3 text-[11px] uppercase ${lang === l ? 'bg-clay-deep text-sand-raised' : 'text-muted'}`}>{l === 'kr' ? '개역한글' : 'KJV'}</button>
               ))}
             </div>
           </div>
@@ -105,7 +107,7 @@ export default function Detail() {
           </div>
         )}
 
-        <button onClick={() => go('collection')} className="mt-8 w-full rounded-2xl border border-line py-3.5 text-center font-serif text-[15px] text-ink-soft transition active:scale-[0.99]">
+        <button onClick={() => go(backTo)} className="mt-8 w-full rounded-2xl border border-line py-3.5 text-center font-serif text-[15px] text-ink-soft transition active:scale-[0.99]">
           여권으로 돌아가기
         </button>
       </div>

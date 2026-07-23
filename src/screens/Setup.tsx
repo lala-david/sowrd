@@ -27,7 +27,7 @@ export default function Setup() {
 
   const begin = () => {
     configure({
-      mode, courseId: activeCourseId,
+      mode, courseId: activeCourseId, journeyId: pilgrim.activeJourneyId,
       goalKm: mode === 'goalDistance' ? goalKm : undefined,
       goalSec: mode === 'goalTime' ? goalMin * 60 : undefined,
       prayerFor: prayerSubject,
@@ -37,8 +37,9 @@ export default function Setup() {
 
   return (
     <div className="relative flex flex-1 flex-col px-6" style={{ paddingTop: 'max(2.5rem, env(safe-area-inset-top))', paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
-      <button onClick={() => go('home')} className="mb-5 flex items-center gap-2 text-[13px] text-muted transition active:scale-95">
-        <IconArrow size={16} className="rotate-180" /> 여정
+      {/* 라벨이 '여정'인데 실제 목적지는 home이었다 — 라벨과 동작이 어긋나면 라벨이 거짓말이 된다. */}
+      <button onClick={() => go('home')} className="tap mb-5 flex items-center gap-2 text-[13px] text-muted transition active:scale-95">
+        <IconArrow size={16} className="rotate-180" /> 오늘
       </button>
 
       <SectionLabel>오늘 걸을 길</SectionLabel>
@@ -93,11 +94,16 @@ export default function Setup() {
       <div className="flex-1 min-h-8" />
 
       {/* START */}
-      <button onClick={begin} className="mx-auto flex h-[132px] w-[132px] flex-col items-center justify-center rounded-full bg-clay text-sand-raised shadow-[0_2px_4px_rgba(192,90,48,.3),0_26px_48px_-16px_rgba(156,69,34,.7)] transition active:scale-95">
+      <button onClick={begin} className="mx-auto flex h-[132px] w-[132px] flex-col items-center justify-center rounded-full bg-clay-deep text-sand-raised shadow-[0_2px_4px_rgba(192,90,48,.3),0_26px_48px_-16px_rgba(156,69,34,.7)] transition active:scale-95">
         <IconStep size={34} strokeWidth={1.6} />
-        <span className="mt-2 font-serif text-[17px]">시작</span>
+        <span className="mt-2 font-serif text-[17px]">달리기 시작</span>
       </button>
-      <p className="mt-4 text-center text-[12px] text-muted">멈추면 오늘의 자리가 열립니다</p>
+      <p className="mt-4 text-center text-[12px] text-muted">멈추면 오늘의 자리에서 말씀을 함께 읽습니다</p>
+      {/* 위치 권한을 왜 묻는지 먼저 밝힌다 — 시스템 팝업이 뜨기 전에 */}
+      <p className="mx-auto mt-3 max-w-[30ch] text-center text-[11px] leading-relaxed text-muted">
+        시작하면 위치 권한을 묻습니다. 달린 거리를 재는 데만 쓰고,
+        위치나 경로는 저장하지도 밖으로 보내지도 않습니다.
+      </p>
     </div>
   )
 }

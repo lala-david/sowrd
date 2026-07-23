@@ -8,7 +8,7 @@
   --color-sand-raised: #fbf4e7;
   --color-ink: #2c2118; /* warm umber-black */
   --color-ink-soft: #5f4f3f;
-  --color-muted: #978878;
+  --color-muted: #736349; /* 2.88:1 → 4.87:1 on sand */
   --color-line: #e6d9c2;
   --color-line-strong: #d6c4a6;
 
@@ -20,10 +20,40 @@
   --color-olive-deep: #55603a;
 
   --color-sun: #e0a53f; /* golden hour highlight */
-  --color-sun-deep: #a5731c; /* gold text */
+  --color-sun-deep: #8a5f18; /* 3.47:1 → 4.72:1 */
   --color-sun-bright: #f0c368;
 
   --color-rubric: #a8382c; /* warm red — prayer / held emphasis */
+
+  /* ★ the Way — 경로선·진행·이정표에만. 화면에서 유일한 찬 색이라 따뜻한 땅 위에서 눈이 먼저 잡는다.
+     아트에 굽지 않고 UI가 그린다: 선은 달린 거리에 따라 차오르는 데이터이기 때문. */
+  --color-lapis: #2e3f8f;
+  --color-lapis-deep: #263573;
+
+  /* ── 러닝 데이터 색 ────────────────────────────────────────────────────
+     기존 5존(올리브2 + 선골드 + 클레이2)은 검증기에서 양쪽 테마 전부 실패했다:
+     다크에서 clay와 clay-deep이 ΔE 3.9로 같은 색이고, 라이트/다크에서 명도 순서가
+     뒤집히며, 올리브 2단은 채도 0.06으로 회색으로 읽혔다. 아래는 통과한 값이다. */
+
+  /* 지도 — 발산 3계급. 5계급은 all-pairs 검사에서 protan ΔE 3.7로 붕괴한다.
+     찬 쪽을 라피스 계열로 둔 것은 문서 §3이 경로선을 라피스로 지정했기 때문. */
+  --color-pace-slow: #b75732;
+  --color-pace-even: #5a503f;
+  --color-pace-fast: #5672c4;
+
+  /* 존 분포 — 순서형 1색 램프(걷기 → 많이 빠르게). 순서가 있는 값이라 무지개가 아니라 램프.
+     sand-raised 위에서만 검증 통과 — sand-sunk 위에 올리면 밝은 끝이 1.69:1로 실패한다. */
+  --color-zone-1: #dfa085;
+  --color-zone-2: #d1815f;
+  --color-zone-3: #c16236;
+  --color-zone-4: #a44b20;
+  --color-zone-5: #823a17;
+
+  /* 차트에서 눈에 안 띄어야 하는 마크(지난 주 막대 등). line-strong은 1.56:1이라 못 쓴다. */
+  /* 차트의 '지난 주' 막대. 강조색(clay)과 정상시야 ΔE 16.4·protan 11.1로 갈리고
+     표면 대비 3:1을 넘는 값. 따뜻한 회색(#7d7a72)은 ΔE 13.5로 클레이와 구분이 안 됐고,
+     올리브는 클레이와 deutan ΔE 4.4 — 적록색약에게 같은 색이라 차트에 함께 쓸 수 없다. */
+  --color-chart-quiet: #6b7280;
 
   --font-serif: "Gowun Batang", "Nanum Myeongjo", serif; /* Korean voice — warm serif */
   --font-display: "Newsreader", "Gowun Batang", Georgia, serif; /* Latin display · scripture · numerals */
@@ -52,9 +82,9 @@ body {
   --color-sand-raised: #241a0f;
   --color-ink: #f0e6d4;
   --color-ink-soft: #bcae95;
-  --color-muted: #837458;
-  --color-line: #362818;
-  --color-line-strong: #4b3922;
+  --color-muted: #948468; /* dark: 4.09:1 → 5.12:1 */
+  --color-line: #5e4a2e; /* 게이지 트랙이 보이도록 1.31:1 → 2.22:1 */
+  --color-line-strong: #7a6444; /* 러닝 컨트롤 외곽선 1.70:1 → 3.32:1 (WCAG 1.4.11) */
 
   --color-clay: #db7a4a;
   --color-clay-deep: #e08a5c;
@@ -68,6 +98,24 @@ body {
   --color-sun-bright: #f6d891;
 
   --color-rubric: #d9695a;
+
+  /* 밤에는 라피스를 발광 톤으로 올린다 — 어두운 흙빛 위에서 #2e3f8f는 묻힌다. */
+  --color-lapis: #7488db;
+  --color-lapis-deep: #8e9ee6;
+
+  /* 다크에서는 램프 방향이 뒤집힌다(어두움 → 밝음). 같은 데이터가 두 테마에서
+     반대로 읽히지 않게 순서를 유지하려면 값 자체를 뒤집어야 한다. */
+  --color-pace-slow: #d07644;
+  --color-pace-even: #6c6250;
+  --color-pace-fast: #708ddd;
+
+  --color-zone-1: #74452c;
+  --color-zone-2: #9c5731;
+  --color-zone-3: #c46b39;
+  --color-zone-4: #e08859;
+  --color-zone-5: #eeac8b;
+
+  --color-chart-quiet: #7b818b; /* 다크: 정상시야 ΔE 16.9 · protan 10.5 · 대비 3:1↑ */
 }
 
 /* signature Versal — illuminated drop-cap, now sun-gold */
@@ -102,6 +150,74 @@ body::after {
     opacity: 1;
   }
 }
+/* 모션 어휘 — DESIGN-PHILOSOPHY ④ "느린 숨": calm 레지스터만, 팡파레 금지.
+   피드백 200~400ms, 전환은 스프링에 가까운 감속 곡선. 아래 reduce-motion 블록이 전부 끈다. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.anim-rise {
+  animation: rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.anim-pop {
+  animation: pop 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* 최소 터치 타깃 44px.
+   실측으로 "전체 ›"(37.8×18), "‹ 오늘로"(57.7×19.5), "‹ 여정"(19.5 높이) 같은
+   텍스트 버튼들이 손가락 접촉면(약 45px)의 절반 이하였다. 시각적 크기는 그대로 두고
+   히트박스만 넓힌다 — 글자를 키우면 위계가 흐트러진다. */
+.tap {
+  position: relative;
+}
+.tap::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+}
+
+/* 포커스 표시 — 앱 전체에 하나도 없었다(실측 outline:none / box-shadow:none).
+   키보드·스위치 컨트롤 사용자에게 지금 어디에 있는지 알려 줄 방법이 없으면 조작이 불가능하다.
+   :focus-visible이라 마우스·터치로 눌렀을 때는 나타나지 않는다(WCAG 2.4.7). */
+:focus-visible {
+  outline: 2px solid var(--color-lapis);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+[data-theme='dark'] :focus-visible {
+  outline-color: var(--color-sun);
+}
+
+/* 글자 크기 — 이 앱의 폰트는 전부 px 하드코딩이라(224곳, rem 0곳) 브라우저 글꼴 설정도
+   iOS Dynamic Type도 듣지 않는다. 노안 사용자에게는 글자를 키울 레버가 하나도 없었다.
+   zoom은 transform과 달리 레이아웃을 실제로 다시 잡으므로 줄바꿈이 깨지지 않는다. */
+[data-textscale='large'] {
+  zoom: 1.15;
+}
+[data-textscale='xlarge'] {
+  zoom: 1.3;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

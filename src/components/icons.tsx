@@ -9,7 +9,7 @@ interface IconProps extends Omit<SVGProps<SVGSVGElement>, 'width' | 'height'> {
   strokeWidth?: number
 }
 
-function Svg({ size = 22, strokeWidth = 1.6, children, ...rest }: IconProps & { children: React.ReactNode }) {
+function Svg({ size = 22, strokeWidth = 1.75, children, ...rest }: IconProps & { children: React.ReactNode }) {
   return (
     <svg
       width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -196,3 +196,62 @@ export function arcIcon(arc: string) {
     default: return IconPilgrim
   }
 }
+
+/* ── 기능 글리프 ────────────────────────────────────────────────────────────
+ * 돌무지·인장·두루마리·등불처럼 이 앱만의 은유는 위쪽 커스텀 세트가 맡고,
+ * 아래는 뜻이 이미 굳어진 순수 기능 아이콘이다(BUILD-SPECS B절의 iconify 폴백 방침).
+ * 24 그리드·currentColor·round로 맞춰 한 세트로 보이게 정규화했다. */
+
+/** 일시정지 — 러닝 화면에서 등불 아이콘을 쓰고 있었다(의미 불일치) */
+export const IconPause = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="6" y="4" width="4" height="16" rx="1.2" />
+    <rect x="14" y="4" width="4" height="16" rx="1.2" />
+  </Svg>
+)
+
+/** 다시 시작 */
+export const IconPlay = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M7 5.2a1.4 1.4 0 0 1 2.1-1.2l9.2 6.8a1.4 1.4 0 0 1 0 2.4L9.1 20a1.4 1.4 0 0 1-2.1-1.2Z" />
+  </Svg>
+)
+
+/** 오디오 가이드런 */
+export const IconHeadphones = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M4 14h2.2A1.8 1.8 0 0 1 8 15.8v3.4A1.8 1.8 0 0 1 6.2 21H5.5A1.5 1.5 0 0 1 4 19.5V13a8 8 0 0 1 16 0v6.5a1.5 1.5 0 0 1-1.5 1.5h-.7a1.8 1.8 0 0 1-1.8-1.8v-3.4A1.8 1.8 0 0 1 17.8 14H20" />
+  </Svg>
+)
+
+/** 시간 — 러닝 지표 */
+export const IconTime = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="13.5" r="7.5" />
+    <path d="M9.8 2.8h4.4M12 9.6v4l2.4 2.4" />
+  </Svg>
+)
+
+/** 스플릿(구간 기록) */
+export const IconSplits = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M5 20.5v-5.2M12 20.5V4M19 20.5V9.6" />
+  </Svg>
+)
+
+/** 카라반 — 함께 걷는 사람들 */
+export const IconCaravan = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="9" cy="7.2" r="3.4" />
+    <path d="M2.6 20.6v-1.8A3.8 3.8 0 0 1 6.4 15h5.2a3.8 3.8 0 0 1 3.8 3.8v1.8" />
+    <path d="M16.4 3.6a3.6 3.6 0 0 1 0 7M19 15.4a3.6 3.6 0 0 1 2.6 3.4v1.8" />
+  </Svg>
+)
+
+/** 전례력 시즌 */
+export const IconSeason = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3.4" y="4.6" width="17.2" height="16" rx="2.2" />
+    <path d="M8 2.8v3.6M16 2.8v3.6M3.4 10.2h17.2" />
+  </Svg>
+)

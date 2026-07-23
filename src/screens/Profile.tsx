@@ -1,17 +1,17 @@
 import { useState } from 'react'
-import { usePilgrim, pilgrimTotals, overallJourneyPct, journeyTier } from '../state/pilgrim'
+import { usePilgrim, pilgrimTotals, overallJourneyPct, activeTier, weeklyKm, daysThisWeek } from '../state/pilgrim'
 import { STATIONS } from '../data/journey'
 import { fmtDistance, fmtDuration, fmtPace, unitLabel } from '../lib/format'
-import { StatTile, SectionLabel, ProgressBar } from '../components/ui'
+import { StatTile, SectionLabel, ProgressBar, SettingSwitch, WeeklyBars } from '../components/ui'
 import TabBar from '../components/TabBar'
 import { IconPilgrim, IconHeld, IconEmber, IconReached, IconSettings } from '../components/icons'
 
 export default function Profile() {
   const pilgrim = usePilgrim()
-  const { units, setUnits, streakDays, prayerSubject, setPrayerSubject, runs, resetAll } = pilgrim
+  const { units, setUnits, prayerSubject, setPrayerSubject, runs, resetAll, textScale, setTextScale } = pilgrim
   const totals = pilgrimTotals(pilgrim)
   const overall = overallJourneyPct(pilgrim)
-  const tier = journeyTier(pilgrim)
+  const tier = activeTier(pilgrim)
 
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(prayerSubject ?? '')
@@ -24,21 +24,30 @@ export default function Profile() {
   return (
     <div className="relative flex flex-1 flex-col">
       <header className="flex items-center gap-4 px-7" style={{ paddingTop: 'max(3rem, env(safe-area-inset-top))' }}>
-        <span className="flex h-14 w-14 items-center justify-center rounded-full border border-line-strong bg-sand-raised text-clay">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full border border-line-strong bg-sand-raised text-clay-deep">
           <IconPilgrim size={28} />
         </span>
         <div>
           <h1 className="font-serif text-[24px] font-bold leading-tight">순례자</h1>
-          <p className="mt-0.5 text-[13px] text-clay-deep">{tier}</p>
+          {/* 단계는 지금 걷는 여정의 tiers에서 온다 — 예전엔 예수 코스 arc 기반이라
+              기본 설정으로 1,000km를 달려도 영원히 3단계 "기적을 지나"였다. */}
+          {tier && (
+            <p className="mt-0.5 text-[13px] text-clay-deep">
+              {tier.index}단계 · {tier.name}
+            </p>
+          )}
         </div>
       </header>
 
       {/* 누적 통계 */}
-      <div className="mt-7 grid grid-cols-4 gap-2 px-6">
+      {/* 4칸을 360px에 넣으면 칸당 72px이라 1,000km부터 옆 칸을 침범한다.
+          2×2면 152px로 두 배가 되고, 위계상으로도 총 거리가 "이번 주 1일"과 동급일 이유가 없다. */}
+      <div className="mt-7 grid grid-cols-2 gap-x-4 gap-y-5 px-6">
         <StatTile value={fmtDistance(totals.totalKm, units, totals.totalKm >= 100 ? 0 : 1)} unit={unitLabel(units).toLowerCase()} label="총 거리" accent />
         <StatTile value={totals.totalStations} label="닿은 자리" />
         <StatTile value={totals.totalRuns} label="순례 횟수" />
-        <StatTile value={streakDays} label="연속일" />
+        {/* 연속일 → 이번 주 달린 날. 스트릭은 월·수·금 러너를 매주 0으로 되돌렸다. */}
+        <StatTile value={`${daysThisWeek(pilgrim)}일`} label="이번 주" />
       </div>
 
       {/* 여정 진도 */}
@@ -46,10 +55,19 @@ export default function Profile() {
         <div className="rounded-2xl border border-line bg-sand-raised/40 p-5">
           <div className="flex items-center justify-between">
             <SectionLabel>여정 진도</SectionLabel>
-            <span className="font-display text-[15px] text-clay" style={{ fontFeatureSettings: "'lnum' 1" }}>{overall}%</span>
+            <span className="font-display text-[15px] text-clay-deep" style={{ fontFeatureSettings: "'lnum' 1" }}>{overall}%</span>
           </div>
           <div className="mt-3"><ProgressBar pct={overall} height={5} /></div>
           <p className="mt-3 text-[12.5px] text-muted">세례에서 땅 끝까지 — 예수님의 전 여정 중 {overall}%를 따라 걸었습니다.</p>
+        </div>
+      </div>
+
+      {/* 주간 추이 — 스트릭이 못 보여주던 "꾸준함"을 형태로 보여준다.
+          카드 표면은 sand-raised여야 한다(막대 색이 sand-sunk 위에서는 대비 검사에 걸린다). */}
+      <div className="mt-5 px-6">
+        <SectionLabel>주마다 달린 거리</SectionLabel>
+        <div className="mt-3 rounded-2xl border border-line bg-sand-raised/40 p-4">
+          <WeeklyBars weeks={weeklyKm(pilgrim, 8)} units={units} />
         </div>
       </div>
 
@@ -58,7 +76,7 @@ export default function Profile() {
         <SectionLabel>개인 기록</SectionLabel>
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div className="flex items-center gap-3 rounded-xl border border-line bg-sand-raised/30 px-4 py-3.5">
-            <IconEmber size={18} className="text-clay" />
+            <IconEmber size={18} className="text-clay-deep" />
             <div>
               <p className="font-display text-[17px] text-ink" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>{totals.fastest1kSec ? fmtPace(totals.fastest1kSec, units) : '—'}</p>
               <p className="text-[11px] text-muted">가장 빠른 1{unitLabel(units).toLowerCase()}</p>
@@ -67,7 +85,7 @@ export default function Profile() {
           <div className="flex items-center gap-3 rounded-xl border border-line bg-sand-raised/30 px-4 py-3.5">
             <IconReached size={18} className="text-olive-deep" />
             <div>
-              <p className="font-display text-[17px] text-ink" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>{fmtDistance(totals.longestRunKm, units, 1)}{unitLabel(units).toLowerCase()}</p>
+              <p className="font-display text-[17px] text-ink" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>{totals.longestRunKm > 0 ? `${fmtDistance(totals.longestRunKm, units, 1)}${unitLabel(units).toLowerCase()}` : '—'}</p>
               <p className="text-[11px] text-muted">가장 긴 순례</p>
             </div>
           </div>
@@ -87,12 +105,13 @@ export default function Profile() {
                 className="flex-1 bg-transparent text-[14px] text-ink outline-none placeholder:text-muted"
                 onKeyDown={(e) => e.key === 'Enter' && saveSubject()}
               />
-              <button onClick={saveSubject} className="rounded-lg bg-clay px-3 py-1.5 text-[12px] text-sand-raised">저장</button>
+              <button onClick={saveSubject} className="min-h-[44px] rounded-lg bg-clay-deep px-4 text-[13px] text-sand-raised">저장</button>
             </>
           ) : (
             <>
               <span className="flex-1 text-[14px] text-ink-soft">{prayerSubject ? prayerSubject : '아직 없어요'}</span>
-              <button onClick={() => { setDraft(prayerSubject ?? ''); setEditing(true) }} className="text-[12.5px] text-clay-deep">{prayerSubject ? '바꾸기' : '더하기'}</button>
+              {/* 실측 32×19였다 — 앱에서 가장 작은 터치 타깃. 44px 하한을 맞춘다 */}
+              <button onClick={() => { setDraft(prayerSubject ?? ''); setEditing(true) }} className="-mr-2 min-h-[44px] px-3 text-[13px] text-clay-deep">{prayerSubject ? '바꾸기' : '더하기'}</button>
             </>
           )}
         </div>
@@ -130,13 +149,61 @@ export default function Profile() {
           <span className="flex items-center gap-2.5 text-[14px] text-ink-soft"><IconSettings size={18} className="text-muted" /> 거리 단위</span>
           <div className="flex overflow-hidden rounded-lg border border-line-strong">
             {(['km', 'mi'] as const).map((u) => (
-              <button key={u} onClick={() => setUnits(u)} className={`px-3.5 py-1.5 text-[12.5px] uppercase ${units === u ? 'bg-clay text-sand-raised' : 'text-muted'}`}>{u}</button>
+              <button key={u} onClick={() => setUnits(u)} className={`min-h-[44px] min-w-[52px] px-3.5 text-[13px] uppercase ${units === u ? 'bg-clay-deep text-sand-raised' : 'text-muted'}`}>{u}</button>
             ))}
           </div>
         </div>
-        <button onClick={() => { if (confirm('모든 순례 기록을 지울까요?')) resetAll() }} className="mt-3 w-full rounded-xl border border-line py-3 text-center text-[13px] text-muted transition active:scale-[0.99]">
-          기록 초기화
-        </button>
+        {/* 글자 크기 — 이 앱의 폰트는 전부 px 하드코딩이라 브라우저·OS의 글꼴 설정이 듣지 않는다.
+            그래서 앱이 직접 레버를 준다. 노안 사용자에게는 이게 유일한 수단이다. */}
+        <div className="mt-3 flex items-center justify-between rounded-xl border border-line bg-sand-raised/30 px-4 py-3">
+          <span className="flex items-center gap-2.5 text-[14px] text-ink-soft">
+            <IconSettings size={18} className="text-muted" /> 글자 크기
+          </span>
+          <div className="flex overflow-hidden rounded-lg border border-line-strong">
+            {([['normal', '보통'], ['large', '크게'], ['xlarge', '더 크게']] as const).map(([v, label]) => (
+              <button
+                key={v}
+                onClick={() => setTextScale(v)}
+                aria-pressed={textScale === v}
+                className={`min-h-[44px] px-3 text-[13px] ${textScale === v ? 'bg-clay-deep text-sand-raised' : 'text-muted'}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 경로 기록 — 기본 꺼짐. 켜야 지도에 오늘 달린 길이 그려진다.
+            켜면 실좌표를 다루므로, 왜 안전한지를 여기서 밝힌다. */}
+        <SettingSwitch
+          label="경로 기록"
+          hint="달린 길을 지도에 그립니다. 시작·끝 200m는 잘라내 집 위치가 드러나지 않고, 좌표는 이 기기에만 남습니다."
+          checked={pilgrim.traceRoute}
+          onChange={pilgrim.setTraceRoute}
+        />
+
+        <SettingSwitch
+          label="호흡 기도"
+          hint="발걸음에 맞춰 짧은 기도를 띄웁니다. 반복 자체에 효력이 있지는 않습니다."
+          checked={pilgrim.breathPrayer}
+          onChange={pilgrim.setBreathPrayer}
+        />
+
+        <SettingSwitch
+          label="전체 해금"
+          hint="모든 자리를 도달한 것으로 봅니다(개발·시연용)."
+          checked={pilgrim.admin}
+          onChange={pilgrim.setAdmin}
+        />
+
+        <div className="mt-4 flex gap-3">
+          <button onClick={() => { if (confirm('지금까지의 기록이 데모 데이터로 바뀝니다. 되돌릴 수 없어요. 계속할까요?')) pilgrim.loadDemo() }} className="flex-1 rounded-xl border border-line py-3.5 text-center text-[13px] text-muted transition active:scale-[0.99]">
+            데모 데이터 넣기
+          </button>
+          <button onClick={() => { if (confirm('모든 순례 기록을 지울까요?')) resetAll() }} className="flex-1 rounded-xl border border-line py-3.5 text-center text-[13px] text-muted transition active:scale-[0.99]">
+            기록 초기화
+          </button>
+        </div>
       </div>
 
       <TabBar active="profile" />

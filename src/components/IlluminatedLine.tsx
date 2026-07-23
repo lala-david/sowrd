@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react'
 
-/* THE WAY signature — The Pilgrim Trail: a warm clay road winding across the hills,
-   with sun-gold milestone stones marking each station reached. */
+/* THE WAY 시그니처 — The Illuminated Line: 하나의 연속된 라피스 경로 + 금 이정표 노드.
+   화면 전체에서 유일한 찬 색이라 따뜻한 씬 아트 위에 얹혀도 눈이 먼저 잡는다.
+   씬 아트에 굽지 않고 여기서 그리는 이유: 이 선은 달린 거리에 따라 차오르는 데이터다. */
 export default function IlluminatedLine({
   total = 12,
   current = 8,
@@ -36,10 +37,10 @@ export default function IlluminatedLine({
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full overflow-visible">
-      {/* the road ahead — faint clay */}
-      <path d={d(pts)} fill="none" stroke="var(--color-clay)" strokeOpacity={0.24} strokeWidth={1.4} strokeLinecap="round" strokeDasharray="1 5" />
-      {/* the road walked — solid clay */}
-      <path ref={doneRef} d={d(pts.slice(0, current))} fill="none" stroke="var(--color-clay)" strokeWidth={2.2} strokeLinecap="round" />
+      {/* 아직 가지 않은 길 — 라피스를 옅게 점선으로 */}
+      <path d={d(pts)} fill="none" stroke="var(--color-lapis)" strokeOpacity={0.24} strokeWidth={1.4} strokeLinecap="round" strokeDasharray="1 5" />
+      {/* 걸어온 길 — 라피스 실선. 달린 거리만큼 stroke-dashoffset으로 차오른다 */}
+      <path ref={doneRef} d={d(pts.slice(0, current))} fill="none" stroke="var(--color-lapis)" strokeWidth={2.2} strokeLinecap="round" />
       {pts.map((p, i) => {
         if (i === current - 1)
           return (
@@ -50,7 +51,7 @@ export default function IlluminatedLine({
             </g>
           )
         if (i < current - 1) return <circle key={i} cx={p[0]} cy={p[1]} r={3.1} fill="var(--color-sun-deep)" />
-        return <circle key={i} cx={p[0]} cy={p[1]} r={2.6} fill="none" stroke="var(--color-clay)" strokeOpacity={0.4} strokeWidth={1.2} />
+        return <circle key={i} cx={p[0]} cy={p[1]} r={2.6} fill="none" stroke="var(--color-lapis)" strokeOpacity={0.4} strokeWidth={1.2} />
       })}
     </svg>
   )
