@@ -12,22 +12,25 @@ import { SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { WebView, type WebViewNavigation } from 'react-native-webview';
 import * as Location from 'expo-location';
+import { scheduleDailyVerse } from './notifications';
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  로드할 웹 앱 URL — 여기 한 줄만 바꾸면 됩니다.
+//  로드할 웹 앱 URL.
+//
+//  기본값은 **배포된 실제 앱**입니다(특정 기기 LAN IP를 코드에 박아 두지 않습니다 —
+//  예전엔 192.168.0.2가 하드코딩돼 남의 기기에선 무조건 실패했습니다).
 //
 //  ▸ 개발(내 PC의 로컬 Vite 서버를 아이폰에서 보기):
 //      1) 저장소 루트에서:  npm run dev -- --host
-//      2) 터미널에 뜨는 "Network" 주소(예: http://192.168.0.12:5173)를 아래에 그대로 붙여넣기
+//      2) 터미널의 "Network" 주소(예: http://192.168.0.12:5173)를 아래 환경변수로 주고 실행:
+//         EXPO_PUBLIC_WEB_APP_URL=http://192.168.0.12:5173 npx expo start
 //      3) 아이폰과 개발 PC가 같은 와이파이에 있어야 합니다.
+//         (localhost/127.0.0.1 은 아이폰 자신을 가리키므로 동작하지 않습니다 — LAN IP 필수.)
 //
-//  ▸ 배포(호스팅된 실제 앱을 보기):
-//      아래 값을 실제 URL(https://the-way.example.com 같은 형태)로 바꾸면 됩니다.
-//
-//  ※ localhost / 127.0.0.1 은 아이폰에서 "아이폰 자신"을 가리키므로 동작하지 않습니다.
-//     반드시 개발 PC의 LAN IP(192.168.x.x 등)를 쓰세요.
+//  ▸ 배포: 그냥 두면 됩니다. 도메인이 바뀌면 아래 기본값만 교체하세요.
 // ─────────────────────────────────────────────────────────────────────────────
-const WEB_APP_URL = 'http://192.168.0.2:5173'; // ← 개발 PC LAN 주소 또는 배포 URL로 바꾸세요(README 참고)
+const WEB_APP_URL =
+  process.env.EXPO_PUBLIC_WEB_APP_URL ?? 'https://lala-david.github.io/sowrd';
 
 const THEME_BG = '#F4F1E8';
 
@@ -48,6 +51,12 @@ export default function App() {
         // 권한을 거부하거나 오류가 나도 앱은 계속 뜬다 — GPS 기능만 제한된다.
       }
     })();
+  }, []);
+
+  // 매일 아침 "오늘의 말씀" 로컬 알림을 예약한다(리텐션). 서버 없이 기기에서 매일 반복.
+  // 권한을 거부하면 조용히 넘어간다 — 알림은 부가 기능이다.
+  useEffect(() => {
+    scheduleDailyVerse(8, 0);
   }, []);
 
   // 안드로이드 하드웨어 뒤로가기 → 웹 히스토리 뒤로가기.

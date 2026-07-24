@@ -55,16 +55,19 @@ npm run dev -- --host
 - macOS: `ipconfig getifaddr en0`
 - Linux: `hostname -I`
 
-### 2) `App.tsx` 의 URL 상수를 그 IP 로 바꾸기
-`App.tsx` 상단의 이 한 줄만 고칩니다:
+### 2) 어떤 주소를 띄울지 정하기 (환경변수)
+`App.tsx` 는 더 이상 IP 를 코드에 박아두지 않습니다. **기본값은 배포된 실제 앱**이고,
+개발 중 로컬 서버를 보려면 **환경변수**로 주소를 넘깁니다:
 
-```ts
-const WEB_APP_URL = 'http://192.168.0.2:5173';   // ← 위에서 확인한 Network 주소로
+```bash
+# 개발 PC 로컬 서버를 아이폰에서 보기 (위 Network 주소로)
+EXPO_PUBLIC_WEB_APP_URL=http://192.168.0.12:5173 npx expo start
 ```
 
 > `localhost` / `127.0.0.1` 은 쓰면 안 됩니다 — 아이폰 입장에선 "아이폰 자기 자신"을 가리켜요.
 > 반드시 개발 PC의 `192.168.x.x` 형태 IP 를 쓰세요.
-> 배포 후엔 이 값을 실제 `https://...` URL 로 바꾸면 됩니다.
+> 배포 도메인이 바뀌면 `App.tsx` 의 기본값(`WEB_APP_URL`) 한 줄만 교체하면 됩니다 —
+> 예전처럼 특정 기기 LAN IP 가 코드에 박혀 남의 기기에서 무조건 실패하는 일은 없습니다.
 
 ### 3) 의존성 설치 & Expo 시작
 이 폴더(`expo-shell/`)에서:
@@ -118,15 +121,26 @@ npx expo start
 
 ---
 
+## 셸이 웹 위에 더해 주는 것 (네이티브만 가능한 것)
+
+- **매일 "오늘의 말씀" 로컬 알림** (`notifications.ts`): 웹 PWA 는 앱이 닫혀 있으면 스스로 알림을
+  못 띄웁니다(푸시 서버 필요). 네이티브 셸은 `expo-notifications` 로 **서버 없이** 매일 아침
+  기기 로컬에서 알림을 예약합니다 — 유일한 D1 훅(오늘의 말씀)을 능동 배달로 승격. 첫 실행 때
+  알림 권한을 한 번 묻고, 거부하면 조용히 넘어갑니다.
+
 ## WebView 방식의 한계 (정직하게)
 
-- **푸시 알림 · 백그라운드 위치**: WebView 만으로는 제한적/불가. 진짜 필요하면 네이티브 코드가 필요합니다.
+- **백그라운드 위치 추적 — 아직 미해결(가장 큰 숙제).** WebView 안 `navigator.geolocation` 은
+  앱이 포그라운드일 때만 잽니다. 화면을 끄거나 주머니에 넣으면 추적이 끊깁니다. 이건 웹의
+  구조적 한계라 셸을 씌워도 그대로입니다. 진짜로 풀려면 `expo-location` 의 백그라운드 위치 +
+  `expo-task-manager` 로 **네이티브가 GPS 를 재서 WebView 로 브리지**해야 합니다(별도 작업).
+  NRC·Strava 와의 러닝 코어 격차는 여기서 갈립니다.
 - **앱스토어 심사**: "웹뷰만 감싼 앱"은 Apple 심사에서 거절될 수 있습니다(개인 사이드로드/내부 테스트엔 무관).
 - **오프라인**: 웹 앱의 Service Worker 캐시에 의존합니다. Expo Go 로 로컬 개발 서버를 볼 땐
   네트워크가 끊기면 당연히 안 뜹니다(개발 서버가 소스이므로).
 - **네이티브 제스처/성능**: DOM 기반이라 순수 네이티브만큼 부드럽진 않습니다.
 
-이 모든 걸 넘어서려면 그때는 "웹뷰 셸"이 아니라 **RN 재작성**(이번 범위 밖)이 답입니다.
+백그라운드 추적까지 진짜로 필요해지면 그때는 "웹뷰 셸"이 아니라 **RN 재작성**(이번 범위 밖)이 답입니다.
 
 ---
 
@@ -134,9 +148,10 @@ npx expo start
 
 ```
 expo-shell/
-├─ App.tsx            전체 화면 WebView + 위치권한/뒤로가기/새로고침
-├─ app.json          Expo 설정 (iOS infoPlist, expo-location 플러그인)
-├─ package.json      expo / react-native / react-native-webview / expo-location
+├─ App.tsx            전체 화면 WebView + 위치권한/뒤로가기/새로고침 + 알림 예약
+├─ notifications.ts   매일 "오늘의 말씀" 로컬 알림 (expo-notifications)
+├─ app.json          Expo 설정 (iOS infoPlist, expo-location · expo-notifications 플러그인)
+├─ package.json      expo / react-native / react-native-webview / expo-location / expo-notifications
 ├─ babel.config.js   babel-preset-expo
 ├─ tsconfig.json     expo/tsconfig.base 확장
 ├─ .gitignore

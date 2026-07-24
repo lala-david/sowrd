@@ -2,7 +2,7 @@
   "expo": {
     "name": "THE WAY",
     "slug": "the-way-expo-shell",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "orientation": "portrait",
     "scheme": "theway",
     "userInterfaceStyle": "automatic",
@@ -37,7 +37,8 @@
         {
           "locationWhenInUsePermission": "달린 거리를 재는 데만 사용합니다."
         }
-      ]
+      ],
+      "expo-notifications"
     ]
   }
 }

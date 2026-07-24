@@ -10,6 +10,8 @@ import { courseById, STATIONS } from '../data/journey'
 import { featuredVerse, SCRIPTURE_ATTRIBUTION } from '../data/scripture'
 import { fmtDistance, fmtPace, unitLabel } from '../lib/format'
 import { toneOf } from '../lib/mood'
+import { renderShareCard, shareCardBlob } from '../lib/shareCard'
+import { APP_URL, APP_URL_LABEL } from '../config'
 import { SummaryTriple, SplitBars, SectionLabel } from '../components/ui'
 import { IconShare, IconReached, IconCairn, IconSeal } from '../components/icons'
 import { heroArt, sceneArt, episodeArt, stationArt } from '../assets/art'
@@ -71,7 +73,6 @@ export default function Reveal() {
   const station = primaryId ? STATIONS[primaryId] : undefined
   const tone = toneOf(station?.mood ?? 'everyday')
   const celebrate = tone.celebrate
-  const v = station ? featuredVerse(station) : undefined
 
   /* 이 런에 닿은 **모든** 자리를 순간(Moment)으로 모은다.
    * 예전엔 마지막 하나만 히어로였고 나머지는 12px 칩이었다 — 첫 러닝에 예수 코스 3자리를
@@ -140,23 +141,79 @@ export default function Reveal() {
     go('home')
   }
 
-  const [shared, setShared] = useState(false)
+  /* 공유 — 예전엔 텍스트 한 줄만 나갔다(이미지도 URL도 없어서, 받은 사람이 앱을 찾지 못했다).
+   * 이제 완성돼 있던 카드 렌더러(shareCard.ts)를 실제로 켜서 이미지 카드를 만들고,
+   * 캡션과 카드 하단에 설치 링크를 새겨 넣는다 — 이게 K=0을 벗어나는 최소 조건이다.
+   * 프라이버시는 그대로: GPS 경로·좌표·기도 대상은 카드에 절대 넣지 않는다(자리·성구·거리만). */
+  const [shareState, setShareState] = useState<'idle' | 'rendering' | 'shared' | 'saved' | 'copied'>('idle')
+
+  // moment.accent는 CSS 변수라 다크 테마에선 밝은 값이 나온다. 카드는 라이트 팔레트로 고정돼
+  // 있으므로 라이트 hex로 맞춰 준다(index.css 라이트 값과 일치).
+  const lightAccent = (v: string): string =>
+    ({
+      'var(--color-lapis)': '#2e3f8f',
+      'var(--color-clay)': '#c05a30',
+      'var(--color-clay-bright)': '#dd7748',
+      'var(--color-sun)': '#e0a53f',
+      'var(--color-sun-bright)': '#f0c368',
+      'var(--color-olive-deep)': '#55603a',
+      'var(--color-muted)': '#736349',
+    })[v] ?? '#c05a30'
+
   const share = async () => {
-    // 프라이버시: GPS 경로·좌표·기도내용은 절대 포함하지 않는다. 자리·성구·거리만.
-    const line = station && v ? `“${v.text}” — ${v.refLatin}` : ''
-    const text = station
-      ? `THE WAY · ${station.place}에 닿았습니다 (${fmtDistance(distanceKm, units)}${units})\n${line}`
-      : `THE WAY · 오늘 ${fmtDistance(distanceKm, units)}${units}를 걸었습니다`
-    try {
+    if (shareState === 'rendering') return
+    const distanceLabel = fmtDistance(distanceKm, units)
+    const caption = moment
+      ? `THE WAY · ${moment.title} · ${distanceLabel}${units}\n여기서 함께 걷기 → ${APP_URL}`
+      : `THE WAY · 오늘 ${distanceLabel}${units}를 걸었습니다\n여기서 함께 걷기 → ${APP_URL}`
+
+    const textFallback = async () => {
       if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: 'THE WAY', text })
+        await navigator.share({ title: 'THE WAY', text: caption })
       } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        await navigator.clipboard.writeText(text)
-        setShared(true)
-        window.setTimeout(() => setShared(false), 1800)
+        await navigator.clipboard.writeText(caption)
+        setShareState('copied')
+        window.setTimeout(() => setShareState('idle'), 1800)
       }
+    }
+
+    // 자리에 못 닿은 날(moment 없음)엔 카드에 담을 그림·자리가 없으므로 텍스트로.
+    if (!moment) {
+      try { await textFallback() } catch { /* 취소 무시 */ }
+      return
+    }
+
+    // 여정 자리는 순번(에피소드 index)을 킥커에 쓴다.
+    let ordinal: number | undefined
+    if (moment.key.startsWith('ep-') && journey) {
+      const i = journey.episodes.findIndex((e) => `ep-${e.id}` === moment.key)
+      if (i >= 0) ordinal = i + 1
+    }
+
+    try {
+      setShareState('rendering')
+      const blob = await renderShareCard({
+        place: moment.title,
+        title: moment.subtitle,
+        verseText: moment.verse?.text ?? moment.body,
+        verseRef: moment.verse?.ref ?? moment.refLine,
+        distanceLabel,
+        unit: units.toUpperCase(),
+        ordinal,
+        courseName: journey?.name ?? course.name,
+        heroSrc: moment.art,
+        accent: lightAccent(moment.accent),
+        celebrate: moment.celebrate,
+        attribution: SCRIPTURE_ATTRIBUTION,
+        url: APP_URL_LABEL,
+      })
+      const res = await shareCardBlob(blob, `theway-${moment.title}-${distanceLabel}`, caption)
+      setShareState(res) // 'shared' | 'saved'
+      window.setTimeout(() => setShareState('idle'), 1800)
     } catch {
-      /* 사용자 취소 — 무시 */
+      // 카드 렌더 실패(캔버스 미지원·아트 로드 실패 등) → 텍스트 공유로 폴백
+      setShareState('idle')
+      try { await textFallback() } catch { /* 취소 무시 */ }
     }
   }
 
@@ -352,9 +409,22 @@ export default function Reveal() {
 
         <p className="mb-3 mt-6 text-[10.5px] tracking-[0.04em] text-muted">{SCRIPTURE_ATTRIBUTION}</p>
         <div className="flex gap-3">
-          <button onClick={share} className="relative flex h-[52px] w-[52px] items-center justify-center rounded-2xl border border-line-strong text-ink-soft transition active:scale-95" aria-label="공유">
-            <IconShare size={20} />
-            {shared && <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11px] text-sand">복사됨</span>}
+          <button
+            onClick={share}
+            disabled={shareState === 'rendering'}
+            className="relative flex h-[52px] w-[52px] items-center justify-center rounded-2xl border border-line-strong text-ink-soft transition active:scale-95 disabled:opacity-60"
+            aria-label={shareState === 'rendering' ? '카드 만드는 중' : '카드로 공유'}
+          >
+            {shareState === 'rendering' ? (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-line-strong border-t-clay" aria-hidden />
+            ) : (
+              <IconShare size={20} />
+            )}
+            {(shareState === 'saved' || shareState === 'copied') && (
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11px] text-sand">
+                {shareState === 'saved' ? '이미지로 저장됨' : '복사됨'}
+              </span>
+            )}
           </button>
           <button onClick={leave} className="flex-1 rounded-2xl bg-clay-deep py-4 text-center font-serif text-[17px] text-sand-raised shadow-[0_1px_2px_rgba(192,90,48,.25),0_16px_36px_-18px_rgba(156,69,34,.55)] transition active:scale-[0.99]">
             계속 걷기

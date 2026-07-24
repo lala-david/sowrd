@@ -35,6 +35,9 @@ export interface ShareCardData {
   accent?: string // tone.accent (없으면 clay)
   celebrate: boolean
   attribution: string
+  /** "여기서 함께 걷기" 설치 링크(스킴 없는 짧은 표기). 카드 하단에 새겨 넣어
+   *  공유 이미지가 캡션 없이 재공유돼도 설치 경로가 따라간다(바이럴 고리 유지). */
+  url?: string
 }
 
 const W = 1080
@@ -169,6 +172,16 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
   ctx.fillText(data.courseName, W - padX, footY + 100)
   ctx.textAlign = 'left'
 
+  // 설치 링크 — 왼쪽 "오늘 걸은 거리"와 같은 높이에 두어 CTA로 균형을 잡는다.
+  // 이게 없으면 카드를 본 사람이 앱을 찾을 방법이 없다(그로스 §4 K=0의 원인).
+  if (data.url) {
+    ctx.textAlign = 'right'
+    ctx.fillStyle = PAL.clayDeep
+    ctx.font = `500 24px ${DISPLAY}`
+    ctx.fillText(data.url, W - padX, footY + 134)
+    ctx.textAlign = 'left'
+  }
+
   // 성경 출처 표기 (맨 아래, 아주 작게)
   ctx.fillStyle = PAL.muted
   ctx.font = `400 18px ${SERIF}`
@@ -182,13 +195,14 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
   })
 }
 
-/** 카드를 공유(가능하면 이미지 파일)하거나, 불가하면 PNG로 저장한다. */
-export async function shareCardBlob(blob: Blob, filenameHint: string): Promise<'shared' | 'saved'> {
+/** 카드를 공유(가능하면 이미지 파일)하거나, 불가하면 PNG로 저장한다.
+ *  caption을 주면 공유 시트의 텍스트로 함께 실어 설치 링크가 캡션에도 남게 한다. */
+export async function shareCardBlob(blob: Blob, filenameHint: string, caption?: string): Promise<'shared' | 'saved'> {
   const file = new File([blob], `${filenameHint}.png`, { type: 'image/png' })
   const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean }
   if (typeof nav.share === 'function' && nav.canShare?.({ files: [file] })) {
     try {
-      await nav.share({ files: [file], title: 'THE WAY' })
+      await nav.share({ files: [file], title: 'THE WAY', ...(caption ? { text: caption } : {}) })
       return 'shared'
     } catch (e) {
       // 사용자 취소 → 저장으로 폴백하지 않고 그대로 종료

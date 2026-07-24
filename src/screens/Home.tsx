@@ -5,6 +5,7 @@ import { STATIONS, type PassageSlug } from '../data/journey'
 import { featuredVerse } from '../data/scripture'
 import { fmtDistance } from '../lib/format'
 import TabBar from '../components/TabBar'
+import InstallPrompt from '../components/InstallPrompt'
 import { IconHeld, IconChevron, IconStep, IconCairn, IconScroll } from '../components/icons'
 import { sceneArt, crestArt, stationArt } from '../assets/art'
 import {
@@ -176,6 +177,10 @@ export default function Home() {
           </button>
           <p className="mt-2 px-1 text-[11.5px] text-muted">달린 거리만큼 이 길이 앞으로 나아갑니다.</p>
         </div>
+
+        {/* 홈 화면에 추가 — 설치 가능할 때만, 조용히. 이미 설치됐으면 아무것도 안 그린다.
+            공유 카드로 들어온 사람이 "앱"으로 남는 유일한 경로다. */}
+        <InstallPrompt />
 
         {/* ③ 오늘의 말씀 — 달리지 않는 날에도 이 앱에 올 이유.
             성경 본문은 거리와 무관하게 항상 열린다(신학적 요구사항). */}

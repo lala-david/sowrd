@@ -3,7 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#F4F1E8" />
+    <!-- 매니페스트 theme_color(#f4ead7)와 일치시킨다 — 예전엔 #F4F1E8로 서로 달랐다 -->
+    <meta name="theme-color" content="#f4ead7" />
+    <meta name="description" content="달린 만큼 성경의 길이 이어집니다. 실제 거리로 걷는 순례, 누군가를 품고 달리는 기도." />
+
+    <!-- iOS 홈 화면 추가 시 독립 실행(standalone)으로 뜨게 한다 -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="THE WAY" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- 공유 링크 미리보기 — 카드 URL을 붙여넣으면 제목·설명·아이콘이 뜬다(바이럴 고리) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="THE WAY · 성경의 길을 달리다" />
+    <meta property="og:description" content="달린 만큼 성경의 길이 이어집니다. 누군가를 품고 달리는 순례." />
+    <meta property="og:image" content="/icon-512.png" />
+    <meta name="twitter:card" content="summary" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
