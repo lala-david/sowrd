@@ -501,14 +501,15 @@ export const isUnlocked = (s: PilgrimState, id: PassageSlug): boolean =>
   s.admin || reachedStations(s).has(id)
 
 export function pilgrimTotals(s: PilgrimState) {
-  const totalKm = Object.values(s.progress).reduce((a, p) => a + p.cumulativeKm, 0)
   const totalStations = new Set(Object.values(s.progress).flatMap((p) => p.reached)).size
   const coursesCompleted = Object.values(s.progress).filter((p) => p.completedAt).length
-  /* 총 러닝 수와 개인 기록은 lifetime에서 읽는다.
-   * runs[]를 훑으면 100건 상한에 밀린 기록이 사라져 최고기록이 후퇴하고 총 러닝 수가 100에서 멈춘다. */
+  /* 총 거리·총 러닝 수·개인 기록은 전부 lifetime에서 읽는다.
+   * 예전엔 총 거리를 progress[].cumulativeKm 합으로 구했는데, 그건 예수 코스 진행도라
+   * lifetime.km(실제 달린 모든 거리의 단조 합)와 어긋날 수 있었다(BI 지적의 "두 진실").
+   * lifetime.km이 진실이다 — 모든 런의 distanceKm를 상한 없이 더한다. */
   const lt = s.lifetime ?? emptyLifetime()
   return {
-    totalKm,
+    totalKm: lt.km,
     totalStations,
     totalRuns: lt.runs,
     coursesCompleted,

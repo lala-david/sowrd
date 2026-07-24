@@ -96,7 +96,6 @@ interface RunState {
   addSimKm: (km: number) => void
   pause: () => void
   resume: () => void
-  clearFlash: () => void
   finish: () => RunRecord | undefined
   reset: () => void
 }
@@ -273,7 +272,6 @@ export const useRun = create<RunState>((set, get) => ({
       _pausedMs: s._pausedMs + (s._pauseStartMs ? Date.now() - s._pauseStartMs : 0),
       _pauseStartMs: undefined,
     })),
-  clearFlash: () => set({ flashAt: 0 }),
 
   finish: () => {
     const st = get()

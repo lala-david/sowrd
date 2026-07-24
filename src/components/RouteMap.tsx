@@ -99,31 +99,32 @@ export default function RouteMap({
           }
         })
 
-        /* 구간마다 페이스 색으로 나눠 그린다. 하나의 폴리라인으로는 색을 나눌 수 없다.
+        /* 같은 밴드끼리 이어붙여 폴리라인 수를 줄인다.
+         * 예전엔 점 쌍마다 폴리라인 하나였다(최대 399개). 색이 바뀔 때만 새 선을 시작하면
+         * 실제 러닝에선 3~10개로 줄어 렌더가 가볍고 선도 매끄럽다.
          * 색 기준은 그날 자기 평균이라 남과 비교되지 않는다. */
+        const styleOf = (band: PaceBand) => ({
+          /* 색 + 굵기 + 파선의 3중 인코딩.
+           * 색만 쓰면 이 앱에서 유일하게 색약 사용자가 정보를 못 받는 곳이 된다.
+           * 하필 가장 약한 쌍(느림↔평소, protan ΔE 13.3)이 구불구불한 5px 선에 올라간다. */
+          color: cssVar(BAND_COLOR[band]),
+          weight: band === 'slow' ? 6 : band === 'fast' ? 5 : 4,
+          dashArray: band === 'slow' ? undefined : band === 'fast' ? '10 4' : '2 5',
+          opacity: 0.95,
+          lineCap: 'round' as const,
+        })
+        // 각 구간(i-1→i)의 밴드는 points[i].pace로 정한다(원래 동작과 동일).
+        let segStart = 0
+        let segBand = bandOf(points[1].pace ?? avgPaceSecPerKm, avgPaceSecPerKm)
         for (let i = 1; i < points.length; i++) {
-          const a = points[i - 1]
-          const b = points[i]
-          const pace = b.pace ?? avgPaceSecPerKm
-          const band = bandOf(pace, avgPaceSecPerKm)
-          L.polyline(
-            [
-              [a.lat, a.lng],
-              [b.lat, b.lng],
-            ],
-            /* 색 + 굵기 + 파선의 3중 인코딩.
-             * 색만 쓰면 이 앱에서 유일하게 색약 사용자가 정보를 못 받는 곳이 된다.
-             * 하필 가장 약한 쌍(느림↔평소, protan ΔE 13.3)이 구불구불한 5px 선에 올라간다.
-             * OSM 래스터 타일 위라 배경도 균일하지 않다. */
-            {
-              color: cssVar(BAND_COLOR[band]),
-              weight: band === 'slow' ? 6 : band === 'fast' ? 5 : 4,
-              dashArray: band === 'slow' ? undefined : band === 'fast' ? '10 4' : '2 5',
-              opacity: 0.95,
-              lineCap: 'round',
-            },
-          ).addTo(map)
+          const legBand = bandOf(points[i].pace ?? avgPaceSecPerKm, avgPaceSecPerKm)
+          if (legBand !== segBand) {
+            L.polyline(points.slice(segStart, i).map((p) => [p.lat, p.lng] as [number, number]), styleOf(segBand)).addTo(map)
+            segStart = i - 1 // 한 점 겹쳐 선이 끊기지 않게
+            segBand = legBand
+          }
         }
+        L.polyline(points.slice(segStart).map((p) => [p.lat, p.lng] as [number, number]), styleOf(segBand)).addTo(map)
 
         const start = points[0]
         const end = points[points.length - 1]
