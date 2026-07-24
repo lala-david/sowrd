@@ -111,10 +111,13 @@ const SUBJECTS = {
   'paul-fairhavens': 'a small exposed anchorage on a rocky southern coast under a hard grey winter sky',
   'paul-malta': 'a broken ship\'s timbers on a rocky island beach with a driftwood fire burning and a snake in the flames',
   'paul-syracuse': 'a Greek theatre carved into a hillside above a bright eastern harbour',
-  'paul-rhegium': 'a narrow strait between a mainland cape and a volcanic island, a favourable south wind filling a sail',
+  // "a sail"이 앉은 인물+삼각 후광을 만들었다. 인물·돛을 빼고 해협과 바람 무늬만.
+  'paul-rhegium': 'a narrow blue strait seen from a high cliff, a mainland cape on one side and a dark volcanic island on the other, long streaks of wind-blown ripples crossing the water, no boats',
   'paul-puteoli': 'a wide volcanic bay harbour with warehouses and a mountain smoking on the far shore',
-  'paul-appii': 'a long straight paved Roman road lined with poplars, a small group of distant figures walking out to meet a traveller',
-  'paul-rome': 'a modest rented upper room in a vast tiled imperial city, its door standing open to the street',
+  // "a traveller" 단수가 인물을 부른다. 마중은 지평선의 작은 무리로만, 전경은 텅 빈 길.
+  'paul-appii': 'a long straight paved Roman road lined with tall poplars stretching to the horizon, empty in the foreground, a faint distant cluster of tiny specks far down the road near the vanishing point',
+  // 거리 소실점 구도가 인물을 세웠다 → 방 안에서 본 열린 문, 사람 없음.
+  'paul-rome': 'the interior of a modest bare upper room seen from within, a single wooden door standing open to a sunlit tiled city beyond, a low table and a rolled scroll on the floor, empty and quiet',
 
   /* ── 베드로 (14) ────────────────────────────────────────── */
   // 예수 코스 call-mt4(버려진 그물)와 겹치지 않게 베드로 쪽은 '만선의 그물'로 구분한다
@@ -124,13 +127,14 @@ const SUBJECTS = {
   'peter-ep04': 'an ornate temple gateway with a discarded beggar\'s mat and a bowl left on its threshold step',
   'peter-ep05': 'a terraced hill town between two mountains with a single well at the crossroads below',
   'peter-ep06': 'an empty sleeping mat rolled up and standing upright against a plastered courtyard wall',
-  'peter-ep07': 'a flat seaside rooftop at noon with a large linen sheet spread out, its four corners weighted',
+  // 지붕 위 린넨보 환상. 인물이 화면을 지배했다 → 부감으로 사물만: 지붕과 펼친 천, 그 너머 바다.
+  'peter-ep07': 'a high overhead view looking straight down onto a flat sun-bleached rooftop where a large square linen sheet lies spread with its four corners weighted by stones, the sea visible past the roof edge, no people',
   'peter-ep08': 'a Roman coastal villa courtyard with an open door and a wide harbour beyond, wind moving through',
   'peter-ep09': 'a circle of low stone benches in a walled courtyard, one place at the centre left open',
   'peter-ep10': 'a long shared table in a city courtyard with two benches drawn slightly apart from each other',
   'peter-ep11': 'a sealed letter scroll on a mountain road, five distant valley towns visible below in the haze',
-  'peter-ep12': 'a busy two-harbour city under a steep rock citadel, a marketplace with divided groups of tiny figures',
-  'peter-ep13': 'a great river city of tiled roofs and aqueducts at dusk, one small lamp burning in a low doorway',
+  'peter-ep12': 'a two-harbour city under a steep rock citadel seen from above, an open marketplace paved in stone split by a dividing line into two empty halves, tiny scattered specks near the far edges',
+  'peter-ep13': 'a great river city of tiled roofs and arched aqueducts at dusk seen from a rooftop, one small warm lamp glowing in a low doorway in the foreground, no people',
   'peter-ep14': 'a bare windswept hillside above a great city at sunset, a single fisherman\'s net folded and laid on a stone',
 }
 
