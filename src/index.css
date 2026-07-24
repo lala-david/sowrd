@@ -189,6 +189,23 @@ body::after {
 /* 포커스 표시 — 앱 전체에 하나도 없었다(실측 outline:none / box-shadow:none).
    키보드·스위치 컨트롤 사용자에게 지금 어디에 있는지 알려 줄 방법이 없으면 조작이 불가능하다.
    :focus-visible이라 마우스·터치로 눌렀을 때는 나타나지 않는다(WCAG 2.4.7). */
+.skip-link {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -120%);
+  z-index: 100;
+  border-radius: 0 0 12px 12px;
+  background: var(--color-clay-deep);
+  color: var(--color-sand-raised);
+  padding: 10px 20px;
+  font-size: 14px;
+  transition: transform 0.15s ease;
+}
+.skip-link:focus {
+  transform: translate(-50%, 0);
+}
+
 :focus-visible {
   outline: 2px solid var(--color-lapis);
   outline-offset: 2px;
@@ -198,15 +215,8 @@ body::after {
   outline-color: var(--color-sun);
 }
 
-/* 글자 크기 — 이 앱의 폰트는 전부 px 하드코딩이라(224곳, rem 0곳) 브라우저 글꼴 설정도
-   iOS Dynamic Type도 듣지 않는다. 노안 사용자에게는 글자를 키울 레버가 하나도 없었다.
-   zoom은 transform과 달리 레이아웃을 실제로 다시 잡으므로 줄바꿈이 깨지지 않는다. */
-[data-textscale='large'] {
-  zoom: 1.15;
-}
-[data-textscale='xlarge'] {
-  zoom: 1.3;
-}
+/* 글자 크기 zoom은 App.tsx가 <html>에 직접 건다 — 인앱 설정과 브라우저/OS 글꼴 설정을
+   곱한 값이라 CSS 상수로는 표현할 수 없다. 여기서는 규칙을 두지 않는다. */
 
 @media (prefers-reduced-motion: reduce) {
   *,

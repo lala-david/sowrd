@@ -33,13 +33,30 @@ export default function App() {
   // 홈은 하나다. 두 개로 갈라 두었더니 한쪽이 탭바까지 감춰 에피소드 진입로를 막았다.
   const Active = SCREENS[screen] ?? Home
 
-  /* 글자 크기는 <html>에 걸어야 한다 — zoom을 앱 컨테이너에만 걸면 position:fixed 요소
-   * (TabBar·러닝 컨트롤)가 새 좌표계를 안 따라와서 화면 밖으로 밀린다. */
+  /* 글자 크기 — 두 가지를 곱해 하나의 zoom으로 <html>에 건다.
+   *  1) 인앱 설정(normal/large/xlarge): 사용자가 직접 고른 배율.
+   *  2) 브라우저·OS 글꼴 설정: 이 앱은 폰트가 전부 px 하드코딩이라 rem/em이 없어서
+   *     브라우저 "기본 글꼴 크기"나 iOS/안드로이드 글꼴 설정이 그냥 무시됐다. 그것을 존중하려면
+   *     224곳의 px를 전부 rem으로 바꿔야 하는데(위험), 대신 사용자가 설정한 루트 글꼴 크기를
+   *     읽어(16px 대비 비율) zoom에 곱한다. 브라우저에서 글자를 키운 사람은 인앱 토글을
+   *     건드리지 않아도 앱 글자가 함께 커진다.
+   * zoom을 앱 컨테이너가 아니라 <html>에 거는 이유: position:fixed(TabBar·러닝 컨트롤)가
+   * 컨테이너 zoom의 새 좌표계를 안 따라와 화면 밖으로 밀리기 때문이다. */
   const textScale = usePilgrim((s) => s.textScale)
   useEffect(() => {
-    const el = document.documentElement
-    if (textScale === 'normal') el.removeAttribute('data-textscale')
-    else el.setAttribute('data-textscale', textScale)
+    const factor = textScale === 'xlarge' ? 1.3 : textScale === 'large' ? 1.15 : 1
+    const apply = () => {
+      // 루트 글꼴 크기(브라우저/OS 설정 반영). zoom은 이 값을 안 바꾸므로 재측정이 안전하다.
+      const root = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+      const browserRatio = Math.min(1.5, Math.max(1, root / 16))
+      // 합쳐서 상한 1.6 — 그 이상은 360px 레이아웃이 감당 못 한다
+      const zoom = Math.min(1.6, browserRatio * factor)
+      document.documentElement.style.zoom = zoom === 1 ? '' : String(zoom)
+    }
+    apply()
+    // 브라우저 글꼴 설정을 러닝 중 바꾸는 사람은 없지만, 탭 복귀 시 한 번 다시 잰다
+    window.addEventListener('focus', apply)
+    return () => window.removeEventListener('focus', apply)
   }, [textScale])
 
   /* 첫 실행 안내는 심플/전체 모드와 무관하게 앱 전체 위에 한 번 뜬다. */
@@ -47,9 +64,12 @@ export default function App() {
 
   return (
     <div className="flex min-h-full justify-center bg-sand text-ink">
+      {/* 스킵 링크 — 키보드/스위치 사용자가 탭바를 건너뛰고 본문으로 바로 간다.
+          포커스 받기 전에는 화면 밖에 숨어 있다가 Tab 첫 눌림에 나타난다(WCAG 2.4.1). */}
+      <a href="#main" className="skip-link">본문으로 건너뛰기</a>
       {/* 앱 전체의 단일 main 랜드마크 — 스크린리더가 셸(탭바)을 건너뛰고 본문에 바로 닿는다.
           예전엔 홈에만 있고 나머지 화면엔 없었다. */}
-      <main className="relative flex min-h-full w-full max-w-[440px] flex-col overflow-x-clip">
+      <main id="main" className="relative flex min-h-full w-full max-w-[440px] flex-col overflow-x-clip">
         <Active />
       </main>
       {!seenIntro && <Intro />}

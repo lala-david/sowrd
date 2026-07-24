@@ -13,31 +13,23 @@
       "fromEpisode": "ur",
       "toEpisode": "ur",
       "km": 1700,
-      "note": "갈대아 우르를 떠나 하란까지 — 여정에서 가장 긴 첫 구간입니다. 짧게 여러 번 나누어 달리며 부르심을 곱씹기 좋습니다."
+      "note": "갈대아 우르를 떠나 하란까지 — 여정에서 가장 긴 첫 구간입니다. 이정표를 하나씩 지나며 짧게 여러 번 나누어 달리기 좋습니다."
     },
     {
       "id": "t2",
-      "name": "하란을 떠나 가나안으로",
+      "name": "가나안으로",
       "fromEpisode": "haran",
-      "toEpisode": "haran",
-      "km": 720,
-      "note": "아버지 집을 떠나 약속의 땅 어귀에 이르는 구간입니다."
+      "toEpisode": "shechem",
+      "km": 750,
+      "note": "하란을 떠나 세겜에 이르러 약속의 땅에 첫 단을 쌓는 구간입니다."
     },
     {
       "id": "t3",
-      "name": "가나안의 첫 제단",
-      "fromEpisode": "shechem",
-      "toEpisode": "bethel",
-      "km": 430,
-      "note": "세겜과 벧엘 — 약속의 땅에 처음 단을 쌓은 자리들입니다."
-    },
-    {
-      "id": "t4",
-      "name": "언약과 여호와 이레",
-      "fromEpisode": "egypt",
+      "name": "약속의 땅에 뿌리내리다",
+      "fromEpisode": "bethel",
       "toEpisode": "machpelah",
-      "km": 640,
-      "note": "애굽의 연약함에서 막벨라의 첫 기업까지, 언약이 깊어지는 구간입니다."
+      "km": 1040,
+      "note": "벧엘에서 막벨라까지 — 애굽의 연약함과 회복을 지나 언약이 깊어지고 첫 기업을 얻는 구간입니다."
     }
   ],
   "episodes": [
