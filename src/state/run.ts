@@ -321,7 +321,11 @@ export const useRun = create<RunState>((set, get) => ({
        * 저장 전에 시작·끝 200m를 잘라낸다. 러닝은 대개 집 앞에서 시작해 집 앞에서 끝나므로,
        * 원본을 그대로 두면 저장된 모든 기록의 양 끝이 같은 점 = 집 주소가 된다.
        * (obfuscateEnds는 만들어 두고 아무도 부르지 않던 함수였다.) */
-      trace: st.trace.length > 1 ? compactTrace(obfuscateEnds(st.trace, 200), avg) : undefined,
+      /* 경로 저장은 「경로 기록」을 켠 경우에만. 실시간 지도용으로 좌표를 모으는 것과
+       * 기록으로 남기는 것은 다른 일이다 — 화면 표시는 늘 하되, 저장은 옵트인이다. */
+      trace: usePilgrim.getState().traceRoute && st.trace.length > 1
+        ? compactTrace(obfuscateEnds(st.trace, 200), avg)
+        : undefined,
       /* 5%만 지어낸 거리여도 'gps'라고 부르지 않는다. 개인 최고기록이 걸린 판정이라
        * 애매하면 sim 쪽으로 기운다 — 없는 기록이 있는 기록보다 낫다. */
       source: st.simKm / Math.max(1e-9, st.gpsKm + st.simKm) > 0.05 ? 'sim' : 'gps',

@@ -5,6 +5,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 import path from 'node:path'
 
 export default defineConfig({
+  /* dev 터널(cloudflared/ngrok)로 낯선 호스트에서 접속할 때만 허용한다.
+   * 평소엔 비어 있어 Vite 기본 보안(낯선 호스트 403)이 그대로 걸린다.
+   * 켜려면: VITE_ALLOW_TUNNEL=1 npx vite --host 127.0.0.1 --port 5173 */
+  server: process.env.VITE_ALLOW_TUNNEL ? { allowedHosts: true } : {},
   plugins: [
     react(),
     tailwindcss(),

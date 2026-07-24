@@ -1,0 +1,35 @@
+
+  VITE v6.4.3  ready in 1241 ms
+
+  ➜  Local:   http://127.0.0.1:5173/
+오후 12:13:01 [vite] (client) page reload expo-shell/App.tsx
+오후 12:15:06 [vite] (client) page reload expo-shell/package.json
+오후 12:15:48 [vite] (client) page reload vite-local.out
+오후 12:15:48 [vite] (client) page reload vite-local.out
+오후 12:15:48 [vite] (client) page reload vite-local.out
+오후 12:15:49 [vite] (client) page reload vite-local.out
+오후 12:15:49 [vite] (client) page reload vite-local.out
+오후 12:16:02 [vite] (client) page reload vite-local.out
+오후 12:16:55 [vite] (client) page reload vite-local.out
+오후 12:16:55 [vite] (client) page reload vite-local.out
+오후 12:16:56 [vite] (client) page reload vite-local.out
+오후 12:18:06 [vite] (client) page reload vite-local.out
+오후 12:18:06 [vite] (client) page reload vite-local.out
+오후 12:18:06 [vite] (client) page reload vite-local.out
+오후 12:18:07 [vite] (client) page reload vite-local.out
+오후 12:18:48 [vite] (client) page reload vite-local.out
+오후 12:18:49 [vite] (client) page reload vite-local.out
+오후 12:22:10 [vite] (client) page reload cf-metro.err
+오후 12:22:10 [vite] (client) page reload vite-local.out
+오후 1:05:30 [vite] (client) hmr update /src/screens/Run.tsx, /src/index.css, /src/screens/Setup.tsx, /src/screens/Home.tsx, /src/screens/Reveal.tsx, /src/components/TabBar.tsx
+오후 1:06:30 [vite] (client) hmr update /src/index.css
+오후 1:06:30 [vite] (client) hmr update /src/screens/Setup.tsx, /src/index.css, /src/screens/Run.tsx, /src/screens/Home.tsx, /src/screens/Reveal.tsx, /src/components/TabBar.tsx
+오후 1:06:30 [vite] (client) hmr update /src/index.css
+오후 1:07:10 [vite] (client) hmr update /src/screens/Run.tsx, /src/index.css
+오후 1:08:15 [vite] (client) hmr update /src/screens/Run.tsx, /src/index.css
+오후 1:09:15 [vite] (client) hmr update /src/screens/Setup.tsx, /src/index.css
+오후 1:09:30 [vite] (client) page reload vite-local.out
+오후 1:09:30 [vite] (client) page reload vite-local.out
+오후 1:13:48 [vite] (client) page reload vite-local.out
+오후 1:17:48 [vite] (client) hmr update /src/components/LiveMap.tsx, /src/index.css
+오후 1:17:48 [vite] (client) page reload vite-local.out

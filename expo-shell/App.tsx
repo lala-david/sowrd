@@ -27,7 +27,7 @@ import * as Location from 'expo-location';
 //  ※ localhost / 127.0.0.1 은 아이폰에서 "아이폰 자신"을 가리키므로 동작하지 않습니다.
 //     반드시 개발 PC의 LAN IP(192.168.x.x 등)를 쓰세요.
 // ─────────────────────────────────────────────────────────────────────────────
-const WEB_APP_URL = 'http://192.168.0.2:5173';
+const WEB_APP_URL = 'https://theories-carroll-balance-celebrate.trycloudflare.com';
 
 const THEME_BG = '#F4F1E8';
 

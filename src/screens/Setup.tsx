@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNav } from '../store'
 import { usePilgrim, progressFor } from '../state/pilgrim'
 import { useRun, RUN_MODES, type RunMode } from '../state/run'
@@ -8,6 +8,8 @@ import { toneOf } from '../lib/mood'
 import { arcIcon, IconArrow, IconHeld, IconStep } from '../components/icons'
 import { SectionLabel } from '../components/ui'
 import { PRAYER_NOTE } from '../data/prayer'
+import { getCurrentPositionOnce, type TracePoint } from '../lib/geo'
+import LiveMap from '../components/LiveMap'
 
 export default function Setup() {
   const go = useNav((s) => s.go)
@@ -24,6 +26,20 @@ export default function Setup() {
   // 오늘 품고 달릴 사람 — 여기서 바로 고른다(예전엔 Profile로 나갔다 와야 했다)
   const [carryId, setCarryId] = useState<string | null>(null)
   const carry = intercessions.find((i) => i.id === carryId)
+
+  /* 달리기 전 GPS 미리보기 — 여기서 내 위치가 뜨면 "GPS 준비됨"을 눈으로 확인한다.
+   * 달리는 중에야 위치가 안 잡히는 걸 아는 일을 막는다. 이 좌표는 화면 표시에만 쓰고 저장하지 않는다. */
+  const [here, setHere] = useState<TracePoint | null>(null)
+  const [gpsState, setGpsState] = useState<'checking' | 'ready' | 'failed'>('checking')
+  useEffect(() => {
+    let alive = true
+    getCurrentPositionOnce().then((pos) => {
+      if (!alive) return
+      if (pos) { setHere({ lat: pos.lat, lng: pos.lng }); setGpsState('ready') }
+      else setGpsState('failed')
+    })
+    return () => { alive = false }
+  }, [])
 
   const next = prog.nextStation
   const NextIcon = next ? arcIcon(next.mood === 'lament' ? 'passion' : next.arc) : IconStep
@@ -124,7 +140,29 @@ export default function Setup() {
         {carry && <p className="mt-2 px-1 text-[11.5px] leading-relaxed text-muted">{PRAYER_NOTE}</p>}
       </div>
 
-      <div className="flex-1 min-h-8" />
+      {/* GPS 미리보기 — 내 위치 확인 */}
+      <div className="mt-4">
+        <div className="flex items-center gap-2 px-1 text-muted">
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{ background: gpsState === 'ready' ? 'var(--color-olive)' : gpsState === 'failed' ? 'var(--color-rubric)' : 'var(--color-sun)', animation: gpsState === 'checking' ? 'glow 1.6s ease-in-out infinite' : 'none' }}
+          />
+          <span className="text-[12.5px]">
+            {gpsState === 'ready' ? 'GPS 준비됨 · 지금 여기 있어요' : gpsState === 'failed' ? '위치를 못 잡았어요' : '위치 확인 중…'}
+          </span>
+        </div>
+        {gpsState === 'ready' && here ? (
+          <div className="mt-2.5">
+            <LiveMap points={[here]} avgPaceSecPerKm={0} height={150} />
+          </div>
+        ) : gpsState === 'failed' ? (
+          <p className="mt-2 px-1 text-[11.5px] leading-relaxed text-muted">
+            아이폰 설정 → 개인정보 보호 → 위치 서비스에서 Safari를 허용해 주세요. 그래도 달릴 수는 있지만 지도와 정확한 거리는 안 나옵니다.
+          </p>
+        ) : null}
+      </div>
+
+      <div className="flex-1 min-h-6" />
 
       {/* START */}
       <button onClick={begin} className="mx-auto flex h-[132px] w-[132px] flex-col items-center justify-center rounded-full bg-clay-deep text-sand-raised shadow-[0_2px_4px_rgba(192,90,48,.3),0_26px_48px_-16px_rgba(156,69,34,.7)] transition active:scale-95">

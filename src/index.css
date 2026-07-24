@@ -224,6 +224,16 @@ body::after {
  * 예전엔 transition을 통째로 껐는데(`transition: none`), 그러면 호흡 기도 교차 페이드나
  * 도달 토스트 페이드가 뚝 끊겨(하드컷) 오히려 더 거슬렸다 — 가드가 상황을 악화시켰다.
  * 지금은 keyframe 애니메이션(빛 펄스·rise·pop 같은 움직임)만 끄고, 페이드는 살린다. */
+/* 실시간 지도의 '지금 내 위치' 마커 — 살짝 맥동해서 '살아있는 위치'로 읽힌다.
+   reduced-motion에서는 아래 미디어쿼리가 animation을 꺼 정지한 점이 된다(움직임 제거). */
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.live-here {
+  animation: livePulse 1.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

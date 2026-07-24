@@ -10,6 +10,7 @@ import { journeyById, journeyProgress, toJourneyKm, toRealKm } from '../data/geo
 import { haptic } from '../lib/haptics'
 import { watchDistance, geoSupported, type GeoStatus } from '../lib/geo'
 import { IconCairn, IconLocked, IconHeld, IconPause, IconPlay } from '../components/icons'
+import LiveMap from '../components/LiveMap'
 
 /* THE LAMP — "밤의 순례길 · 등불"(dark). 시119:105 "주의 말씀은 내 발에 등이요…"
  * 거리가 곧 앞으로 나아가는 등불. 자리에 닿으면 멈춰서 그 자리의 말씀을 함께 읽는다.
@@ -32,7 +33,6 @@ export default function Run() {
   const units = usePilgrim((s) => s.units)
   const breathPrayer = usePilgrim((s) => s.breathPrayer)
   const setBreathPrayer = usePilgrim((s) => s.setBreathPrayer)
-  const traceRoute = usePilgrim((s) => s.traceRoute)
   const admin = usePilgrim((s) => s.admin)
   const run = useRun()
   const { status, courseId, startKm, distanceKm, elapsedSec, flashAt, lastReached } = run
@@ -96,9 +96,10 @@ export default function Run() {
         }
       },
       setGeo,
-      traceRoute,
+      // 좌표는 늘 받는다 — 실시간 지도를 그려야 하니까. 저장은 finish()에서 「경로 기록」으로 가른다.
+      true,
     )
-  }, [status, traceRoute])
+  }, [status])
 
   /* GPS를 못 쓸 때의 시뮬레이션.
    * 개발 빌드이거나 관리자 모드일 때만 돈다 — 일반 사용자에게 위치 권한 거부는
@@ -352,8 +353,30 @@ export default function Run() {
           <Metric big={fmtPace(avgPace, units)} small="1km 평균" />
         </div>
 
+        {/* 실시간 지도 — 지금 내 위치와 달린 길. 좌표는 화면 표시용이고 저장은 「경로 기록」을 켤 때만.
+            다크 화면 속 밝은 지도라 카드로 감싸 이물감을 줄인다. */}
+        <div className="mt-7 w-full max-w-[320px]">
+          {run.trace.length > 0 ? (
+            <LiveMap points={run.trace} avgPaceSecPerKm={avgPace} height={190} />
+          ) : (
+            <div className="flex h-[190px] flex-col items-center justify-center gap-2 rounded-2xl bg-sand-raised/10 ring-1 ring-line-strong/50">
+              <span className="h-2.5 w-2.5 rounded-full bg-sun" style={{ animation: 'glow 1.6s ease-in-out infinite' }} />
+              <p className="text-[12.5px] text-muted">
+                {geo === 'denied' ? '위치 권한이 꺼져 있어요' : geo === 'unavailable' ? '이 기기는 위치를 못 재요' : '내 위치를 찾는 중…'}
+              </p>
+              {geo === 'denied' && <p className="max-w-[26ch] px-6 text-center text-[11px] leading-relaxed text-muted">설정 → Safari → 위치에서 허용하면 지도에 내 위치가 떠요</p>}
+            </div>
+          )}
+          {/* GPS 상태 한 줄 — 지도가 그려질 때도 신호 상태를 알려 준다 */}
+          {run.trace.length > 0 && geo !== 'tracking' && (
+            <p className="mt-1.5 px-1 text-center text-[11px] text-muted">
+              {geo === 'lost' ? '신호가 잠깐 약해요' : geo === 'denied' ? '위치 권한 꺼짐 · 어림으로 잽니다' : '신호를 다듬는 중'}
+            </p>
+          )}
+        </div>
+
         {/* 등불 구절 시119:105 */}
-        <p className="mt-8 max-w-[24ch] text-center font-serif text-[13.5px] leading-[1.7] text-ink-soft/90">{LAMP_VERSE.kr}</p>
+        <p className="mt-7 max-w-[24ch] text-center font-serif text-[13.5px] leading-[1.7] text-ink-soft/90">{LAMP_VERSE.kr}</p>
 
         {/* 목표 게이지 — 목표 거리/시간을 골랐으면 그 진행을 보여준다.
             예전엔 Setup에서 목표를 정해도 Run이 goalKm/goalSec을 안 읽어서 아무 일도 없었다.

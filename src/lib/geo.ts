@@ -171,6 +171,19 @@ const MIN_SPEED_MS = 0.35
 export const geoSupported = (): boolean =>
   typeof navigator !== 'undefined' && 'geolocation' in navigator
 
+/** 지금 위치 한 번만 — Setup의 '여기 내 위치' 미리보기용.
+ * 달리기 전에 GPS가 잡히는지 눈으로 확인하게 해서, 달리는 중에야 안 되는 걸 알게 되는 일을 막는다. */
+export function getCurrentPositionOnce(): Promise<{ lat: number; lng: number; acc: number } | null> {
+  return new Promise((resolve) => {
+    if (!geoSupported()) return resolve(null)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy }),
+      () => resolve(null),
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 12000 },
+    )
+  })
+}
+
 /**
  * 위치 추적을 시작한다. 표본이 올 때마다 onSample(deltaKm, pace)이 불린다.
  * 반환값을 호출하면 추적을 멈춘다.
