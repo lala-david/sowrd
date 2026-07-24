@@ -218,11 +218,22 @@ body::after {
 /* 글자 크기 zoom은 App.tsx가 <html>에 직접 건다 — 인앱 설정과 브라우저/OS 글꼴 설정을
    곱한 값이라 CSS 상수로는 표현할 수 없다. 여기서는 규칙을 두지 않는다. */
 
+/* 움직임 줄이기.
+ *
+ * 전정기관 장애의 유발 요인은 **움직임**(이동·확대·펄스·시차)이지 투명도 변화가 아니다.
+ * 예전엔 transition을 통째로 껐는데(`transition: none`), 그러면 호흡 기도 교차 페이드나
+ * 도달 토스트 페이드가 뚝 끊겨(하드컷) 오히려 더 거슬렸다 — 가드가 상황을 악화시켰다.
+ * 지금은 keyframe 애니메이션(빛 펄스·rise·pop 같은 움직임)만 끄고, 페이드는 살린다. */
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
   ::after {
     animation: none !important;
-    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  /* transform 트랜지션은 이동이므로 즉시 끝낸다(누르는 순간의 미세 scale 정도만 남는다).
+     색·투명도 트랜지션은 그대로 둬서 페이드가 매끄럽게 유지된다. */
+  * {
+    transition-property: opacity, background-color, color, border-color, box-shadow, fill, stroke;
   }
 }

@@ -150,6 +150,7 @@ export default function Collection() {
                 <button
                   key={id}
                   onClick={() => openDetail(id)}
+                  aria-label={`${st.place} · ${on ? '닿은 자리' : isNext ? '다음에 닿을 자리' : '아직 닿지 않은 자리'}`}
                   style={{ animationDelay: `${Math.min(i, 12) * 35}ms` }}
                   className={`anim-pop relative flex w-full items-center gap-3 rounded-2xl border pr-3 text-left transition active:scale-[0.99] ${
                     isNext ? 'border-lapis/60 bg-sand-raised' : on ? 'border-line-strong bg-sand-raised' : 'border-line bg-sand-raised/30'

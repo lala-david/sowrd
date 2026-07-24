@@ -128,6 +128,14 @@ export default function JourneyDetail() {
           const tierStarted = tierReached > 0
           const tier = journey.tiers[gi]
           const tierRealKm = tier ? toRealKm(journey.id, tier.km) : 0
+          /* 진행바는 자리 수가 아니라 **km 비율**로 채운다.
+             아브라함 첫 티어는 우르→하란 142km인데 자리가 우르 하나뿐이라, 자리 수 기반이면
+             하란에 닿기 전까지 142km 내내 0%로 멈춰 있었다(가장 긴 구간이 가장 죽어 보였다).
+             km 비율이면 이정표를 지날 때마다 조금씩 차오른다. */
+          const tierFromKm = tier ? journey.episodes.find((e) => e.id === tier.fromEpisode)?.cumulativeKm ?? 0 : 0
+          const tierPct = tier && tier.km > 0
+            ? Math.min(100, Math.max(0, ((km - tierFromKm) / tier.km) * 100))
+            : 0
           return (
             <section key={g.name}>
               <div className="flex items-center gap-2.5">
@@ -151,7 +159,7 @@ export default function JourneyDetail() {
               <div className="mt-2 ml-[32px] h-[3px] overflow-hidden rounded-full bg-line">
                 <div
                   className="h-full rounded-full transition-[width] duration-700"
-                  style={{ width: `${(tierReached / g.eps.length) * 100}%`, background: chrome.accent }}
+                  style={{ width: `${tierPct}%`, background: chrome.accent }}
                 />
               </div>
               <p className="ml-[32px] mt-1.5 text-[12px] leading-relaxed text-muted">
