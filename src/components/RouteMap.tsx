@@ -202,12 +202,14 @@ export default function RouteMap({
           <span key={b} className="flex items-center gap-1.5 text-[11px] text-muted">
             {/* 범례도 굵기·파선을 그대로 보여줘야 지도와 대조할 수 있다 */}
             <svg width="18" height="7" aria-hidden>
+              {/* stroke는 attribute가 아니라 style로 준다 — SVG 표현 속성의 var()는
+                  WebKit에서 안 풀리지만, CSS 속성(style)의 var()는 확실히 풀린다. */}
               <line
                 x1="1" y1="3.5" x2="17" y2="3.5"
-                stroke={BAND_COLOR[b]}
                 strokeWidth={b === 'slow' ? 4 : b === 'fast' ? 3 : 2.5}
                 strokeDasharray={b === 'slow' ? undefined : b === 'fast' ? '5 2' : '1 2.5'}
                 strokeLinecap="round"
+                style={{ stroke: BAND_COLOR[b] }}
               />
             </svg>
             {BAND_LABEL[b]}

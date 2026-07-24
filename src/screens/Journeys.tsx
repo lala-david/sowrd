@@ -12,7 +12,7 @@ import { IconArrow } from '../components/icons'
 function Crest({ src }: { src: string }) {
   return (
     <span className="absolute right-4 top-1/2 flex h-14 w-14 -translate-y-1/2 overflow-hidden rounded-full ring-1 ring-line-strong">
-      <img src={src} alt="" className="h-full w-full scale-[1.06] object-cover" />
+      <img src={src} alt="" loading="lazy" decoding="async" className="h-full w-full scale-[1.06] object-cover" />
     </span>
   )
 }
@@ -42,7 +42,7 @@ export default function Journeys() {
           onClick={() => go('collection')}
           className="relative w-full overflow-hidden rounded-3xl border border-line-strong text-left transition active:scale-[0.99]"
         >
-          <img src={sceneArt('sea')} alt="" className="h-[132px] w-full object-cover" style={{ objectPosition: sceneFocus('sea', 'card') }} />
+          <img src={sceneArt('sea')} alt="" loading="lazy" decoding="async" className="h-[132px] w-full object-cover" style={{ objectPosition: sceneFocus('sea', 'card') }} />
           <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to right, var(--color-sand) 0%, var(--color-sand) 44%, transparent 82%)' }} />
           <div className="absolute inset-y-0 left-0 flex w-[62%] flex-col justify-center px-5">
             <span className="font-display text-[10.5px] uppercase tracking-[0.2em] text-clay-deep">Via Christi</span>
@@ -63,7 +63,7 @@ export default function Journeys() {
               onClick={() => { setActiveJourney(j.id); openJourney(j.id) }}
               className="relative w-full overflow-hidden rounded-3xl border border-line-strong text-left transition active:scale-[0.99]"
             >
-              <img src={sceneArt(chrome.scene)} alt="" className="h-[132px] w-full object-cover" style={{ objectPosition: sceneFocus(chrome.scene, 'card') }} />
+              <img src={sceneArt(chrome.scene)} alt="" loading="lazy" decoding="async" className="h-[132px] w-full object-cover" style={{ objectPosition: sceneFocus(chrome.scene, 'card') }} />
               <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to right, var(--color-sand) 0%, var(--color-sand) 44%, transparent 82%)' }} />
 
               <div className="absolute inset-y-0 left-0 flex w-[62%] flex-col justify-center px-5">

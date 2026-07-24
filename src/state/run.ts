@@ -166,10 +166,17 @@ export const useRun = create<RunState>((set, get) => ({
      * dtSec은 이 표본이 덮는 구간의 길이라 페이스 창 계산에만 쓴다. */
     const elapsedSec = st.elapsedSec
 
-    /* 현재 페이스 — 최근 200m(또는 최근 45초) 창으로만 잰다.
-     * 전체 평균을 "현재"라고 부르면 초반에 빠르게 뛴 사람은 걷기 시작해도 숫자가 안 떨어진다. */
+    /* 현재 페이스 — 최근 창으로만 잰다(전체 평균을 "현재"라 부르면 초반에 빠르게 뛴 사람은
+     * 걷기 시작해도 숫자가 안 떨어진다).
+     *
+     * 창 규칙이 바뀌었다. 예전엔 `wKm >= 0.2 || wSec >= 45`(둘 중 하나)라, 느린 러너는
+     * 0.2km를 채우기 전에 45초에 걸려 창이 닫혔다 — 10분/km면 45초에 0.075km뿐이라
+     * 표본이 가장 적었다. 잡음이 가장 큰 사람에게 표본을 가장 적게 주는 거꾸로 된 설계였다.
+     * 지금은 **거리와 시간을 둘 다** 채워야 닫히되(느릴수록 창이 길어져 표본이 늘어난다),
+     * 상한(MAX_SEC)을 둬서 아주 느린 걸음에도 창이 런 전체가 되지 않게 한다. */
     const WINDOW_KM = 0.2
-    const WINDOW_SEC = 45
+    const MIN_SEC = 20 // 짧은 빠른 버스트로 창이 너무 작아지지 않게
+    const MAX_SEC = 120 // 아주 느린 걸음이어도 창이 이보다 길어지지 않게
     const _recent = [...st._recent, { km: dKm, sec: dtSec }]
     let wKm = 0
     let wSec = 0
@@ -178,7 +185,8 @@ export const useRun = create<RunState>((set, get) => ({
       wKm += _recent[i].km
       wSec += _recent[i].sec
       cut = i
-      if (wKm >= WINDOW_KM || wSec >= WINDOW_SEC) break
+      if (wSec >= MAX_SEC) break // 상한 도달 — 무조건 닫는다
+      if (wKm >= WINDOW_KM && wSec >= MIN_SEC) break // 거리·시간 둘 다 충족
     }
     const recentWindow = _recent.slice(cut)
     const recentPaceSecPerKm = wKm > 0 ? wSec / wKm : st.recentPaceSecPerKm

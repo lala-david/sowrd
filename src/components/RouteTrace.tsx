@@ -77,15 +77,15 @@ export default function RouteTrace({
             y1={py(a)}
             x2={px(p)}
             y2={py(p)}
-            stroke={BAND_COLOR[bandOf(pace, avgPaceSecPerKm)]}
+            style={{ stroke: BAND_COLOR[bandOf(pace, avgPaceSecPerKm)] }}
             strokeWidth={2.4}
             strokeLinecap="round"
           />
         )
       })}
       {/* 출발·도착 */}
-      <circle cx={px(points[0])} cy={py(points[0])} r={3} fill="var(--color-sand)" stroke="var(--color-ink)" strokeWidth={1.4} />
-      <circle cx={px(points[points.length - 1])} cy={py(points[points.length - 1])} r={3.4} fill="var(--color-sun)" />
+      <circle cx={px(points[0])} cy={py(points[0])} r={3} strokeWidth={1.4} style={{ fill: 'var(--color-sand)', stroke: 'var(--color-ink)' }} />
+      <circle cx={px(points[points.length - 1])} cy={py(points[points.length - 1])} r={3.4} style={{ fill: 'var(--color-sun)' }} />
     </svg>
   )
 }

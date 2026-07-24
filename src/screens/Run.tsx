@@ -240,8 +240,12 @@ export default function Run() {
     ? journeyProgress(journey, toJourneyKm(journeyId, journeyStartRealKm + distanceKm))
     : undefined
   const jNextRealKm = journey && jProg ? toRealKm(journeyId, jProg.toNextKm) : 0
-  // 현재 페이스는 최근 창 기준(run.ts). 전체 평균은 따로 보여준다.
-  const curPace = run.recentPaceSecPerKm || paceSecPerKm(distanceKm, elapsedSec)
+  /* 현재 페이스는 최근 창 기준(run.ts). 전체 평균은 따로 보여준다.
+   * 표시는 5초 단위로 반올림한다 — GPS 현재 페이스의 실제 불확실성이 ±20~35초라,
+   * 초 단위까지 찍으면 측정 정밀도보다 한 자릿수 높은 정밀함을 가장하게 된다.
+   * (전체 평균은 러닝이 끝날수록 안정되므로 반올림하지 않는다.) */
+  const curPaceRaw = run.recentPaceSecPerKm || paceSecPerKm(distanceKm, elapsedSec)
+  const curPace = curPaceRaw > 0 ? Math.round(curPaceRaw / 5) * 5 : 0
   const avgPace = paceSecPerKm(distanceKm, elapsedSec)
   const tone = prog.nextStation ? toneOf(prog.nextStation.mood) : toneOf('everyday')
 
