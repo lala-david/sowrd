@@ -32,9 +32,15 @@ export default function Profile() {
           {/* 단계는 지금 걷는 여정의 tiers에서 온다 — 예전엔 예수 코스 arc 기반이라
               기본 설정으로 1,000km를 달려도 영원히 3단계 "기적을 지나"였다. */}
           {tier && (
-            <p className="mt-0.5 text-[13px] text-clay-deep">
-              {tier.index}단계 · {tier.name}
-            </p>
+            <>
+              <p className="mt-0.5 text-[13px] text-clay-deep">
+                {tier.index}/{tier.total}단계 · {tier.name}
+              </p>
+              {/* 지금 단계를 얼마나 지났는지 — 등급을 정지된 이름표가 아니라 차오르는 게이지로 */}
+              <div className="mt-1.5 h-[3px] w-[132px] overflow-hidden rounded-full bg-line">
+                <div className="h-full rounded-full bg-clay-deep transition-[width] duration-700" style={{ width: `${tier.pct}%` }} />
+              </div>
+            </>
           )}
         </div>
       </header>

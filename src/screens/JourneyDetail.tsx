@@ -121,13 +121,42 @@ export default function JourneyDetail() {
       <div className="mt-7 flex flex-col gap-8 px-7" style={{ paddingBottom: 'max(2.5rem, env(safe-area-inset-bottom))' }}>
         {groups.map((g, gi) => {
           if (!g.eps.length) return null
+          /* 티어를 게임 챕터로 만든다 — 목차가 아니라 도달/진행/완료 상태를 보여준다.
+             그 티어의 자리 중 몇 개에 닿았는지, 다 닿았으면 인장, 진행 중이면 %. */
+          const tierReached = g.eps.filter((ep) => journey.episodes.indexOf(ep) < reachedIdx).length
+          const tierDone = tierReached === g.eps.length
+          const tierStarted = tierReached > 0
+          const tier = journey.tiers[gi]
+          const tierRealKm = tier ? toRealKm(journey.id, tier.km) : 0
           return (
             <section key={g.name}>
-              <div className="flex items-baseline gap-2.5">
-                <span className="font-display text-[13px] tracking-[0.1em]" style={{ color: chrome.accent }}>{ROMAN[gi] ?? gi + 1}</span>
-                <SectionLabel>{g.name}</SectionLabel>
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full font-display text-[11px]"
+                  style={{
+                    background: tierDone ? chrome.accent : tierStarted ? 'transparent' : 'transparent',
+                    color: tierDone ? 'var(--color-sand)' : chrome.accent,
+                    boxShadow: !tierDone && tierStarted ? `0 0 0 1.5px ${chrome.accent}` : 'none',
+                    border: tierDone || tierStarted ? 'none' : '1px solid var(--color-line-strong)',
+                  }}
+                >
+                  {tierDone ? <IconSeal size={13} /> : ROMAN[gi] ?? gi + 1}
+                </span>
+                <SectionLabel className="flex-1">{g.name}</SectionLabel>
+                <span className="shrink-0 font-display text-[11px] text-muted" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>
+                  {tierDone ? '완료' : `${tierReached}/${g.eps.length}`}
+                </span>
               </div>
-              <p className="mt-1.5 text-[12px] leading-relaxed text-muted">{g.note}</p>
+              {/* 티어 진행바 — 이 챕터를 얼마나 지났는지 */}
+              <div className="mt-2 ml-[32px] h-[3px] overflow-hidden rounded-full bg-line">
+                <div
+                  className="h-full rounded-full transition-[width] duration-700"
+                  style={{ width: `${(tierReached / g.eps.length) * 100}%`, background: chrome.accent }}
+                />
+              </div>
+              <p className="ml-[32px] mt-1.5 text-[12px] leading-relaxed text-muted">
+                {g.note} <span className="whitespace-nowrap text-clay-deep">· 이 구간 약 {tierRealKm.toFixed(0)}km</span>
+              </p>
 
               <div className="relative mt-4 pl-[26px]">
                 {/* 세로 라피스 레일 */}

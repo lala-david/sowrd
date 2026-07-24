@@ -16,8 +16,9 @@ import path from 'node:path'
 
 const DIR = 'src/data/geo/journeys'
 const SCALE = { abraham: 12, exodus: 4, jesus: 10, paul: 30, peter: 12 }
-const MILE_REAL_KM = 2.5   // 이정표 간격(실제 달릴 km)
-const MIN_SEG_REAL_KM = 5  // 이보다 짧은 구간은 나누지 않는다
+const MILE_REAL_KM = 2.0   // 이정표 간격(실제 달릴 km) — 3km 러너가 매번 최소 하나는 지나게
+const MIN_SEG_REAL_KM = 2.5 // 이보다 짧은 구간만 이정표를 안 둔다(한 번의 러닝보다 짧으므로).
+                            // 4였을 때 출애굽의 3~4km 구간들이 통째로 비어 3km 러너가 빈손이 됐다.
 
 const rad = (d) => (d * Math.PI) / 180
 const deg = (r) => (r * 180) / Math.PI

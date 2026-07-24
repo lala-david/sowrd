@@ -7,28 +7,6 @@
  *  · 못 잰 것은 못 잰다고 한다(고도·심박·케이던스는 센서가 없으면 비운다).
  */
 
-/** 페이스 구간 — 색과 이름은 UI가 쓰고, 경계는 사용자 자신의 평균에서 파생된다 */
-export type PaceZone = 'walk' | 'easy' | 'steady' | 'strong' | 'sprint'
-
-export interface ZoneSpec {
-  id: PaceZone
-  label: string
-  /** 평균 페이스 대비 배수 상한(작을수록 빠름) */
-  ratioMax: number
-  color: string
-}
-
-/* 경계는 자기 평균 페이스 기준 상대값이다. 절대 기준을 쓰면 초보에게는 전 구간이 '느림'이 된다.
- * 색은 순서형 1색 램프다 — 존은 순서가 있는 값이라 무지개로 칠하면 순서 정보가 색에서 사라진다.
- * 라벨도 "전력·빠르게" 같은 평가어 대신 자기 평소 속도 기준 서술로 바꿨다. */
-export const ZONES: ZoneSpec[] = [
-  { id: 'sprint', label: '많이 빠르게', ratioMax: 0.85, color: 'var(--color-zone-5)' },
-  { id: 'strong', label: '조금 빠르게', ratioMax: 0.95, color: 'var(--color-zone-4)' },
-  { id: 'steady', label: '평소대로', ratioMax: 1.06, color: 'var(--color-zone-3)' },
-  { id: 'easy', label: '천천히', ratioMax: 1.25, color: 'var(--color-zone-2)' },
-  { id: 'walk', label: '느리게', ratioMax: Infinity, color: 'var(--color-zone-1)' },
-]
-
 /* 지도용 3계급 — 5계급은 all-pairs 색약 검사에서 붕괴한다(최악 쌍 protan ΔE 3.7).
  * 지도는 어떤 두 선분도 이웃이 될 수 있어 인접 쌍만 보는 것보다 훨씬 엄격한 검사가 필요하다. */
 export type PaceBand = 'slow' | 'even' | 'fast'
@@ -50,44 +28,27 @@ export function bandOf(paceSecPerKm: number, avgPaceSecPerKm: number): PaceBand 
   return r > 1.08 ? 'slow' : r < 0.92 ? 'fast' : 'even'
 }
 
-/* 절대 기준(9분/km)으로 "걷기"를 판정하던 것을 없앴다. 세 가지 이유:
- *  1. 이 파일 자신의 원칙과 모순됐다 — zoneOf(560, 560)이 'walk'였다. 자기 평균과 똑같이
- *     달린 구간조차 걷기로 찍혔고, 9'20"/km로 조깅하는 초보는 매번 "오늘은 걷는 걸음이었습니다"를 받았다.
- *  2. 1km 해상도 페이스로 걷기와 느린 조깅을 구분하려면 케이던스가 필요한데 없다.
- *     즉 "없는 데이터를 요구하는 지표"라 칼로리·VO2max와 같은 범주다.
- *  3. 걷는 것은 이 앱에서 실패가 아니다. 실패가 아닌 것에 이름표를 붙일 이유가 없다.
- * 남은 것은 상대 기준의 "느린 구간"뿐이며, 걷기라는 주장은 하지 않는다. */
-export function zoneOf(paceSecPerKm: number, avgPaceSecPerKm: number): ZoneSpec {
-  const ratio = avgPaceSecPerKm > 0 ? paceSecPerKm / avgPaceSecPerKm : 1
-  return ZONES.find((z) => ratio < z.ratioMax) ?? ZONES[ZONES.length - 1]
-}
-
+/* 구간 하나. 5계급 zone·deltaSec 필드가 있었지만 어느 화면도 안 써서 지웠다
+ * (5계급 존 자체가 색약 검사에 걸리는 죽은 코드였다 — bandOf 3계급만 남긴다). */
 export interface SplitAnalysis {
   km: number
   sec: number
-  zone: ZoneSpec
-  /** 직전 구간 대비 초 차이(음수면 빨라짐) */
-  deltaSec?: number
 }
 
 export interface RunAnalysis {
   splits: SplitAnalysis[]
   avgPaceSecPerKm: number
   fastestKm?: number
-  slowestKm?: number
   /** 후반이 전반보다 빨랐는가 — 러닝에서 가장 좋은 신호로 치는 배분 */
   negativeSplit: boolean
   /** 앞뒤 절반의 평균 페이스 차(초). 음수면 후반이 빠름 */
   halfDiffSec: number
-  /** 페이스 폭(초). n<5면 범위(max−min), n≥5면 MAD 기반. n<2면 0 */
+  /** 페이스 폭(초). 관측값 max−min. n<2면 0 */
   spreadSec: number
-  spreadKind: 'range' | 'mad' | 'none'
   /** 후반 배분을 주장해도 될 만큼 구간이 있는가(4개 이상) */
   splitConfident: boolean
   /** 자기 중앙값보다 25% 이상 느린 구간 수 — 걷기라고 주장하지 않는다 */
   slowSegments: number
-  /** 구간별 시간 비중(구간 id → 초) */
-  zoneSeconds: Record<PaceZone, number>
 }
 
 /** 후반 배분을 주장해도 되는 최소 차이(초). 참 효과 0에서 오탐 5% 수준 */
@@ -102,15 +63,7 @@ function halfDiffThreshold(splits: number[]): number {
 
 export function analyzeRun(splits: number[], distanceKm: number, durationSec: number): RunAnalysis {
   const avg = distanceKm > 0 ? durationSec / distanceKm : 0
-  const list: SplitAnalysis[] = splits.map((sec, i) => ({
-    km: i + 1,
-    sec,
-    zone: zoneOf(sec, avg),
-    deltaSec: i > 0 ? sec - splits[i - 1] : undefined,
-  }))
-
-  const zoneSeconds = ZONES.reduce((acc, z) => ({ ...acc, [z.id]: 0 }), {} as Record<PaceZone, number>)
-  for (const s of list) zoneSeconds[s.zone.id] += s.sec
+  const list: SplitAnalysis[] = splits.map((sec, i) => ({ km: i + 1, sec }))
 
   const half = Math.floor(splits.length / 2)
   const mean = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0)
@@ -133,16 +86,13 @@ export function analyzeRun(splits: number[], distanceKm: number, durationSec: nu
    * 관측값은 추정량이 아니라서 틀릴 수가 없고, n 경계 불연속도 없다.
    * 다만 n에 따라 커지는 성질이 있으므로 러닝 간 비교에는 쓰지 않는다(추이 그래프 금지). */
   const spreadSec = splits.length < 2 ? 0 : Math.round(Math.max(...splits) - Math.min(...splits))
-  const spreadKind: 'range' | 'mad' | 'none' = splits.length < 2 ? 'none' : 'range'
 
   const fastest = splits.length ? Math.min(...splits) : undefined
-  const slowest = splits.length ? Math.max(...splits) : undefined
 
   return {
     splits: list,
     avgPaceSecPerKm: Math.round(avg),
     fastestKm: fastest !== undefined ? splits.indexOf(fastest) + 1 : undefined,
-    slowestKm: slowest !== undefined ? splits.indexOf(slowest) + 1 : undefined,
     /* 후반 배분 판정.
      *
      * 예전엔 `n >= 4 && halfDiffSec < 0`이었다. 그 게이트는 오탐률을 **1%도 낮추지 못했다** —
@@ -156,7 +106,6 @@ export function analyzeRun(splits: number[], distanceKm: number, durationSec: nu
     negativeSplit: splits.length >= 4 && halfDiffSec < -halfDiffThreshold(splits),
     halfDiffSec,
     spreadSec,
-    spreadKind,
     splitConfident: splits.length >= 4,
     slowSegments: (() => {
       // 짝수 n에서 위쪽 중앙값을 쓰면 기준이 위로 밀려 느린 구간이 과소 계상된다
@@ -165,7 +114,6 @@ export function analyzeRun(splits: number[], distanceKm: number, durationSec: nu
       const med = n === 0 ? 0 : n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2
       return splits.filter((x) => med > 0 && x > med * 1.25).length
     })(),
-    zoneSeconds,
   }
 }
 

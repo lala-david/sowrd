@@ -43,11 +43,6 @@
 
   /* 존 분포 — 순서형 1색 램프(걷기 → 많이 빠르게). 순서가 있는 값이라 무지개가 아니라 램프.
      sand-raised 위에서만 검증 통과 — sand-sunk 위에 올리면 밝은 끝이 1.69:1로 실패한다. */
-  --color-zone-1: #dfa085;
-  --color-zone-2: #d1815f;
-  --color-zone-3: #c16236;
-  --color-zone-4: #a44b20;
-  --color-zone-5: #823a17;
 
   /* 차트에서 눈에 안 띄어야 하는 마크(지난 주 막대 등). line-strong은 1.56:1이라 못 쓴다. */
   /* 차트의 '지난 주' 막대. 강조색(clay)과 정상시야 ΔE 16.4·protan 11.1로 갈리고
@@ -109,11 +104,6 @@ body {
   --color-pace-even: #6c6250;
   --color-pace-fast: #708ddd;
 
-  --color-zone-1: #74452c;
-  --color-zone-2: #9c5731;
-  --color-zone-3: #c46b39;
-  --color-zone-4: #e08859;
-  --color-zone-5: #eeac8b;
 
   --color-chart-quiet: #7b818b; /* 다크: 정상시야 ΔE 16.9 · protan 10.5 · 대비 3:1↑ */
 }
