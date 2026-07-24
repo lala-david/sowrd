@@ -32,12 +32,12 @@ export default function Run() {
   const units = usePilgrim((s) => s.units)
   const breathPrayer = usePilgrim((s) => s.breathPrayer)
   const setBreathPrayer = usePilgrim((s) => s.setBreathPrayer)
-  const prayerSubject = usePilgrim((s) => s.prayerSubject)
   const traceRoute = usePilgrim((s) => s.traceRoute)
   const admin = usePilgrim((s) => s.admin)
   const run = useRun()
   const { status, courseId, startKm, distanceKm, elapsedSec, flashAt, lastReached } = run
   const { journeyId, journeyStartRealKm, lastEpisodePlace } = run
+  const { mode, goalKm, goalSec, prayerFor } = run
   const course = courseById(courseId)!
 
   /* 스크린리더 안내 문자열.
@@ -310,10 +310,10 @@ export default function Run() {
 
       {/* 중보 — 누구를 위해 달리는지. 이름은 이니셜만, 기도 제목은 화면에 띄우지 않는다.
           거리와 응답을 연결짓는 표시는 두지 않는다(기도는 하나님을 움직이는 기술이 아니다). */}
-      {prayerSubject && (
+      {prayerFor && (
         <div className="relative z-10 mt-3 flex items-center justify-center gap-2 px-7 text-sun-deep">
           <IconHeld size={14} />
-          <p className="text-[12px] tracking-[0.04em]">{prayerSubject}님을 위해 달립니다</p>
+          <p className="text-[12px] tracking-[0.04em]">{prayerFor}님을 품고 달립니다</p>
         </div>
       )}
 
@@ -350,6 +350,34 @@ export default function Run() {
 
         {/* 등불 구절 시119:105 */}
         <p className="mt-8 max-w-[24ch] text-center font-serif text-[13.5px] leading-[1.7] text-ink-soft/90">{LAMP_VERSE.kr}</p>
+
+        {/* 목표 게이지 — 목표 거리/시간을 골랐으면 그 진행을 보여준다.
+            예전엔 Setup에서 목표를 정해도 Run이 goalKm/goalSec을 안 읽어서 아무 일도 없었다.
+            달성해도 멈추지는 않는다 — 더 달리고 싶으면 계속 달릴 수 있어야 한다. */}
+        {(mode === 'goalDistance' && goalKm) || (mode === 'goalTime' && goalSec) ? (
+          (() => {
+            const isDist = mode === 'goalDistance'
+            const cur = isDist ? distanceKm : elapsedSec
+            const goal = isDist ? goalKm! : goalSec!
+            const pct = Math.min(100, (cur / goal) * 100)
+            const done = cur >= goal
+            return (
+              <div className="mt-9 w-full max-w-[300px]">
+                <div className="flex items-center justify-between text-[12px]">
+                  <span className="text-muted">{done ? '목표 달성 · 계속 달려도 좋아요' : '오늘의 목표'}</span>
+                  <span className="font-display text-sun" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>
+                    {isDist
+                      ? `${fmtDistance(distanceKm, units)} / ${goalKm} ${unitLabel(units).toLowerCase()}`
+                      : `${fmtDuration(Math.round(elapsedSec))} / ${fmtDuration(goalSec!)}`}
+                  </span>
+                </div>
+                <div className="mt-2 h-[4px] w-full overflow-hidden rounded-full bg-line-strong">
+                  <div className="h-full rounded-full transition-[width] duration-300" style={{ width: `${pct}%`, background: done ? 'var(--color-sun-bright)' : 'var(--color-sun)' }} />
+                </div>
+              </div>
+            )
+          })()
+        ) : null}
 
         {/* 다음 자리 게이지 */}
         <div className="mt-9 w-full max-w-[300px]">

@@ -57,7 +57,7 @@ export default function Home() {
   const openJourney = useNav((s) => s.openJourney)
   const configure = useRun((s) => s.configure)
   const pilgrim = usePilgrim()
-  const { units, prayerSubject, activeJourneyId, activeCourseId, homeCompact, setHomeCompact } = pilgrim
+  const { units, intercessions, activeJourneyId, activeCourseId, homeCompact, setHomeCompact } = pilgrim
 
   const totals = pilgrimTotals(pilgrim)
   const journey = journeyById(activeJourneyId) ?? JOURNEYS[0]
@@ -278,7 +278,9 @@ export default function Home() {
                 <IconHeld size={18} />
               </span>
               <span className="flex-1 text-[13.5px] text-ink-soft">
-                {prayerSubject ? `오늘 품고 달릴 사람 · ${prayerSubject}` : '오늘 품고 달릴 사람'}
+                {intercessions.length > 0
+                  ? `품고 달리는 사람 · ${intercessions.slice(0, 2).map((i) => i.alias).join(', ')}${intercessions.length > 2 ? ` 외 ${intercessions.length - 2}` : ''}`
+                  : '품고 달릴 사람 더하기'}
               </span>
               <IconChevron size={15} className="text-muted" />
             </button>

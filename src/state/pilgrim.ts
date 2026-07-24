@@ -3,8 +3,8 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import type { PassageSlug, Mood } from '../data/journey'
 import { COURSES, courseById } from '../data/journey'
 import { journeyById, toJourneyKm } from '../data/geo/journeys'
-import { type Units, dayKey, daysBetween } from '../lib/format'
-import type { Intercession } from '../data/prayer'
+import { type Units, dayKey } from '../lib/format'
+import { validateAlias, type Intercession } from '../data/prayer'
 import type { TracePoint } from '../lib/geo'
 
 /* ── 영속 도메인 상태 (localStorage) ─────────────────────────────────────
@@ -98,8 +98,6 @@ interface PilgrimState {
   runs: RunRecord[]
   /** 100건 상한과 무관하게 단조 증가하는 누적치 */
   lifetime: Lifetime
-  prayerSubject?: string
-  streakDays: number
   lastRunDay?: string
   admin: boolean // 관리자 모드 — 모든 자리/코스 해금 오버레이(실데이터 미변경)
   /* 호흡 기도(예수기도) — 반드시 기본 꺼짐.
@@ -126,7 +124,6 @@ interface PilgrimState {
   // actions
   setActiveCourse: (id: string) => void
   setUnits: (u: Units) => void
-  setPrayerSubject: (v?: string) => void
   setAdmin: (v: boolean) => void
   setBreathPrayer: (v: boolean) => void
   setHomeCompact: (v: boolean) => void
@@ -169,7 +166,7 @@ const seedRuns: RunRecord[] = [
 
 type SeedShape = Pick<
   PilgrimState,
-  'activeCourseId' | 'units' | 'progress' | 'collectedVerses' | 'collectedEpisodes' | 'runs' | 'lifetime' | 'prayerSubject' | 'streakDays' | 'lastRunDay'
+  'activeCourseId' | 'units' | 'progress' | 'collectedVerses' | 'collectedEpisodes' | 'runs' | 'lifetime' | 'lastRunDay'
 >
 
 /* 처음 켠 사람은 자기 기록에서 시작한다.
@@ -184,8 +181,6 @@ const seed = (): SeedShape => ({
   collectedEpisodes: [],
   runs: [],
   lifetime: emptyLifetime(),
-  prayerSubject: undefined,
-  streakDays: 0,
   lastRunDay: undefined,
 })
 
@@ -214,8 +209,6 @@ const demo = (): SeedShape => ({
       return acc
     }, {} as Record<string, { km: number; runs: number }>),
   },
-  prayerSubject: 'J.S',
-  streakDays: 3,
   lastRunDay: dayKey(now), // 오늘로 둔다 — 이틀 전이면 첫 러닝에 스트릭이 줄어든다
 })
 
@@ -259,9 +252,20 @@ function migrateInner(s: Partial<PilgrimState>, from: number): Partial<PilgrimSt
    * 그 상태로 갇혀 있었으므로 무조건 펼친 상태(false)로 올린다. */
   if (from < 4) {
     s = { ...s, collectedEpisodes: s.collectedEpisodes ?? [] }
-    const legacy = s as Partial<PilgrimState> & { simpleMode?: boolean }
-    delete legacy.simpleMode
-    s = { ...legacy, homeCompact: false }
+    const noSimple = s as Partial<PilgrimState> & { simpleMode?: boolean }
+    delete noSimple.simpleMode
+    s = { ...noSimple, homeCompact: false }
+  }
+  /* v5: 단일 prayerSubject를 intercessions 리스트로 흡수한다.
+   * 예전엔 한 사람만 품을 수 있었고 validateAlias를 우회했다. 이제 여러 명을 등록하고
+   * 러닝마다 한 명을 고른다. 기존 prayerSubject는 리스트의 첫 항목으로 옮긴다. */
+  if (from < 5) {
+    const list = [...(s.intercessions ?? [])]
+    const legacy = (s as Partial<PilgrimState> & { prayerSubject?: string }).prayerSubject
+    if (legacy && validateAlias(legacy).ok && !list.some((i) => i.alias === legacy)) {
+      list.unshift({ id: 'ic-legacy', alias: legacy, createdAt: Date.now() })
+    }
+    s = { ...s, intercessions: list }
   }
   return s
 }
@@ -288,16 +292,23 @@ export const usePilgrim = create<PilgrimState>()(
 
       setActiveCourse: (id) => set({ activeCourseId: id }),
       setUnits: (units) => set({ units }),
-      setPrayerSubject: (prayerSubject) => set({ prayerSubject }),
       setAdmin: (admin) => set({ admin }),
       setActiveJourney: (activeJourneyId) => set({ activeJourneyId }),
-      addIntercession: (alias, note) =>
-        set((s) => ({
-          intercessions: [
-            { id: 'ic-' + Date.now().toString(36), alias, note, createdAt: Date.now() },
-            ...s.intercessions,
-          ].slice(0, 30),
-        })),
+      addIntercession: (alias, note) => {
+        const v = validateAlias(alias)
+        if (!v.ok) return
+        const clean = alias.trim()
+        set((s) => {
+          // 같은 별칭이 이미 있으면 더하지 않는다(중복 카드 방지)
+          if (s.intercessions.some((i) => i.alias === clean)) return s
+          return {
+            intercessions: [
+              { id: 'ic-' + Date.now().toString(36), alias: clean, note: note?.trim() || undefined, createdAt: Date.now() },
+              ...s.intercessions,
+            ].slice(0, 30),
+          }
+        })
+      },
       removeIntercession: (id) =>
         set((s) => ({ intercessions: s.intercessions.filter((i) => i.id !== id) })),
       setBreathPrayer: (breathPrayer) => set({ breathPrayer }),
@@ -322,15 +333,10 @@ export const usePilgrim = create<PilgrimState>()(
         }
         const collectedVerses = Array.from(new Set([...s.collectedVerses, ...r.reached]))
 
-        // streak: 오늘 첫 러닝이면 갱신
+        // 오늘 첫 러닝인지 — lastRunDay는 "오늘 이미 달렸나" 판정에만 남긴다.
+        // 스트릭(streakDays)은 지웠다: 화면은 "이번 주 N일"만 쓰고, 스트릭은 월·수·금
+        // 러너를 매주 0으로 되돌려 가장 흔한 패턴을 실패로 채점하던 죽은 지표였다.
         const today = dayKey(r.endedAt)
-        let streakDays = s.streakDays
-        if (s.lastRunDay !== today) {
-          /* 하루 빠져도 끊기지 않는다(grace day). 문서가 약속한 "너그러운 스트릭"인데
-           * 코드에는 없어서, 하루만 쉬어도 1로 초기화됐다. */
-          const gap = s.lastRunDay ? daysBetween(s.lastRunDay, today) : 1
-          streakDays = gap <= 2 ? s.streakDays + 1 : 1
-        }
 
         /* 거리는 '그 런이 실제로 달린 여정'에 쌓는다.
          * s.activeJourneyId를 보면, 러닝 중에 사용자가 다른 여정을 눌러본 순간
@@ -402,12 +408,11 @@ export const usePilgrim = create<PilgrimState>()(
            * 오래된 런은 거리·시간·스플릿으로 남는다(그쪽이 훨씬 오래 쓸모 있다). */
           runs: [r, ...s.runs].slice(0, 100).map((x, i) => (i < TRACE_KEEP ? x : x.trace ? { ...x, trace: undefined } : x)),
           lifetime,
-          streakDays,
           lastRunDay: today,
         })
       },
 
-      resetAll: () => set({ ...seed(), admin: false, homeCompact: false, breathPrayer: false, traceRoute: false, activeJourneyId: 'peter', progress: {}, collectedVerses: [], collectedEpisodes: [], runs: [], lifetime: emptyLifetime(), streakDays: 0, journeyKm: {}, intercessions: [], lastRunDay: undefined, prayerSubject: undefined }),
+      resetAll: () => set({ ...seed(), admin: false, homeCompact: false, breathPrayer: false, traceRoute: false, activeJourneyId: 'peter', progress: {}, collectedVerses: [], collectedEpisodes: [], runs: [], lifetime: emptyLifetime(), journeyKm: {}, intercessions: [], lastRunDay: undefined }),
     }),
     {
       name: 'theway-pilgrim-v1',
@@ -427,8 +432,6 @@ export const usePilgrim = create<PilgrimState>()(
         collectedEpisodes: s.collectedEpisodes,
         runs: s.runs,
         lifetime: s.lifetime,
-        prayerSubject: s.prayerSubject,
-        streakDays: s.streakDays,
         lastRunDay: s.lastRunDay,
         admin: s.admin,
         breathPrayer: s.breathPrayer,
@@ -466,7 +469,7 @@ export const usePilgrim = create<PilgrimState>()(
       /* 버전을 둔다. 기본 merge는 한 겹 얕은 병합이라 새 최상위 키는 초기값을 물려받지만,
          CourseProgress·RunRecord처럼 중첩 구조에 필드가 늘면 기존 사용자가 undefined를 받는다.
          지금은 무해할 때 자리를 만들어 둔다. */
-      version: 4,
+      version: 5,
       migrate: (state, from) => {
         try {
           return migrateInner(state as Partial<PilgrimState>, from)

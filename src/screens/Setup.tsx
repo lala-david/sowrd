@@ -7,10 +7,11 @@ import { fmtDistance, fmtDuration } from '../lib/format'
 import { toneOf } from '../lib/mood'
 import { arcIcon, IconArrow, IconHeld, IconStep } from '../components/icons'
 import { SectionLabel } from '../components/ui'
+import { PRAYER_NOTE } from '../data/prayer'
 
 export default function Setup() {
   const go = useNav((s) => s.go)
-  const { activeCourseId, units, prayerSubject } = usePilgrim()
+  const { activeCourseId, units, intercessions } = usePilgrim()
   const pilgrim = usePilgrim()
   const configure = useRun((s) => s.configure)
   const course = courseById(activeCourseId)!
@@ -20,6 +21,9 @@ export default function Setup() {
   const [mode, setMode] = useState<RunMode>('guided')
   const [goalKm, setGoalKm] = useState(5)
   const [goalMin, setGoalMin] = useState(30)
+  // 오늘 품고 달릴 사람 — 여기서 바로 고른다(예전엔 Profile로 나갔다 와야 했다)
+  const [carryId, setCarryId] = useState<string | null>(null)
+  const carry = intercessions.find((i) => i.id === carryId)
 
   const next = prog.nextStation
   const NextIcon = next ? arcIcon(next.mood === 'lament' ? 'passion' : next.arc) : IconStep
@@ -30,7 +34,7 @@ export default function Setup() {
       mode, courseId: activeCourseId, journeyId: pilgrim.activeJourneyId,
       goalKm: mode === 'goalDistance' ? goalKm : undefined,
       goalSec: mode === 'goalTime' ? goalMin * 60 : undefined,
-      prayerFor: prayerSubject,
+      prayerFor: carry?.alias,
     })
     go('run')
   }
@@ -85,11 +89,40 @@ export default function Setup() {
         )}
       </div>
 
-      {/* 오늘 품고 달릴 사람 */}
-      <button onClick={() => go('profile')} className="mt-4 flex items-center gap-3 rounded-xl border border-line bg-sand-raised/30 px-4 py-3.5 text-left transition active:scale-[0.99]">
-        <span className="text-rubric"><IconHeld size={19} /></span>
-        <span className="flex-1 text-[13.5px] text-ink-soft">{prayerSubject ? `${prayerSubject}를 품고 달립니다` : '오늘 품고 달릴 사람 (선택)'}</span>
-      </button>
+      {/* 오늘 품고 달릴 사람 — Setup을 떠나지 않고 바로 고른다 */}
+      <div className="mt-4">
+        <div className="flex items-center gap-2 px-1 text-muted">
+          <IconHeld size={16} className="text-rubric" />
+          <span className="text-[12.5px]">오늘 품고 달릴 사람 <span className="text-muted">(선택)</span></span>
+        </div>
+        {intercessions.length > 0 ? (
+          <div className="mt-2.5 flex flex-wrap gap-2">
+            {intercessions.map((ic) => {
+              const on = ic.id === carryId
+              return (
+                <button
+                  key={ic.id}
+                  onClick={() => setCarryId(on ? null : ic.id)}
+                  aria-pressed={on}
+                  className={`min-h-[38px] rounded-full border px-3.5 text-[13px] transition active:scale-95 ${
+                    on ? 'border-clay-deep bg-clay-deep text-sand-raised' : 'border-line-strong text-ink-soft'
+                  }`}
+                >
+                  {ic.alias}
+                </button>
+              )
+            })}
+            <button onClick={() => go('profile')} className="min-h-[38px] rounded-full border border-dashed border-line-strong px-3.5 text-[13px] text-muted transition active:scale-95">
+              + 더하기
+            </button>
+          </div>
+        ) : (
+          <button onClick={() => go('profile')} className="mt-2.5 flex w-full items-center gap-2 rounded-xl border border-dashed border-line-strong bg-sand-raised/20 px-4 py-3 text-left text-[13px] text-muted transition active:scale-[0.99]">
+            <IconHeld size={16} className="text-rubric" /> 품고 달릴 사람 등록하기
+          </button>
+        )}
+        {carry && <p className="mt-2 px-1 text-[11.5px] leading-relaxed text-muted">{PRAYER_NOTE}</p>}
+      </div>
 
       <div className="flex-1 min-h-8" />
 

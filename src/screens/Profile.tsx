@@ -5,20 +5,24 @@ import { fmtDistance, fmtDuration, fmtPace, unitLabel } from '../lib/format'
 import { StatTile, SectionLabel, ProgressBar, SettingSwitch, WeeklyBars } from '../components/ui'
 import TabBar from '../components/TabBar'
 import { IconPilgrim, IconHeld, IconEmber, IconReached, IconSettings } from '../components/icons'
+import { validateAlias } from '../data/prayer'
 
 export default function Profile() {
   const pilgrim = usePilgrim()
-  const { units, setUnits, prayerSubject, setPrayerSubject, runs, resetAll, textScale, setTextScale } = pilgrim
+  const { units, setUnits, intercessions, addIntercession, removeIntercession, runs, resetAll, textScale, setTextScale } = pilgrim
   const totals = pilgrimTotals(pilgrim)
   const overall = overallJourneyPct(pilgrim)
   const tier = activeTier(pilgrim)
 
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(prayerSubject ?? '')
+  const [draft, setDraft] = useState('')
+  const [aliasErr, setAliasErr] = useState<string | null>(null)
 
-  const saveSubject = () => {
-    setPrayerSubject(draft.trim() || undefined)
-    setEditing(false)
+  const addPerson = () => {
+    const v = validateAlias(draft)
+    if (!v.ok) { setAliasErr(v.reason ?? '다시 확인해 주세요.'); return }
+    addIntercession(draft)
+    setDraft('')
+    setAliasErr(null)
   }
 
   return (
@@ -98,30 +102,45 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* 오늘 품고 달릴 사람 */}
+      {/* 품고 달리는 사람들 — 여러 명을 등록하고, 러닝을 시작할 때 한 명을 고른다.
+          예전엔 단 한 명만 저장됐고 실명 필터(validateAlias)를 우회했다. */}
       <div className="mt-5 px-6">
-        <SectionLabel>오늘 품고 달릴 사람</SectionLabel>
-        <div className="mt-3 flex items-center gap-3 rounded-xl border border-line bg-sand-raised/30 px-4 py-3">
-          <span className="text-rubric"><IconHeld size={20} /></span>
-          {editing ? (
-            <>
-              <input
-                autoFocus value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={12}
-                placeholder="이니셜 또는 별칭"
-                className="flex-1 bg-transparent text-[14px] text-ink outline-none placeholder:text-muted"
-                onKeyDown={(e) => e.key === 'Enter' && saveSubject()}
-              />
-              <button onClick={saveSubject} className="min-h-[44px] rounded-lg bg-clay-deep px-4 text-[13px] text-sand-raised">저장</button>
-            </>
-          ) : (
-            <>
-              <span className="flex-1 text-[14px] text-ink-soft">{prayerSubject ? prayerSubject : '아직 없어요'}</span>
-              {/* 실측 32×19였다 — 앱에서 가장 작은 터치 타깃. 44px 하한을 맞춘다 */}
-              <button onClick={() => { setDraft(prayerSubject ?? ''); setEditing(true) }} className="-mr-2 min-h-[44px] px-3 text-[13px] text-clay-deep">{prayerSubject ? '바꾸기' : '더하기'}</button>
-            </>
-          )}
+        <SectionLabel>품고 달리는 사람들</SectionLabel>
+
+        {intercessions.length > 0 && (
+          <div className="mt-3 flex flex-col gap-2">
+            {intercessions.map((ic) => (
+              <div key={ic.id} className="flex items-center gap-3 rounded-xl border border-line bg-sand-raised/30 px-4 py-3">
+                <span className="text-rubric"><IconHeld size={18} /></span>
+                <span className="flex-1 text-[14px] text-ink-soft">{ic.alias}</span>
+                <button
+                  onClick={() => removeIntercession(ic.id)}
+                  aria-label={`${ic.alias} 지우기`}
+                  className="-mr-1 flex min-h-[44px] min-w-[44px] items-center justify-center text-[13px] text-muted transition active:scale-90"
+                >
+                  지우기
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-2.5 flex items-center gap-2 rounded-xl border border-line bg-sand-raised/30 px-4 py-2">
+          <span className="text-muted"><IconHeld size={18} /></span>
+          <input
+            value={draft}
+            onChange={(e) => { setDraft(e.target.value); setAliasErr(null) }}
+            maxLength={8}
+            placeholder="이니셜 또는 별칭 (예: J.S, 은혜)"
+            className="min-h-[44px] flex-1 bg-transparent text-[14px] text-ink outline-none placeholder:text-muted"
+            onKeyDown={(e) => e.key === 'Enter' && addPerson()}
+          />
+          <button onClick={addPerson} className="min-h-[44px] rounded-lg bg-clay-deep px-4 text-[13px] text-sand-raised transition active:scale-95">더하기</button>
         </div>
-        <p className="mt-2 px-1 text-[11.5px] text-muted">이름은 이니셜·별칭만. 기본 비공개입니다.</p>
+        {aliasErr && <p className="mt-1.5 px-1 text-[11.5px] text-rubric">{aliasErr}</p>}
+        <p className="mt-2 px-1 text-[11.5px] leading-relaxed text-muted">
+          실명 대신 이니셜·별칭만. 기도 제목은 이 기기에만 남고 공유되지 않습니다.
+        </p>
       </div>
 
       {/* 활동 히스토리 */}
