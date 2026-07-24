@@ -44,6 +44,7 @@ export default function Reveal() {
   // 여정 쪽 결과 — 이게 없어서 여정을 달려도 리빌엔 예수 코스 문구만 떴다
   const { journeyId, reachedEpisodes, trace } = run
   const miles = run.reachedMilestones
+  const traceOff = !usePilgrim.getState().traceRoute
   /* 신호가 나빴는가 — 기준은 개인 기록 후보 조건과 같아야 한다(pilgrim.commitRun).
      다르면 "기록에 안 넣었다"고 말해 놓고 넣거나, 넣어 놓고 말을 안 하게 된다. */
   const { signalAccM, signalRate } = run
@@ -270,13 +271,25 @@ export default function Reveal() {
                 </span>
               </p>
             )}
-            {/* 달린 경로 — 페이스 색으로 칠한 지도. 설정에서 경로 기록을 켠 경우에만 */}
-            {trace.length > 1 && (
+            {/* 달린 경로 — 페이스 색으로 칠한 지도. 설정에서 경로 기록을 켠 경우에만.
+                꺼져 있으면(기본값) 지도가 왜 없는지 알려 준다 — 안 그러면 "지도가 왜 안 나오지"가 된다. */}
+            {trace.length > 1 ? (
               <div className="mt-5 border-t border-line pt-4">
                 <p className="mb-3 text-[11px] tracking-[0.1em] text-muted">오늘 달린 길</p>
                 <RouteMap points={trace} avgPaceSecPerKm={avgPace} />
               </div>
-            )}
+            ) : traceOff && distanceKm > 0.1 ? (
+              <button
+                onClick={() => go('profile')}
+                className="mt-5 flex w-full items-start gap-2.5 border-t border-line pt-4 text-left"
+              >
+                <IconCairn size={15} className="mt-[1px] shrink-0 text-muted" />
+                <span className="text-[12.5px] leading-relaxed text-muted">
+                  달린 길을 지도로 보고 싶으면 <span className="text-clay-deep">설정에서 「경로 기록」을 켜세요</span>.
+                  기본은 꺼져 있습니다 — 좌표는 켠 뒤에도 이 기기에만 남습니다.
+                </span>
+              </button>
+            ) : null}
 
             {/* 예전엔 이 블록 전체가 splits.length > 1 조건이라, 1km를 못 채운 러닝은
                 한 문장도 못 받았다("1km를 채우기 전에 멈췄습니다"는 렌더 불가능한 죽은 코드였다). */}
