@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "THE WAY",
+    "slug": "the-way-expo-shell",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "theway",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#F4F1E8",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "team.kloint.theway.shell",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "달린 거리를 재는 데만 사용합니다.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "달린 거리를 재는 데만 사용합니다.",
+        "NSLocalNetworkUsageDescription": "개발 중 같은 와이파이의 개발 서버(예: http://192.168.x.x:5173)에서 앱 화면을 불러옵니다.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
+    },
+    "android": {
+      "package": "team.kloint.theway.shell",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "달린 거리를 재는 데만 사용합니다."
+        }
+      ]
+    ]
+  }
+}

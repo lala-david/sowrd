@@ -1,0 +1,15 @@
+# Expo
+.expo/
+dist/
+web-build/
+
+# 의존성 (설치하지 않음 — README 참고)
+node_modules/
+
+# 로그 / OS
+*.log
+.DS_Store
+
+# 네이티브 프로젝트 (prebuild 시 생성)
+/ios
+/android
