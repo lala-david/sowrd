@@ -6,3 +6,15 @@ dev-dist
 .tmp
 
 .claude/worktrees
+
+# dev 터널·서버 임시 로그
+cf-*.log
+cf-*.out
+cf-*.out2
+cf-*.err
+vite-*.log
+vite-*.out
+vite-*.err
+expo-shell/expo-*.out
+expo-shell/expo-*.log
+expo-shell/node_modules
