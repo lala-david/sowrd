@@ -92,7 +92,7 @@ export default function Home() {
         </span>
       </header>
 
-      <main className="relative z-10 flex flex-1 flex-col">
+      <div className="relative z-10 flex flex-1 flex-col">
         {/* ① 지금 걷는 여정 — 이 화면의 주인공.
             탭하면 그 여정의 자리 목록(에피소드)으로 들어간다. */}
         <section className="px-6 pt-5">
@@ -294,7 +294,7 @@ export default function Home() {
             <IconChevron size={12} className={homeCompact ? '-rotate-90' : 'rotate-90'} />
           </button>
         </div>
-      </main>
+      </div>
 
       <TabBar active="home" />
     </>

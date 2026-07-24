@@ -38,9 +38,17 @@ export default function RouteMap({
 }) {
   const boxRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<LeafletMap | null>(null)
-  const [failed, setFailed] = useState(false)
+  /* 데이터 절약 모드면 처음부터 지도를 포기하고 SVG 폴백(RouteTrace, 네트워크 0건)으로 간다.
+   * OSM 타일은 회당 150~500KB다 — 데이터를 아끼려는 사용자에게 물어보지도 않고 쓰면 안 된다.
+   * navigator.connection은 표준은 아니지만 있는 브라우저(주로 안드로이드 크롬)에서만 참이라
+   * 없으면 평소대로 지도를 그린다. */
+  const saveData =
+    typeof navigator !== 'undefined' &&
+    (navigator as unknown as { connection?: { saveData?: boolean } }).connection?.saveData === true
+  const [failed, setFailed] = useState(saveData)
 
   useEffect(() => {
+    if (saveData) return // 지도 로드를 아예 시작하지 않는다
     if (!boxRef.current || points.length < 2) return
     let disposed = false
 
@@ -160,7 +168,7 @@ export default function RouteMap({
       mapRef.current?.remove()
       mapRef.current = null
     }
-  }, [points, avgPaceSecPerKm])
+  }, [points, avgPaceSecPerKm, saveData])
 
   if (points.length < 2) return null
   /* 타일을 못 받으면 지도를 포기하되 화면을 비우지는 않는다 — 좌표는 있으므로

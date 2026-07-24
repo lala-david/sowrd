@@ -127,7 +127,8 @@ export default function Courses() {
         </button>
       </div>
 
-      <TabBar active="courses" />
+      {/* 여정 탭에서 진입하는 하위 화면 — 자기 탭이 없으므로 여정 탭을 켠다 */}
+      <TabBar active="journeys" />
     </div>
   )
 }

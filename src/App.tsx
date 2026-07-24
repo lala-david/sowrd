@@ -47,9 +47,11 @@ export default function App() {
 
   return (
     <div className="flex min-h-full justify-center bg-sand text-ink">
-      <div className="relative flex min-h-full w-full max-w-[440px] flex-col overflow-x-clip">
+      {/* 앱 전체의 단일 main 랜드마크 — 스크린리더가 셸(탭바)을 건너뛰고 본문에 바로 닿는다.
+          예전엔 홈에만 있고 나머지 화면엔 없었다. */}
+      <main className="relative flex min-h-full w-full max-w-[440px] flex-col overflow-x-clip">
         <Active />
-      </div>
+      </main>
       {!seenIntro && <Intro />}
     </div>
   )
