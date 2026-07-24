@@ -336,3 +336,7 @@ export const useRun = create<RunState>((set, get) => ({
     flashAt: 0, splits: [], _lastKmMark: 0, _splitStartSec: 0,
   }),
 }))
+
+/* dev 전용 테스트 훅 — 브라우저 콘솔/자동화에서 러닝 상태를 직접 세팅해 리빌 등을 검증한다.
+ * import.meta.env.DEV 가드라 프로덕션 번들에는 포함되지 않는다. */
+if (import.meta.env.DEV) (globalThis as unknown as { __run?: typeof useRun }).__run = useRun

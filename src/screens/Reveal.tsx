@@ -6,21 +6,41 @@ import RouteMap from '../components/RouteMap'
 import { analyzeRun, readingOf } from '../lib/runAnalysis'
 import { usePilgrim } from '../state/pilgrim'
 import { useRun } from '../state/run'
-import { courseById, STATIONS, progressOf } from '../data/journey'
+import { courseById, STATIONS } from '../data/journey'
 import { featuredVerse, SCRIPTURE_ATTRIBUTION } from '../data/scripture'
 import { fmtDistance, fmtPace, unitLabel } from '../lib/format'
 import { toneOf } from '../lib/mood'
 import { SummaryTriple, SplitBars, SectionLabel } from '../components/ui'
-import { arcIcon, IconShare, IconReached, IconCairn, IconSeal } from '../components/icons'
-import { heroArt, sceneArt, episodeArt } from '../assets/art'
+import { IconShare, IconReached, IconCairn, IconSeal } from '../components/icons'
+import { heroArt, sceneArt, episodeArt, stationArt } from '../assets/art'
 import { sceneForEpisode } from '../lib/scene'
+
+/* 리빌의 한 '순간' — 여정 자리든 예수 코스 자리든 같은 형태로 렌더한다. */
+interface Moment {
+  key: string
+  art: string
+  accent: string
+  glow?: string
+  celebrate: boolean
+  topLabel: string
+  title: string
+  subtitle: string
+  /** 여정 자리는 사건 서술, 예수 코스 자리는 성구 */
+  body?: string
+  verse?: { text: string; ref: string }
+  refLine: string
+  reflection: string
+  prayer: string
+  onOpen: () => void
+}
 
 export default function Reveal() {
   const go = useNav((s) => s.go)
   const openEpisode = useNav((s) => s.openEpisode)
+  const openDetail = useNav((s) => s.openDetail)
   const units = usePilgrim((s) => s.units)
   const run = useRun()
-  const { courseId, startKm, distanceKm, elapsedSec, splits, reachedThisRun, prayerFor } = run
+  const { courseId, distanceKm, elapsedSec, splits, reachedThisRun, prayerFor } = run
   // 여정 쪽 결과 — 이게 없어서 여정을 달려도 리빌엔 예수 코스 문구만 떴다
   const { journeyId, reachedEpisodes, trace } = run
   const miles = run.reachedMilestones
@@ -46,13 +66,62 @@ export default function Reveal() {
    * 리빌 전체가 "갈릴리 호숫가"였고 여정 도달은 아래 12px 칩 신세였다.
    * 이번 런에서 여정 자리에 닿았으면 그것이 히어로다. 못 닿았으면 예수 코스 자리를 쓰고,
    * 그것도 없으면 여정의 남은 거리를 말한다. */
-  const epId = (reachedEpisodes ?? [])[(reachedEpisodes ?? []).length - 1]
-  const episode = epId ? journey?.episodes.find((e) => e.id === epId) : undefined
   const primaryId = reachedThisRun[reachedThisRun.length - 1]
   const station = primaryId ? STATIONS[primaryId] : undefined
   const tone = toneOf(station?.mood ?? 'everyday')
   const celebrate = tone.celebrate
   const v = station ? featuredVerse(station) : undefined
+
+  /* 이 런에 닿은 **모든** 자리를 순간(Moment)으로 모은다.
+   * 예전엔 마지막 하나만 히어로였고 나머지는 12px 칩이었다 — 첫 러닝에 예수 코스 3자리를
+   * 밟으면 두 자리는 온전한 순간(그림·성구·묵상·기도)을 못 받았다.
+   * 여러 자리에 닿았으면 넘겨 볼 수 있게 페이저로 만든다. */
+  const moments: Moment[] = [
+    ...(reachedEpisodes ?? [])
+      .map((id) => journey?.episodes.find((e) => e.id === id))
+      .filter(Boolean)
+      .map((ep) => {
+        const e = ep!
+        return {
+          key: `ep-${e.id}`,
+          art: episodeArt(journeyId, e.id) ?? sceneArt(sceneForEpisode(e)),
+          accent: 'var(--color-lapis)',
+          celebrate: true,
+          topLabel: `${journey?.name ?? '여정'} · 닿았습니다`,
+          title: e.place,
+          subtitle: `${e.placeLatin} · ${e.region}`,
+          body: e.event,
+          refLine: e.passageRef.replace(/\s*\(.*\)$/, ''),
+          reflection: e.reflection,
+          prayer: e.prayer,
+          onOpen: () => openEpisode(journeyId, e.id),
+        } as Moment
+      }),
+    ...reachedThisRun.map((id) => {
+      const st = STATIONS[id]
+      const sv = featuredVerse(st)
+      const t = toneOf(st.mood)
+      return {
+        key: `st-${id}`,
+        art: (stationArt(id) ?? heroArt(course.hero)) as string,
+        accent: t.accent,
+        glow: t.celebrate ? t.glow : undefined,
+        celebrate: t.celebrate,
+        topLabel: t.celebrate ? '닿았습니다' : '이 자리를 지나며',
+        title: st.place,
+        subtitle: st.title,
+        verse: { text: sv.text, ref: sv.refLatin },
+        refLine: sv.refLatin,
+        reflection: st.reflection,
+        prayer: st.prayer,
+        onOpen: () => openDetail(id, 'reveal'),
+      } as Moment
+    }),
+  ]
+
+  // 최근에 닿은 것(리스트 끝)을 먼저 보여준다 — 방금의 도달이 첫 화면
+  const [momIdx, setMomIdx] = useState(Math.max(0, moments.length - 1))
+  const moment = moments[Math.min(momIdx, moments.length - 1)]
 
   /* 여정 쪽 남은 거리 — 화면에 쓰는 것은 여정km가 아니라 **내가 실제로 달릴 km**다.
    * 바울은 축척 30배라 "다음까지 210km"는 실제로 7km인데, 여정km를 그대로 보여주면
@@ -62,9 +131,6 @@ export default function Reveal() {
   const jNext = jProg?.next
   const jToNextRealKm = jProg ? toRealKm(journeyId, jProg.toNextKm) : 0
 
-  const cumulative = startKm + distanceKm
-  const prog = progressOf(course, cumulative)
-  const ordinal = prog.reached // 지금까지 닿은 총 자리 수
   const avgPace = distanceKm > 0 ? elapsedSec / distanceKm : 0
   const analysis = analyzeRun(splits, distanceKm, elapsedSec)
 
@@ -93,67 +159,73 @@ export default function Reveal() {
     }
   }
 
-  const StArc = station ? arcIcon(station.mood === 'lament' ? 'passion' : station.arc) : IconReached
 
   return (
     <div className="relative flex flex-1 flex-col overflow-y-auto bg-sand text-ink">
       {/* 장면 — 자리 아트(얼굴 없는 실루엣) + 리빌 페이드 */}
       <div className="relative h-[42%] min-h-[280px] w-full overflow-hidden">
         <img
-          src={(episode && episodeArt(journeyId, episode.id)) ?? (episode ? sceneArt(sceneForEpisode(episode)) : heroArt(course.hero))}
+          key={moment?.key}
+          src={moment?.art ?? heroArt(course.hero)}
           alt=""
           /* alt=""로 둔다 — 두 요소 뒤 h1이 같은 지명을 말하므로 장식이다(예전엔 두 번 읽혔다) */
           className="h-full w-full object-cover transition-all duration-[1400ms] ease-out"
-          style={{ transform: shown ? 'scale(1)' : 'scale(1.08)', opacity: shown ? 1 : 0.2, filter: celebrate ? 'none' : 'saturate(0.72)' }}
+          style={{ transform: shown ? 'scale(1)' : 'scale(1.08)', opacity: shown ? 1 : 0.2, filter: moment?.celebrate === false ? 'saturate(0.72)' : 'none' }}
         />
-        <div className="pointer-events-none absolute inset-0" style={{ background: celebrate ? `radial-gradient(60% 50% at 50% 40%, ${tone.glow}, transparent)` : 'none' }} />
+        <div className="pointer-events-none absolute inset-0" style={{ background: moment?.glow ? `radial-gradient(60% 50% at 50% 40%, ${moment.glow}, transparent)` : 'none' }} />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28" style={{ background: 'linear-gradient(to top, var(--color-sand), transparent)' }} />
       </div>
 
       <div className="relative z-10 flex flex-1 flex-col px-8 pt-4" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
-        {episode ? (
+        {moment ? (
           <>
-            {/* 여정 자리 — 이 런의 주인공 */}
-            <div className="flex items-center gap-2" style={{ color: 'var(--color-lapis)' }}>
+            {/* 여러 자리에 닿았으면 넘겨 본다 — 점으로 몇 개인지, 어디쯤인지 알린다 */}
+            {moments.length > 1 && (
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-1.5" role="tablist" aria-label="이번에 닿은 자리">
+                  {moments.map((m, i) => (
+                    <button
+                      key={m.key}
+                      onClick={() => setMomIdx(i)}
+                      aria-label={`${i + 1}번째 자리 ${m.title}`}
+                      aria-selected={i === momIdx}
+                      className="h-2 rounded-full transition-all"
+                      style={{ width: i === momIdx ? 18 : 8, background: i === momIdx ? moment.accent : 'var(--color-line-strong)' }}
+                    />
+                  ))}
+                </div>
+                <span className="font-display text-[11px] text-muted" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>
+                  이번에 닿은 자리 {momIdx + 1}/{moments.length}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-2" style={{ color: moment.accent }}>
               <IconSeal size={17} />
-              <p className="font-display text-[12px] uppercase tracking-[0.22em]">
-                {journey?.name} · {jProg ? `${jProg.reachedCount}번째 자리` : '자리'} · 닿았습니다
-              </p>
+              <p className="font-display text-[12px] uppercase tracking-[0.22em]">{moment.topLabel}</p>
             </div>
-            <h1 className="mt-2.5 font-serif text-[36px] font-bold leading-[1.1]">{episode.place}</h1>
-            <p className="mt-1 font-serif text-[15px] text-ink-soft">{episode.placeLatin} · {episode.region}</p>
+            <h1 className="mt-2.5 font-serif text-[36px] font-bold leading-[1.1]">{moment.title}</h1>
+            <p className="mt-1 font-serif text-[15px] text-ink-soft">{moment.subtitle}</p>
 
-            <p className="mt-6 max-w-[28ch] font-serif text-[17px] leading-[1.72] text-ink">{episode.event}</p>
-            <button
-              onClick={() => openEpisode(journeyId, episode.id)}
-              className="mt-3 flex items-center gap-1.5 self-start font-display text-[12px] uppercase tracking-[0.2em] text-clay-deep"
-            >
-              {episode.passageRef.replace(/\s*\(.*\)$/, '')} · 본문 읽기
-            </button>
-
-            <p className="mt-6 max-w-[32ch] text-[14px] leading-relaxed text-ink-soft">{episode.reflection}</p>
-            <p className="mt-3 text-[12.5px] text-muted">기도 · {episode.prayer}</p>
-          </>
-        ) : station ? (
-          <>
-            <div className="flex items-center gap-2" style={{ color: tone.accent }}>
-              <StArc size={17} />
-              <p className="font-display text-[12px] uppercase tracking-[0.22em]">{celebrate ? `${ordinal}번째 자리 · 닿았습니다` : '이 자리를 지나며'}</p>
-            </div>
-            <h1 className="mt-2.5 font-serif text-[36px] font-bold leading-[1.1]">{station.place}</h1>
-            <p className="mt-1 font-serif text-[16px] text-ink-soft">{station.title}</p>
-
-            {v && (
+            {moment.verse ? (
               <>
                 <p className="mt-6 max-w-[26ch] font-serif text-[18px] leading-[1.72] text-ink">
-                  <span className="versal" style={{ color: tone.accent }}>{v.text.slice(0, 1)}</span>{v.text.slice(1)}
+                  <span className="versal" style={{ color: moment.accent }}>{moment.verse.text.slice(0, 1)}</span>{moment.verse.text.slice(1)}
                 </p>
-                <p className="mt-2.5 font-display text-[12px] uppercase tracking-[0.22em]" style={{ color: 'var(--color-clay-deep)' }}>{v.refLatin}</p>
+                <button onClick={moment.onOpen} className="mt-2.5 flex items-center gap-1.5 self-start font-display text-[12px] uppercase tracking-[0.22em]" style={{ color: 'var(--color-clay-deep)' }}>
+                  {moment.verse.ref} · 전문 보기
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="mt-6 max-w-[28ch] font-serif text-[17px] leading-[1.72] text-ink">{moment.body}</p>
+                <button onClick={moment.onOpen} className="mt-3 flex items-center gap-1.5 self-start font-display text-[12px] uppercase tracking-[0.2em] text-clay-deep">
+                  {moment.refLine} · 본문 읽기
+                </button>
               </>
             )}
 
-            <p className="mt-6 max-w-[32ch] text-[14px] leading-relaxed text-ink-soft">{station.reflection}</p>
-            <p className="mt-3 text-[12.5px] text-muted">기도 · {station.prayer}</p>
+            <p className="mt-6 max-w-[32ch] text-[14px] leading-relaxed text-ink-soft">{moment.reflection}</p>
+            <p className="mt-3 text-[12.5px] text-muted">기도 · {moment.prayer}</p>
           </>
         ) : (
           <>
