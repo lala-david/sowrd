@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNav } from '../store'
 import { JOURNEYS, JOURNEY_CHROME, toJourneyKm } from '../data/geo/journeys'
 import { usePilgrim, journeyKmOf } from '../state/pilgrim'
-import { STATIONS, type PassageSlug } from '../data/journey'
+import { STATIONS, JESUS_ORDER, type PassageSlug } from '../data/journey'
 import { featuredVerseById, GRACE_NOTE } from '../data/scripture'
 import { toneOf } from '../lib/mood'
 import { sceneArt, stationArt, crestArt, episodeArt } from '../assets/art'
@@ -12,9 +12,10 @@ import TabBar from '../components/TabBar'
 import { arcIcon, IconScroll, IconSeal } from '../components/icons'
 
 /* 예수님의 사역 길 — 카테고리로 묶지 않고 실제 사역 순서 그대로 한 줄로 잇는다.
- * STATIONS의 선언 순서가 곧 사역 순서다(세례 → 광야 → 부르심 → 팔복 → … → 파송).
+ * 순서의 단일 정본은 journey.ts의 JESUS_ORDER다(세례 → 광야 → 부르심 → 팔복 → … → 파송).
+ * 사도행전 3자리(오순절·베드로 설교·사울)는 예수 여정에서 분리되어 여기 표시되지 않는다.
  * 자리마다 그 지형의 그림을 붙여야 스탬프가 수집품처럼 보인다. */
-const ORDER = Object.keys(STATIONS) as PassageSlug[]
+const ORDER: PassageSlug[] = JESUS_ORDER
 
 type Mode = 'journeys' | 'path' | 'verses'
 

@@ -213,6 +213,9 @@ export const STATIONS: Record<PassageSlug, Station> = {
     reflection: '여정은 도착으로 끝나지 않고 파송으로 이어집니다. 당신이 받은 이 길은, 이제 누군가에게 전할 길입니다.',
     prayer: '내가 걸은 이 길을 다른 이에게 전하게 하소서.',
   },
+  /* ── 사도행전 (예수 여정에서 분리) ──────────────────────────────────────
+   * 아래 3자리는 초대교회 사건 → JESUS_ORDER·예수 코스에서 제외. 성구/아트 데이터
+   * 재사용을 위해 레지스트리에만 남겨 둔다. 서사는 베드로/바울 여정 소관. */
   pentecost: {
     id: 'pentecost', place: '예루살렘', placeLatin: 'Jerusalem', title: '오순절',
     passage: 'pentecost', verse: 4, arc: 'send', mood: 'joy',
@@ -292,6 +295,32 @@ export const STATIONS: Record<PassageSlug, Station> = {
   },
 }
 
+/* ── 정본 서사 순서 (2026-07-27 재배열) ──────────────────────────────────
+ * 예수님 공생애의 시간 순서. Home·Collection의 타임라인/여권이 이 순서를 따른다.
+ * (레지스트리 STATIONS의 선언 순서가 아니라, 이 배열이 표시 순서의 단일 정본이다.)
+ *
+ * 사도행전 분리: pentecost(오순절)·peter-sermon(베드로 설교)·saul(사울의 회심)은
+ * 예수님 공생애가 아니라 초대교회 사건이므로 예수 여정에서 제외한다. 해당 내용은
+ * 베드로/바울 여정(geo/journeys/peter.json·paul.json)에 이미 존재한다. STATIONS
+ * 레지스트리에는 성구·아트·인물 데이터 재사용을 위해 남겨 두되, 순서·코스에서 뺀다.
+ * 예수 여정의 끝은 지상명령(commission) → 땅 끝까지(ends-earth, 승천 시 말씀 행 1:8). */
+export const JESUS_ORDER: PassageSlug[] = [
+  // 부르심
+  'baptism', 'temptation', 'call-mt4', 'call-mk1',
+  // 산상수훈
+  'beat-1', 'beat-2', 'light-mt5', 'lords-prayer', 'wise-builder',
+  // 갈릴리 사역 — 비유와 이적
+  'sower', 'mustard', 'feeding', 'walk-water', 'take-heart', 'blind-sight', 'transfig',
+  // 후기 사역 — 은혜의 비유와 베다니
+  'lost-sheep', 'prodigal', 'samaritan', 'resurrection-hope', 'lazarus-come',
+  // 수난주간
+  'entry', 'talents', 'last-supper', 'gethsemane', 'arrest', 'pilate', 'golgotha', 'finished', 'cross-luke',
+  // 부활
+  'empty-tomb', 'risen',
+  // 파송
+  'commission', 'ends-earth',
+]
+
 /* ── 코스: 거리별 순례길 ─────────────────────────────────────────────── */
 export interface CourseStation {
   id: PassageSlug
@@ -361,10 +390,10 @@ export const COURSES: Course[] = [
   },
   {
     id: 'ends', name: '땅 끝까지', nameLatin: 'To the Ends of the Earth', distanceKm: 50, band: 'ULTRA',
-    arcLabel: '부활 이후 · 사도행전 · 울트라',
-    blurb: '부활에서 땅 끝까지, 결승선 없는 사명의 울트라 순례.',
+    arcLabel: '부활 · 파송 · 울트라',
+    blurb: '빈 무덤에서 땅 끝까지, 결승선 없는 사명의 울트라 순례.',
     hero: 'dawn-road',
-    stations: [S('risen', 8), S('commission', 16), S('pentecost', 25), S('peter-sermon', 33), S('saul', 42), S('ends-earth', 50)],
+    stations: [S('empty-tomb', 10), S('risen', 20), S('resurrection-hope', 30), S('commission', 40), S('ends-earth', 50)],
   },
 ]
 

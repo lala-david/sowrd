@@ -1,5 +1,7 @@
 # 프로젝트 현황 — PROJECT THE WAY
 
+> ✅ **정본: [`DECISIONS.md`](DECISIONS.md).** 출시 범위 = **예수 단일 여정**(아브라함·출애굽·바울·베드로 다중 데이터는 코드에 있으나 출시선 뒤로 주차). 스테이션은 `src/data/journey.ts`의 `JESUS_ORDER`(34자리) 정본 순서로 재배열, 사도행전 3자리(오순절·베드로 설교·사울) 분리(→ 베드로/바울 여정). 타겟·초점·검증은 [`BEACHHEAD.md`](BEACHHEAD.md)·[`FOCUS-ROADMAP.md`](FOCUS-ROADMAP.md)·[`VALIDATION.md`](VALIDATION.md). *아래 §5의 "37 스테이션" 등 서술은 이 배너 기준으로 읽을 것.*
+
 > 최종 갱신: 2026-07-22
 > 현재 단계: **개발 — S1 데이터 구동 앱 동작.** 디자인을 C안(따뜻한 순례길)으로 전환하고, 하드코딩 프로토타입(S0)을 **데이터에서 렌더되는 앱**으로 재작업. 7화면(홈·코스선택·Setup·러닝/THE LAMP·리빌·수집/여권·프로필), 37 스테이션 + 7 거리별 코스(1·3·5·10·21·42·50km), 영속 스토어(zustand+persist), 시뮬레이션 러닝 엔진, 커스텀 SVG 아이콘 세트, Recraft 아트 6종(얼굴 없는 뒷모습·1세기 근동). NRC 벤치마킹(거대 거리 숫자·스플릿·요약) 반영. `tsc --noEmit` + `vite build` 통과. 상세 구조는 [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
@@ -22,7 +24,11 @@
 | 문서 | 다루는 내용 | 상태 |
 |---|---|---|
 | [`README.md`](../README.md) | 프로젝트 개요, 차별점, 지켜야 할 선, 로드맵 요약 | ✅ |
-| [`docs/PLANNING.md`](PLANNING.md) | **전체 기획서 17장** — 서비스 정의, 신학 기준, 공생애 타임라인 9시즌, 개인·공동체 모드, 러닝 중 콘텐츠, 게임화 원칙, 글로벌 전략, 개인정보·안전, MVP, 단계별 확장, 수익 모델, 운영 조직, KPI | ✅ |
+| [`docs/PLANNING.md`](PLANNING.md) | **전체 기획서 17장** — 서비스 정의, 신학 기준, 공생애 타임라인 9시즌, 개인·공동체 모드, 러닝 중 콘텐츠, 게임화 원칙, 글로벌 전략, 개인정보·안전, MVP, 단계별 확장, 수익 모델, 운영 조직, KPI | ✅ MVP 정본 |
+| [`docs/DECISIONS.md`](DECISIONS.md) | **⭐ 정본 결정 기록** — 문서 충돌 시 최우선. "다중-여정 아키텍처·예수 단일 출시", 슬로건 통일, 게임/오디오/걷기 모순 정리 | ✅ 정본 |
+| [`docs/BEACHHEAD.md`](BEACHHEAD.md) | **비치헤드 확정** — 1순위 고객(한국 도시권 2030 개신교 소그룹 러너), 러너/걷기·신자/온램프·B2C/B2B·국가·여정 1차→2차 순서화 | ✅ |
+| [`docs/FOCUS-ROADMAP.md`](FOCUS-ROADMAP.md) | **초점 로드맵** — NOW(WIP=1 수요검증)/NEXT/LATER/**Won't-do-yet**. MASTERPLAN §7 "전부 구현" 해체 | ✅ |
+| [`docs/VALIDATION.md`](VALIDATION.md) | **수요 검증 설계** — Mom Test 인터뷰·경쟁앱 리뷰 코딩·랜딩 A/B 스모크테스트·KPI 임계값·결정 게이트 | ✅ |
 | [`docs/DESIGN-TOOLING.md`](DESIGN-TOOLING.md) | 디자인/UI/이미지·아이콘 MCP 20여종 조사 + 추천 스택 | ✅ |
 | [`docs/ART-DIRECTION.md`](ART-DIRECTION.md) | Nike풍 미니멀 애슬레틱 아트 방향, 프롬프트 템플릿, 일관성 워크플로 | ✅ |
 | [`docs/DESIGN-PHILOSOPHY.md`](DESIGN-PHILOSOPHY.md) | **디자인 철학** — "빛이 이긴 길"(라이트), 7원칙, AI-slop 금지 목록, 토큰. 모든 화면 심사 기준 | ✅ |

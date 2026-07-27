@@ -1,0 +1,366 @@
+<style>
+  /* ── THE WAY · 검증 랜딩 (변형 B — 품은 사람을 위해) ───────────────────────
+     따뜻한 순례길 팔레트. 라이트=낮의 순례, 다크=밤의 순례·등불.
+     대기자 CTA는 외부 폼/메일로 연결(아티팩트 CSP상 자체 수집 불가).
+     ▶ WAITLIST: 아래 --form-url 대신 Tally/Google Form 링크로 교체하면 전환 추적 깔끔. */
+  :root{
+    --bg:#E7DCC4; --panel:#F2EAD8; --panel-2:#EFE5CF;
+    --ink:#2B2419; --muted:#736753; --faint:#9A8C6E;
+    --clay:#A84B2A; --olive:#5F6B45; --gold:#C6892E;
+    --line:#D2C4A2; --route:#9A5636; --lamp:#D69A3C;
+    --shadow:0 1px 0 rgba(43,36,25,.04), 0 24px 60px -32px rgba(43,36,25,.35);
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#16120C; --panel:#201A12; --panel-2:#241D14;
+      --ink:#EDE4D1; --muted:#A99C82; --faint:#7C7059;
+      --clay:#D0754C; --olive:#94A06F; --gold:#E8B25A;
+      --line:#38301F; --route:#C88A55; --lamp:#F0BE68;
+      --shadow:0 1px 0 rgba(0,0,0,.3), 0 30px 70px -34px rgba(0,0,0,.7);
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#E7DCC4; --panel:#F2EAD8; --panel-2:#EFE5CF;
+    --ink:#2B2419; --muted:#736753; --faint:#9A8C6E;
+    --clay:#A84B2A; --olive:#5F6B45; --gold:#C6892E;
+    --line:#D2C4A2; --route:#9A5636; --lamp:#D69A3C;
+    --shadow:0 1px 0 rgba(43,36,25,.04), 0 24px 60px -32px rgba(43,36,25,.35);
+    color-scheme:light;
+  }
+  :root[data-theme="dark"]{
+    --bg:#16120C; --panel:#201A12; --panel-2:#241D14;
+    --ink:#EDE4D1; --muted:#A99C82; --faint:#7C7059;
+    --clay:#D0754C; --olive:#94A06F; --gold:#E8B25A;
+    --line:#38301F; --route:#C88A55; --lamp:#F0BE68;
+    --shadow:0 1px 0 rgba(0,0,0,.3), 0 30px 70px -34px rgba(0,0,0,.7);
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box}
+  .wrap{
+    --serif:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,'Times New Roman',serif;
+    --myeongjo:'Nanum Myeongjo','Apple SD Gothic Neo',var(--serif),serif;
+    --sans:'Apple SD Gothic Neo','Pretendard','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+    background:var(--bg); color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.65; -webkit-font-smoothing:antialiased;
+    /* 은은한 종이 그레인 */
+    background-image:
+      radial-gradient(rgba(120,100,60,.05) 1px, transparent 1.4px);
+    background-size:4px 4px;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  .shell{max-width:64rem; margin:0 auto; padding:clamp(1.4rem,4vw,2.6rem);}
+  .measure{max-width:40rem}
+
+  /* topbar */
+  .top{display:flex; align-items:center; justify-content:space-between; gap:1rem; padding-block:.4rem 0}
+  .brand{display:flex; align-items:center; gap:.6rem; font-family:var(--serif); letter-spacing:.02em}
+  .brand .lamp{width:1.05rem; height:1.05rem; border-radius:50%;
+    background:radial-gradient(circle at 50% 40%, var(--lamp), var(--clay) 70%);
+    box-shadow:0 0 14px -1px var(--lamp);}
+  .brand b{font-weight:600; font-size:1.02rem}
+  .top .kick{font-family:var(--sans); font-size:.72rem; letter-spacing:.18em; text-transform:uppercase; color:var(--faint)}
+
+  /* hero */
+  header.hero{padding-block:clamp(2.4rem,7vw,4.2rem) clamp(1.6rem,4vw,2.4rem)}
+  .eyebrow{font-size:.74rem; letter-spacing:.24em; text-transform:uppercase; color:var(--clay); font-weight:600; margin:0 0 1.1rem}
+  h1{
+    font-family:var(--myeongjo); font-weight:600;
+    font-size:clamp(2.15rem,6.2vw,3.7rem); line-height:1.14; letter-spacing:-.01em;
+    margin:0 0 1.15rem; text-wrap:balance; color:var(--ink);
+  }
+  h1 .accent{color:var(--clay)}
+  .latin{font-family:var(--serif); font-style:italic; color:var(--muted); font-size:clamp(1rem,2.2vw,1.2rem); letter-spacing:.01em; margin:0 0 1.5rem}
+  .lede{font-size:clamp(1.02rem,2vw,1.18rem); color:var(--muted); margin:0 0 2rem; text-wrap:pretty}
+
+  /* map panel — 순례 경로 */
+  .mapcard{
+    position:relative; border:1px solid var(--line); border-radius:14px;
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    box-shadow:var(--shadow); overflow:hidden;
+  }
+  .mapcard .frame{position:absolute; inset:.55rem; border:1px solid var(--line); border-radius:9px; pointer-events:none; opacity:.7}
+  .mapcard canvas{display:block; width:100%; height:clamp(240px,42vw,360px)}
+  .mapcap{position:absolute; left:1.15rem; bottom:1rem; right:1.15rem; display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; pointer-events:none}
+  .mapcap .q{font-family:var(--myeongjo); font-size:1rem; color:var(--ink); max-width:22ch; text-wrap:balance}
+  .mapcap .n{font-family:var(--serif); font-style:italic; font-size:.82rem; letter-spacing:.03em; color:var(--faint); white-space:nowrap}
+
+  /* buttons */
+  .cta-row{display:flex; flex-wrap:wrap; gap:.8rem; align-items:center; margin-top:2rem}
+  .btn{display:inline-flex; align-items:center; gap:.5rem; font-family:var(--sans); font-size:1rem; font-weight:600;
+    padding:.85rem 1.4rem; border-radius:999px; text-decoration:none; cursor:pointer; border:1px solid transparent;
+    transition:transform .16s ease, box-shadow .16s ease, background .16s ease;}
+  .btn.primary{background:var(--clay); color:#FBF4E6; box-shadow:0 10px 24px -12px var(--clay)}
+  .btn.primary:hover{transform:translateY(-2px); box-shadow:0 16px 30px -14px var(--clay)}
+  .btn.ghost{background:transparent; color:var(--ink); border-color:var(--line)}
+  .btn.ghost:hover{border-color:var(--clay); color:var(--clay)}
+  .btn:focus-visible{outline:2.5px solid var(--olive); outline-offset:3px}
+  .cta-note{font-size:.82rem; color:var(--faint)}
+
+  /* section rhythm */
+  section{padding-block:clamp(2.2rem,6vw,3.4rem); border-top:1px solid var(--line)}
+  .slabel{font-size:.72rem; letter-spacing:.22em; text-transform:uppercase; color:var(--faint); font-weight:600; margin:0 0 1.6rem}
+  h2{font-family:var(--myeongjo); font-weight:600; font-size:clamp(1.5rem,3.4vw,2rem); line-height:1.25; margin:0 0 .5rem; text-wrap:balance}
+
+  /* why — 3 invitations */
+  .cards{display:grid; grid-template-columns:1fr; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:12px; overflow:hidden}
+  @media(min-width:720px){.cards{grid-template-columns:repeat(3,1fr)}}
+  .card{background:var(--panel); padding:1.5rem 1.4rem; display:flex; flex-direction:column; gap:.6rem}
+  .card .idx{font-family:var(--serif); font-style:italic; color:var(--clay); font-size:1.1rem}
+  .card h3{font-family:var(--myeongjo); font-weight:600; font-size:1.12rem; margin:0; line-height:1.35}
+  .card p{margin:0; color:var(--muted); font-size:.95rem}
+
+  /* how — core loop */
+  .loop{display:grid; grid-template-columns:1fr; gap:.9rem; counter-reset:step}
+  @media(min-width:720px){.loop{grid-template-columns:repeat(4,1fr)}}
+  .step{position:relative; padding:1.25rem 1.2rem 1.3rem; border:1px solid var(--line); border-radius:12px; background:var(--panel); display:flex; flex-direction:column; gap:.45rem}
+  .step .dot{width:.7rem; height:.7rem; border-radius:50%; background:var(--lamp); box-shadow:0 0 10px -1px var(--lamp); margin-bottom:.2rem}
+  .step .t{font-family:var(--myeongjo); font-weight:600; font-size:1.05rem}
+  .step p{margin:0; color:var(--muted); font-size:.9rem}
+  .step .verb{font-family:var(--serif); font-style:italic; color:var(--faint); font-size:.78rem; letter-spacing:.03em}
+
+  /* honesty */
+  .honesty{background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--clay); border-radius:12px; padding:clamp(1.5rem,4vw,2.2rem)}
+  .honesty p{margin:0 0 .7rem; color:var(--ink); font-size:1.05rem; text-wrap:pretty}
+  .honesty p.sub{color:var(--muted); font-size:.98rem; margin-bottom:0}
+
+  /* cta block */
+  .final{text-align:center; display:flex; flex-direction:column; align-items:center; gap:1.1rem}
+  .final h2{font-size:clamp(1.7rem,4vw,2.3rem)}
+  .final .lede{margin:0; max-width:34rem}
+  .final .cta-row{justify-content:center}
+
+  /* footer */
+  footer{border-top:1px solid var(--line); padding-block:2.2rem 2.8rem; color:var(--muted); display:flex; flex-direction:column; gap:1rem}
+  footer .quiet{font-family:var(--myeongjo); font-size:1.05rem; color:var(--ink); max-width:30rem; text-wrap:balance}
+  footer .meta{font-size:.82rem; color:var(--faint); display:flex; flex-wrap:wrap; gap:.4rem 1.1rem}
+  footer .meta span{display:inline-flex; align-items:center; gap:.4rem}
+  .priv{font-size:.82rem; color:var(--faint)}
+
+  @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
+</style>
+
+<div class="wrap">
+  <div class="shell">
+
+    <div class="top">
+      <div class="brand"><span class="lamp" aria-hidden="true"></span><b>THE&nbsp;WAY</b></div>
+      <div class="kick">품고 달리는 길</div>
+    </div>
+
+    <header class="hero">
+      <p class="eyebrow">Run for someone · 품고 달리는 길</p>
+      <h1 class="measure">오늘, 한 사람을<br><span class="accent">마음에 품고</span> 달린다</h1>
+      <p class="latin">Run the Way. Walk with the Gospel.</p>
+      <p class="lede measure">아픈 친구, 멀리 있는 가족, 이름을 부르고 싶은 누군가. 오늘 그 한 사람을 품고 달린 거리가 예수님의 길 위에 등불로 남습니다.</p>
+
+      <div class="mapcard">
+        <canvas id="route" aria-label="스스로 그려지는 순례 경로"></canvas>
+        <div class="frame" aria-hidden="true"></div>
+        <div class="mapcap">
+          <div class="q">당신이 품은 이름이, 이 길 위에 등불로 켜집니다.</div>
+          <div class="n">For someone you carry</div>
+        </div>
+      </div>
+
+      <div class="cta-row">
+        <a class="btn primary" href="#join">품고 걸을게요 →</a>
+        <span class="cta-note">먼저 함께 걸을 사람을 찾습니다 · 무료</span>
+      </div>
+    </header>
+
+    <section>
+      <p class="slabel">왜 이 길인가</p>
+      <div class="cards">
+        <div class="card">
+          <span class="idx">i.</span>
+          <h3>다크패턴 없는,<br>정말 좋은 러닝 앱</h3>
+          <p>스트릭으로 죄책감 주지 않습니다. 쉼도 축복입니다. 조작하지 않는 앱, 그 자체가 드뭅니다.</p>
+        </div>
+        <div class="card">
+          <span class="idx">ii.</span>
+          <h3>누군가를 품고<br>달리는 시간</h3>
+          <p>아픈 친구, 멀리 있는 가족. ‘기도’라 부르지 않아도, 한 사람을 마음에 붙들고 달리는 경험은 누구에게나 있습니다.</p>
+        </div>
+        <div class="card">
+          <span class="idx">iii.</span>
+          <h3>통계가 아니라,<br>그려지는 하나의 길</h3>
+          <p>막대그래프 대신, 당신만의 순례 지도가 한 걸음씩 채워집니다. 자랑하고 싶은 아름다운 오브제.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <p class="slabel">어떻게 걷나</p>
+      <h2 class="measure">달린다 · 자리에 닿는다 · 말씀을 만난다 · 함께 중보한다</h2>
+      <div class="loop" style="margin-top:1.6rem">
+        <div class="step"><span class="dot" aria-hidden="true"></span><span class="verb">Run</span><span class="t">달린다</span><p>평소처럼 달리거나 걷습니다. 그 실제 거리가 여정을 전진시킵니다.</p></div>
+        <div class="step"><span class="dot" aria-hidden="true"></span><span class="verb">Arrive</span><span class="t">자리에 닿는다</span><p>일정 거리를 넘으면 예수님 사역의 한 ‘자리’가 열립니다.</p></div>
+        <div class="step"><span class="dot" aria-hidden="true"></span><span class="verb">Reveal</span><span class="t">말씀을 만난다</span><p>그 자리의 성경 본문과 짧은 묵상이 도착의 선물로 펼쳐집니다.</p></div>
+        <div class="step"><span class="dot" aria-hidden="true"></span><span class="verb">Together</span><span class="t">함께 중보한다</span><p>소그룹이 거리를 모아 하나의 길을 완성하고, 서로를 위해 기도합니다.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <p class="slabel">정직한 초대</p>
+      <div class="honesty measure">
+        <p>아직 만드는 중입니다.</p>
+        <p>완성된 앱을 파는 게 아니라, 이 길을 <b>먼저 함께 걸을 분</b>을 찾고 있어요. 관심을 남겨 주시면 가장 먼저 초대하고, 어떤 길이면 좋을지 여쭙겠습니다.</p>
+        <p class="sub">강요하지 않습니다. 그냥, 같이 걸어볼래요?</p>
+      </div>
+    </section>
+
+    <section id="join" class="final">
+      <h2>이 순례, 같이 걸을래요?</h2>
+      <p class="lede">이메일 하나만 남겨 주세요. 준비되면 가장 먼저, 조용히 초대장을 보내드릴게요.</p>
+      <div class="cta-row">
+        <!-- ▶ 대기자 폼(Tally/Google Form)을 만들면 아래 href를 그 링크로 교체하세요.
+             변형 B 유입 구분을 위해 subject/파라미터에 'B' 태그가 들어가 있습니다. -->
+        <a class="btn primary" id="joinBtn"
+           href="mailto:wnswns1946@kloint.team?subject=THE%20WAY%20%EB%8C%80%EA%B8%B0%EC%9E%90%20%C2%B7%20B&body=%ED%92%88%EA%B3%A0%20%EA%B1%B7%EA%B3%A0%20%EC%8B%B6%EC%96%B4%EC%9A%94.%20%EC%A4%80%EB%B9%84%EB%90%98%EB%A9%B4%20%EC%95%8C%EB%A0%A4%EC%A3%BC%EC%84%B8%EC%9A%94.">
+          품고 걸을게요 →
+        </a>
+        <span class="cta-note">이메일만 받습니다 · 스팸 없음</span>
+      </div>
+    </section>
+
+    <footer>
+      <p class="quiet">우리는 달린 거리로 믿음을 증명하지 않습니다. 다만 그 길을 함께 걷습니다.</p>
+      <div class="meta">
+        <span>🕯️ THE WAY</span>
+        <span>신앙생활을 돕는 보조 도구 — 예배·성경·교회를 대체하지 않습니다.</span>
+      </div>
+      <p class="priv">개인정보: 이메일 주소만 받습니다. 위치(GPS)·기도 내용은 수집하지 않습니다.</p>
+    </footer>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  var canvas = document.getElementById('route');
+  if(!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var reduce = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  // 순례 경로 제어점(상대 0~1). 아래→위로 굽이치며 오르는 트레일.
+  var ctrl = [
+    [0.10,0.90],[0.28,0.78],[0.20,0.60],[0.42,0.50],
+    [0.64,0.56],[0.56,0.36],[0.78,0.26],[0.88,0.12]
+  ];
+  // 등불이 켜지는 자리(제어점 인덱스)
+  var lamps = [0,2,4,6,7];
+
+  function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+  // Catmull-Rom → 촘촘한 폴리라인 샘플
+  function sample(pts, seg){
+    var out=[];
+    for(var i=0;i<pts.length-1;i++){
+      var p0=pts[i-1]||pts[i], p1=pts[i], p2=pts[i+1], p3=pts[i+2]||pts[i+1];
+      for(var t=0;t<seg;t++){
+        var s=t/seg, s2=s*s, s3=s2*s;
+        var x=0.5*((2*p1[0])+(-p0[0]+p2[0])*s+(2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*s2+(-p0[0]+3*p1[0]-3*p2[0]+p3[0])*s3);
+        var y=0.5*((2*p1[1])+(-p0[1]+p2[1])*s+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*s2+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*s3);
+        out.push([x,y]);
+      }
+    }
+    out.push(pts[pts.length-1]);
+    return out;
+  }
+
+  var W=0,H=0,dpr=1, poly=[], lampT=[];
+  function layout(){
+    dpr = Math.min(window.devicePixelRatio||1, 2);
+    W = canvas.clientWidth; H = canvas.clientHeight;
+    canvas.width = W*dpr; canvas.height = H*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    var pad = 26;
+    var pts = ctrl.map(function(p){ return [pad + p[0]*(W-2*pad), pad + p[1]*(H-2*pad)]; });
+    poly = sample(pts, 24);
+    // 각 등불 제어점의 폴리라인상 진행도(0~1)
+    lampT = lamps.map(function(ci){
+      var target = pts[ci], best=0, bd=1e9;
+      for(var i=0;i<poly.length;i++){ var dx=poly[i][0]-target[0], dy=poly[i][1]-target[1], d=dx*dx+dy*dy; if(d<bd){bd=d;best=i;} }
+      return best/(poly.length-1);
+    });
+  }
+
+  function draw(prog){
+    ctx.clearRect(0,0,W,H);
+    var route=css('--route'), lamp=css('--lamp'), line=css('--line');
+
+    // 옅은 격자(지도 결)
+    ctx.strokeStyle=line; ctx.globalAlpha=.5; ctx.lineWidth=1;
+    for(var gx=0;gx<=W;gx+=Math.max(34,W/9)){ ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke(); }
+    for(var gy=0;gy<=H;gy+=Math.max(34,H/6)){ ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
+    ctx.globalAlpha=1;
+
+    var last = Math.max(1, Math.floor(prog*(poly.length-1)));
+    // 경로 밑선(옅게 전체)
+    ctx.strokeStyle=line; ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.globalAlpha=.55;
+    ctx.beginPath(); ctx.moveTo(poly[0][0],poly[0][1]);
+    for(var i=1;i<poly.length;i++) ctx.lineTo(poly[i][0],poly[i][1]);
+    ctx.stroke(); ctx.globalAlpha=1;
+
+    // 걸어온 길(진하게, 점선 느낌의 손맛)
+    ctx.strokeStyle=route; ctx.lineWidth=3.2; ctx.setLineDash([1,7]); ctx.lineDashOffset=0;
+    ctx.beginPath(); ctx.moveTo(poly[0][0],poly[0][1]);
+    for(var j=1;j<=last;j++) ctx.lineTo(poly[j][0],poly[j][1]);
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // 실선 위에 얇게 한 겹 더(연속감)
+    ctx.strokeStyle=route; ctx.globalAlpha=.9; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(poly[0][0],poly[0][1]);
+    for(var k=1;k<=last;k++) ctx.lineTo(poly[k][0],poly[k][1]);
+    ctx.stroke(); ctx.globalAlpha=1;
+
+    // 등불
+    lampT.forEach(function(t){
+      var lit = prog >= t - 0.001;
+      var idx = Math.floor(t*(poly.length-1));
+      var p = poly[idx];
+      if(lit){
+        var glow = ctx.createRadialGradient(p[0],p[1],0,p[0],p[1],16);
+        glow.addColorStop(0, lamp); glow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.globalAlpha=.55; ctx.fillStyle=glow;
+        ctx.beginPath(); ctx.arc(p[0],p[1],16,0,7); ctx.fill(); ctx.globalAlpha=1;
+        ctx.fillStyle=lamp; ctx.beginPath(); ctx.arc(p[0],p[1],4.2,0,7); ctx.fill();
+        ctx.fillStyle=css('--bg'); ctx.beginPath(); ctx.arc(p[0],p[1],1.7,0,7); ctx.fill();
+      } else {
+        ctx.strokeStyle=line; ctx.lineWidth=2; ctx.fillStyle=css('--panel');
+        ctx.beginPath(); ctx.arc(p[0],p[1],3.6,0,7); ctx.fill(); ctx.stroke();
+      }
+    });
+
+    // 현재 순례자 위치(진행 끝)
+    if(prog<1){
+      var cur=poly[last];
+      ctx.fillStyle=route; ctx.beginPath(); ctx.arc(cur[0],cur[1],3,0,7); ctx.fill();
+    }
+  }
+
+  var start=null, DUR=2200;
+  function frame(ts){
+    if(start===null) start=ts;
+    var prog=Math.min(1,(ts-start)/DUR);
+    var e = prog<0.5 ? 2*prog*prog : 1-Math.pow(-2*prog+2,2)/2; // easeInOutQuad
+    draw(e);
+    if(prog<1) requestAnimationFrame(frame);
+  }
+
+  function run(){ layout(); if(reduce){ draw(1); } else { start=null; requestAnimationFrame(frame); } }
+
+  run();
+  var rt;
+  window.addEventListener('resize', function(){ clearTimeout(rt); rt=setTimeout(function(){ layout(); draw(1); }, 150); });
+  // 테마 전환 시 경로·등불 색을 다시 칠한다(옛 색 잔상 방지)
+  var repaint = function(){ layout(); draw(1); };
+  try{ window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change', repaint); }catch(e){}
+  try{ new MutationObserver(repaint).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']}); }catch(e){}
+})();
+</script>

@@ -1,7 +1,7 @@
 import { useNav } from '../store'
 import { usePilgrim, journeyKmOf, daysThisWeek, pilgrimTotals } from '../state/pilgrim'
 import { useRun } from '../state/run'
-import { STATIONS, type PassageSlug } from '../data/journey'
+import { STATIONS, JESUS_ORDER, type PassageSlug } from '../data/journey'
 import { featuredVerse } from '../data/scripture'
 import { fmtDistance } from '../lib/format'
 import TabBar from '../components/TabBar'
@@ -37,7 +37,7 @@ import { sceneFocus } from '../lib/scene'
  * 간단히 보기를 켜면 ③④가 접히고 ①②만 남는다 — 감추는 것은 화면이지 기능이 아니다.
  */
 
-const ORDER = Object.keys(STATIONS) as PassageSlug[]
+const ORDER: PassageSlug[] = JESUS_ORDER
 /* 아직 한 번도 안 달린 사람에게는 수난·광야 자리를 뽑지 않는다.
  * 날짜로만 고르다 보니 앱을 처음 켠 날 첫 화면이 겟세마네 체포 장면인 일이 실제로 있었다. */
 const GENTLE = ORDER.filter((id) => !['lament', 'wilderness'].includes(STATIONS[id].mood))

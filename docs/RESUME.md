@@ -1,6 +1,8 @@
 # THE WAY — 재개 문서 (RESUME) · 2026-07-23 작성
 
 > **이 문서 하나로 정확히 이어서 작업한다.** 오늘 세션에서 단일 "예수 사역 러닝"에서 → **다중 성경 여정 + 실제 순례길 + 실거리 러닝 + 게임형 진행 + 신앙 공동체(중보)** 플랫폼으로 재설계하고, 데이터·연구·기획·첫 아트까지 확보한 상태. 전체 기획은 [`MASTERPLAN.md`](MASTERPLAN.md), 빌드 스펙은 [`research/BUILD-SPECS.md`](research/BUILD-SPECS.md).
+>
+> 📌 **정합 주의(2026-07-27):** 위 "다중 성경 여정 플랫폼" 프레임은 이후 [`DECISIONS.md`](DECISIONS.md)가 **"다중-여정 아키텍처 · 예수 단일 출시"**로 확정했다(다중 데이터는 주차, 예수부터). 걷기 축소·게임화·오디오 표현은 DECISIONS D3~D5 기준. 지금 할 일은 [`FOCUS-ROADMAP.md`](FOCUS-ROADMAP.md)의 NOW(수요 검증).
 
 ---
 
