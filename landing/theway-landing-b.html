@@ -89,6 +89,15 @@
   .mapcap .q{font-family:var(--myeongjo); font-size:1rem; color:var(--ink); max-width:22ch; text-wrap:balance}
   .mapcap .n{font-family:var(--serif); font-style:italic; font-size:.82rem; letter-spacing:.03em; color:var(--faint); white-space:nowrap}
 
+  /* 여정 미리보기 — 실제 자리(JESUS_ORDER 서사 척추) */
+  .wp-cap{font-size:.68rem; letter-spacing:.2em; text-transform:uppercase; color:var(--faint); font-weight:600; margin:1.5rem 0 .7rem}
+  .waypoints{display:flex; align-items:flex-start; gap:.35rem; overflow-x:auto; padding-bottom:.15rem}
+  .wp{display:flex; flex-direction:column; align-items:center; gap:.06rem; text-align:center; flex:0 0 auto; min-width:3rem}
+  .wp i{width:.58rem; height:.58rem; border-radius:50%; background:var(--lamp); box-shadow:0 0 9px -1px var(--lamp)}
+  .wp b{font-family:var(--myeongjo); font-weight:600; font-size:.9rem; color:var(--ink); margin-top:.2rem}
+  .wp em{font-family:var(--serif); font-style:italic; font-size:.7rem; letter-spacing:.02em; color:var(--faint)}
+  .wp-rail{flex:1 1 auto; min-width:.8rem; border-top:1.6px dotted var(--line); margin-top:.27rem; align-self:flex-start}
+
   /* buttons */
   .cta-row{display:flex; flex-wrap:wrap; gap:.8rem; align-items:center; margin-top:2rem}
   .btn{display:inline-flex; align-items:center; gap:.5rem; font-family:var(--sans); font-size:1rem; font-weight:600;
@@ -165,6 +174,19 @@
           <div class="q">당신이 품은 이름이, 이 길 위에 등불로 켜집니다.</div>
           <div class="n">For someone you carry</div>
         </div>
+      </div>
+
+      <p class="wp-cap">이 길에서 만나는 자리</p>
+      <div class="waypoints" role="list" aria-label="여정 미리보기">
+        <div class="wp" role="listitem"><i aria-hidden="true"></i><b>세례</b><em>Jordan</em></div>
+        <span class="wp-rail" aria-hidden="true"></span>
+        <div class="wp" role="listitem"><i aria-hidden="true"></i><b>갈릴리</b><em>Galilee</em></div>
+        <span class="wp-rail" aria-hidden="true"></span>
+        <div class="wp" role="listitem"><i aria-hidden="true"></i><b>예루살렘</b><em>Jerusalem</em></div>
+        <span class="wp-rail" aria-hidden="true"></span>
+        <div class="wp" role="listitem"><i aria-hidden="true"></i><b>십자가</b><em>Golgotha</em></div>
+        <span class="wp-rail" aria-hidden="true"></span>
+        <div class="wp" role="listitem"><i aria-hidden="true"></i><b>부활</b><em>The Tomb</em></div>
       </div>
 
       <div class="cta-row">
