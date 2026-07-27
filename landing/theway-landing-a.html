@@ -1,154 +1,165 @@
 <style>
   /* ── THE WAY · 검증 랜딩 (변형 A — 디지털 순례길) ─────────────────────────
-     따뜻한 순례길 팔레트. 라이트=낮의 순례, 다크=밤의 순례·등불.
-     대기자 CTA는 외부 폼/메일로 연결(아티팩트 CSP상 자체 수집 불가).
-     ▶ WAITLIST: 아래 --form-url 대신 Tally/Google Form 링크로 교체하면 전환 추적 깔끔. */
+     "The Illuminated Path"(채색 필사본): 양피지 + 세피아 잉크 + 놋쇠 금 + 라피스 여정선.
+     시그니처(DESIGN-PHILOSOPHY §3·§4): The Illuminated Line(라피스 경로 + 금 이정표),
+     The Versal(금박 드롭캡), Illumination(현재 자리 발광). 게임형: 자리가 해금되고 다음은 봉인.
+     ▶ WAITLIST: 아래 CTA href(mailto)를 Tally/Google Form 링크로 교체하면 전환 추적 깔끔. */
   :root{
-    --bg:#E7DCC4; --panel:#F2EAD8; --panel-2:#EFE5CF;
-    --ink:#2B2419; --muted:#736753; --faint:#9A8C6E;
-    --clay:#A84B2A; --olive:#5F6B45; --gold:#C6892E;
-    --line:#D2C4A2; --route:#9A5636; --lamp:#D69A3C;
-    --shadow:0 1px 0 rgba(43,36,25,.04), 0 24px 60px -32px rgba(43,36,25,.35);
+    --paper:#F4F1E8; --card:#FBF9F2; --sunk:#EDE8DC; --hair:#E4DED0;
+    --ink:#201C15; --ink2:#4E4739; --muted:#6E6555;
+    --gold:#A67F27; --gold-ink:#6E5417; --gold-hi:#C39A3E;
+    --lapis:#2E3F8F; --lapis-soft:#4E5DA8; --vermilion:#9E2B25;
+    --shadow:0 1px 0 rgba(32,28,21,.03), 0 30px 66px -36px rgba(32,28,21,.34);
     color-scheme:light;
   }
   @media (prefers-color-scheme:dark){
     :root{
-      --bg:#16120C; --panel:#201A12; --panel-2:#241D14;
-      --ink:#EDE4D1; --muted:#A99C82; --faint:#7C7059;
-      --clay:#D0754C; --olive:#94A06F; --gold:#E8B25A;
-      --line:#38301F; --route:#C88A55; --lamp:#F0BE68;
-      --shadow:0 1px 0 rgba(0,0,0,.3), 0 30px 70px -34px rgba(0,0,0,.7);
+      --paper:#16120C; --card:#1E1810; --sunk:#241D14; --hair:#38301F;
+      --ink:#ECE6D6; --ink2:#C9C0AC; --muted:#A99C82;
+      --gold:#D6AF5B; --gold-ink:#E8C877; --gold-hi:#F0CD84;
+      --lapis:#7488DB; --lapis-soft:#8E9FE6; --vermilion:#C86A5A;
+      --shadow:0 1px 0 rgba(0,0,0,.3), 0 34px 74px -36px rgba(0,0,0,.72);
       color-scheme:dark;
     }
   }
   :root[data-theme="light"]{
-    --bg:#E7DCC4; --panel:#F2EAD8; --panel-2:#EFE5CF;
-    --ink:#2B2419; --muted:#736753; --faint:#9A8C6E;
-    --clay:#A84B2A; --olive:#5F6B45; --gold:#C6892E;
-    --line:#D2C4A2; --route:#9A5636; --lamp:#D69A3C;
-    --shadow:0 1px 0 rgba(43,36,25,.04), 0 24px 60px -32px rgba(43,36,25,.35);
+    --paper:#F4F1E8; --card:#FBF9F2; --sunk:#EDE8DC; --hair:#E4DED0;
+    --ink:#201C15; --ink2:#4E4739; --muted:#6E6555;
+    --gold:#A67F27; --gold-ink:#6E5417; --gold-hi:#C39A3E;
+    --lapis:#2E3F8F; --lapis-soft:#4E5DA8; --vermilion:#9E2B25;
+    --shadow:0 1px 0 rgba(32,28,21,.03), 0 30px 66px -36px rgba(32,28,21,.34);
     color-scheme:light;
   }
   :root[data-theme="dark"]{
-    --bg:#16120C; --panel:#201A12; --panel-2:#241D14;
-    --ink:#EDE4D1; --muted:#A99C82; --faint:#7C7059;
-    --clay:#D0754C; --olive:#94A06F; --gold:#E8B25A;
-    --line:#38301F; --route:#C88A55; --lamp:#F0BE68;
-    --shadow:0 1px 0 rgba(0,0,0,.3), 0 30px 70px -34px rgba(0,0,0,.7);
+    --paper:#16120C; --card:#1E1810; --sunk:#241D14; --hair:#38301F;
+    --ink:#ECE6D6; --ink2:#C9C0AC; --muted:#A99C82;
+    --gold:#D6AF5B; --gold-ink:#E8C877; --gold-hi:#F0CD84;
+    --lapis:#7488DB; --lapis-soft:#8E9FE6; --vermilion:#C86A5A;
+    --shadow:0 1px 0 rgba(0,0,0,.3), 0 34px 74px -36px rgba(0,0,0,.72);
     color-scheme:dark;
   }
 
   *{box-sizing:border-box}
   .wrap{
-    --serif:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,'Times New Roman',serif;
-    --myeongjo:'Nanum Myeongjo','Apple SD Gothic Neo',var(--serif),serif;
-    --sans:'Apple SD Gothic Neo','Pretendard','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
-    background:var(--bg); color:var(--ink);
-    font-family:var(--sans);
-    line-height:1.65; -webkit-font-smoothing:antialiased;
-    /* 은은한 종이 그레인 */
-    background-image:
-      radial-gradient(rgba(120,100,60,.05) 1px, transparent 1.4px);
+    --serif:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;
+    --myeongjo:'Nanum Myeongjo','Gowun Batang','AppleMyungjo','Batang',var(--serif),serif;
+    --sans:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,'Segoe UI',sans-serif;
+    background:var(--paper); color:var(--ink);
+    font-family:var(--sans); line-height:1.62; -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(rgba(110,90,40,.045) 1px, transparent 1.5px);
     background-size:4px 4px;
-    min-height:100vh;
-    overflow-x:hidden;
+    min-height:100vh; overflow-x:hidden;
   }
-  .shell{max-width:64rem; margin:0 auto; padding:clamp(1.4rem,4vw,2.6rem);}
-  .measure{max-width:40rem}
+  .shell{max-width:63rem; margin:0 auto; padding:clamp(1.4rem,4vw,2.6rem)}
+  .measure{max-width:38rem}
 
-  /* topbar */
-  .top{display:flex; align-items:center; justify-content:space-between; gap:1rem; padding-block:.4rem 0}
-  .brand{display:flex; align-items:center; gap:.6rem; font-family:var(--serif); letter-spacing:.02em}
-  .brand .lamp{width:1.05rem; height:1.05rem; border-radius:50%;
-    background:radial-gradient(circle at 50% 40%, var(--lamp), var(--clay) 70%);
-    box-shadow:0 0 14px -1px var(--lamp);}
-  .brand b{font-weight:600; font-size:1.02rem}
-  .top .kick{font-family:var(--sans); font-size:.72rem; letter-spacing:.18em; text-transform:uppercase; color:var(--faint)}
+  .top{display:flex; align-items:center; justify-content:space-between; gap:1rem; padding-block:.3rem 0}
+  .brand{display:flex; align-items:center; gap:.6rem; font-family:var(--serif); letter-spacing:.03em}
+  .brand .seal{width:1.15rem; height:1.15rem; border-radius:50%;
+    background:radial-gradient(circle at 50% 38%, var(--gold-hi), var(--gold) 62%, var(--gold-ink) 100%);
+    box-shadow:0 0 0 1px rgba(110,84,23,.35), 0 0 12px -2px var(--gold)}
+  .brand b{font-weight:600; font-size:1.04rem; color:var(--ink)}
+  .top .kick{font-family:var(--sans); font-size:.7rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold-ink); font-weight:700}
 
-  /* hero */
-  header.hero{padding-block:clamp(2.4rem,7vw,4.2rem) clamp(1.6rem,4vw,2.4rem)}
-  .eyebrow{font-size:.74rem; letter-spacing:.24em; text-transform:uppercase; color:var(--clay); font-weight:600; margin:0 0 1.1rem}
+  header.hero{padding-block:clamp(2.3rem,7vw,4rem) clamp(1.4rem,4vw,2.2rem)}
+  .eyebrow{font-size:.72rem; letter-spacing:.26em; text-transform:uppercase; color:var(--gold-ink); font-weight:700; margin:0 0 1.15rem}
   h1{
     font-family:var(--myeongjo); font-weight:600;
-    font-size:clamp(2.15rem,6.2vw,3.7rem); line-height:1.14; letter-spacing:-.01em;
-    margin:0 0 1.15rem; text-wrap:balance; color:var(--ink);
+    font-size:clamp(2.1rem,6vw,3.6rem); line-height:1.16; letter-spacing:-.01em;
+    margin:0 0 1.1rem; text-wrap:balance; color:var(--ink);
   }
-  h1 .accent{color:var(--clay)}
-  .latin{font-family:var(--serif); font-style:italic; color:var(--muted); font-size:clamp(1rem,2.2vw,1.2rem); letter-spacing:.01em; margin:0 0 1.5rem}
-  .lede{font-size:clamp(1.02rem,2vw,1.18rem); color:var(--muted); margin:0 0 2rem; text-wrap:pretty}
+  h1 .lapisword{color:var(--lapis)}
+  .latin{font-family:var(--serif); font-style:italic; color:var(--ink2); font-size:clamp(1rem,2.1vw,1.18rem); margin:0 0 1.4rem}
+  .lede{font-size:clamp(1.02rem,2vw,1.16rem); color:var(--ink2); margin:0 0 1.8rem; text-wrap:pretty}
+  .lede b{color:var(--ink); font-weight:600}
 
-  /* map panel — 순례 경로 */
-  .mapcard{
-    position:relative; border:1px solid var(--line); border-radius:14px;
-    background:linear-gradient(180deg,var(--panel),var(--panel-2));
-    box-shadow:var(--shadow); overflow:hidden;
-  }
-  .mapcard .frame{position:absolute; inset:.55rem; border:1px solid var(--line); border-radius:9px; pointer-events:none; opacity:.7}
-  .mapcard canvas{display:block; width:100%; height:clamp(240px,42vw,360px)}
-  .mapcap{position:absolute; left:1.15rem; bottom:1rem; right:1.15rem; display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; pointer-events:none}
-  .mapcap .q{font-family:var(--myeongjo); font-size:1rem; color:var(--ink); max-width:22ch; text-wrap:balance}
-  .mapcap .n{font-family:var(--serif); font-style:italic; font-size:.82rem; letter-spacing:.03em; color:var(--faint); white-space:nowrap}
+  .mapcard{position:relative; border:1px solid var(--hair); border-radius:14px;
+    background:linear-gradient(180deg,var(--card),var(--sunk)); box-shadow:var(--shadow); overflow:hidden}
+  .mapcard .illum{position:absolute; inset:.5rem; border:1px solid var(--hair); border-radius:9px; pointer-events:none; opacity:.65}
+  .mapcard .corner{position:absolute; width:16px; height:16px; border:1.5px solid var(--gold); opacity:.55; pointer-events:none}
+  .mapcard .corner.tl{top:.7rem; left:.7rem; border-right:0; border-bottom:0}
+  .mapcard .corner.tr{top:.7rem; right:.7rem; border-left:0; border-bottom:0}
+  .mapcard .corner.bl{bottom:.7rem; left:.7rem; border-right:0; border-top:0}
+  .mapcard .corner.br{bottom:.7rem; right:.7rem; border-left:0; border-top:0}
+  .mapcard .mappanel{padding:clamp(1.4rem,3.6vw,2rem)}
+  .maphead{display:flex; align-items:baseline; justify-content:space-between; gap:1rem; margin-bottom:1.2rem}
+  .maphead .lbl{font-size:.62rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold-ink); font-weight:700}
+  .maphead .val{font-family:var(--serif); font-size:1.15rem; color:var(--ink); font-variant-numeric:oldstyle-nums}
+  .maphead .val b{color:var(--lapis); font-weight:600}
+  .itinerary{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:clamp(.55rem,1.6vw,.85rem); position:relative}
+  .itinerary::before{content:""; position:absolute; left:7px; top:.55rem; bottom:.55rem; width:2px;
+    background:repeating-linear-gradient(var(--lapis) 0 5px, transparent 5px 10px); opacity:.5}
+  .stop{display:flex; align-items:center; gap:.85rem; position:relative}
+  .stop .node{width:16px; height:16px; border-radius:50%; flex:0 0 auto; z-index:1; box-shadow:0 0 0 4px var(--card)}
+  .stop.lit .node{background:radial-gradient(circle at 50% 40%, var(--gold-hi), var(--gold)); box-shadow:0 0 0 4px var(--card), 0 0 11px -1px var(--gold)}
+  .stop.now .node{background:radial-gradient(circle at 50% 40%, var(--gold-hi), var(--gold)); animation:pulse 3.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 4px var(--card), 0 0 0 2px var(--lapis), 0 0 10px 0 var(--gold)} 50%{box-shadow:0 0 0 4px var(--card), 0 0 0 2px var(--lapis), 0 0 20px 2px var(--gold)}}
+  .stop.sealed .node{background:var(--card); border:1.5px solid var(--hair)}
+  .stop .nm{font-family:var(--myeongjo); font-weight:600; color:var(--ink); font-size:1.02rem}
+  .stop.sealed .nm{color:var(--muted)}
+  .stop.now .nm{color:var(--lapis)}
+  .stop .pl{font-family:var(--serif); font-style:italic; color:var(--gold-ink); font-size:.78rem; margin-left:auto}
+  .stop.sealed .pl{color:var(--muted)}
+  .mapfoot{margin:1.3rem 0 0; font-family:var(--myeongjo); font-size:.92rem; color:var(--ink2); text-wrap:pretty}
+  @media (prefers-reduced-motion:reduce){.stop.now .node{animation:none; box-shadow:0 0 0 4px var(--card), 0 0 0 2px var(--lapis), 0 0 16px 1px var(--gold)}}
 
-  /* 여정 미리보기 — 실제 자리(JESUS_ORDER 서사 척추) */
-  .wp-cap{font-size:.68rem; letter-spacing:.2em; text-transform:uppercase; color:var(--faint); font-weight:600; margin:1.5rem 0 .7rem}
-  .waypoints{display:flex; align-items:flex-start; gap:.35rem; overflow-x:auto; padding-bottom:.15rem}
-  .wp{display:flex; flex-direction:column; align-items:center; gap:.06rem; text-align:center; flex:0 0 auto; min-width:3rem}
-  .wp i{width:.58rem; height:.58rem; border-radius:50%; background:var(--lamp); box-shadow:0 0 9px -1px var(--lamp)}
-  .wp b{font-family:var(--myeongjo); font-weight:600; font-size:.9rem; color:var(--ink); margin-top:.2rem}
-  .wp em{font-family:var(--serif); font-style:italic; font-size:.7rem; letter-spacing:.02em; color:var(--faint)}
-  .wp-rail{flex:1 1 auto; min-width:.8rem; border-top:1.6px dotted var(--line); margin-top:.27rem; align-self:flex-start}
+  .cta-row{display:flex; flex-wrap:wrap; gap:.8rem; align-items:center; margin-top:1.9rem}
+  .btn{display:inline-flex; align-items:center; gap:.5rem; font-family:var(--sans); font-size:1rem; font-weight:700;
+    padding:.85rem 1.5rem; border-radius:999px; text-decoration:none; cursor:pointer; border:1px solid transparent;
+    transition:transform .16s ease, box-shadow .16s ease}
+  .btn.primary{background:var(--lapis); color:#F7F5EC; box-shadow:0 12px 26px -14px var(--lapis)}
+  .btn.primary:hover{transform:translateY(-2px); box-shadow:0 18px 32px -14px var(--lapis)}
+  .btn:focus-visible{outline:2.5px solid var(--gold); outline-offset:3px}
+  .cta-note{font-size:.82rem; color:var(--muted)}
 
-  /* buttons */
-  .cta-row{display:flex; flex-wrap:wrap; gap:.8rem; align-items:center; margin-top:2rem}
-  .btn{display:inline-flex; align-items:center; gap:.5rem; font-family:var(--sans); font-size:1rem; font-weight:600;
-    padding:.85rem 1.4rem; border-radius:999px; text-decoration:none; cursor:pointer; border:1px solid transparent;
-    transition:transform .16s ease, box-shadow .16s ease, background .16s ease;}
-  .btn.primary{background:var(--clay); color:#FBF4E6; box-shadow:0 10px 24px -12px var(--clay)}
-  .btn.primary:hover{transform:translateY(-2px); box-shadow:0 16px 30px -14px var(--clay)}
-  .btn.ghost{background:transparent; color:var(--ink); border-color:var(--line)}
-  .btn.ghost:hover{border-color:var(--clay); color:var(--clay)}
-  .btn:focus-visible{outline:2.5px solid var(--olive); outline-offset:3px}
-  .cta-note{font-size:.82rem; color:var(--faint)}
+  .verse{border-top:1px solid var(--hair); border-bottom:1px solid var(--hair); padding-block:clamp(1.8rem,5vw,2.6rem); text-align:center}
+  .verse p{font-family:var(--myeongjo); font-size:clamp(1.3rem,3.2vw,1.85rem); line-height:1.5; color:var(--ink); margin:0 auto; max-width:24ch; text-wrap:balance}
+  .verse .versal{font-family:var(--serif); color:var(--gold);
+    font-size:1.5em; line-height:.8; padding:.05em .08em 0 0; text-shadow:0 0 18px rgba(166,127,39,.35)}
+  .verse cite{display:block; margin-top:1rem; font-family:var(--serif); font-style:italic; color:var(--gold-ink); font-size:.92rem; letter-spacing:.02em}
 
-  /* section rhythm */
-  section{padding-block:clamp(2.2rem,6vw,3.4rem); border-top:1px solid var(--line)}
-  .slabel{font-size:.72rem; letter-spacing:.22em; text-transform:uppercase; color:var(--faint); font-weight:600; margin:0 0 1.6rem}
-  h2{font-family:var(--myeongjo); font-weight:600; font-size:clamp(1.5rem,3.4vw,2rem); line-height:1.25; margin:0 0 .5rem; text-wrap:balance}
+  section{padding-block:clamp(2.2rem,6vw,3.4rem); border-top:1px solid var(--hair)}
+  .slabel{font-size:.7rem; letter-spacing:.24em; text-transform:uppercase; color:var(--gold-ink); font-weight:700; margin:0 0 1.7rem}
+  h2{font-family:var(--myeongjo); font-weight:600; font-size:clamp(1.5rem,3.4vw,2rem); line-height:1.26; margin:0 0 .5rem; text-wrap:balance}
 
-  /* why — 3 invitations */
-  .cards{display:grid; grid-template-columns:1fr; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:12px; overflow:hidden}
-  @media(min-width:720px){.cards{grid-template-columns:repeat(3,1fr)}}
-  .card{background:var(--panel); padding:1.5rem 1.4rem; display:flex; flex-direction:column; gap:.6rem}
-  .card .idx{font-family:var(--serif); font-style:italic; color:var(--clay); font-size:1.1rem}
-  .card h3{font-family:var(--myeongjo); font-weight:600; font-size:1.12rem; margin:0; line-height:1.35}
-  .card p{margin:0; color:var(--muted); font-size:.95rem}
+  .why{display:grid; grid-template-columns:1fr; gap:2rem}
+  @media(min-width:760px){.why{grid-template-columns:1.3fr 1fr; gap:2.4rem 3rem}
+    .why .lead{grid-column:1; grid-row:span 2}}
+  .why .item{display:grid; grid-template-columns:auto 1fr; gap:1rem; align-items:start}
+  .why .num{font-family:var(--serif); font-variant-numeric:oldstyle-nums; color:var(--gold); font-size:1.5rem; line-height:1; padding-top:.1rem}
+  .why .lead .num{color:var(--lapis); font-size:2rem}
+  .why h3{font-family:var(--myeongjo); font-weight:600; margin:0 0 .4rem; line-height:1.32; color:var(--ink)}
+  .why .lead h3{font-size:1.5rem}
+  .why .item h3{font-size:1.1rem}
+  .why p{margin:0; color:var(--ink2); font-size:.96rem}
+  .why .lead p{font-size:1.02rem}
 
-  /* how — core loop */
-  .loop{display:grid; grid-template-columns:1fr; gap:.9rem; counter-reset:step}
-  @media(min-width:720px){.loop{grid-template-columns:repeat(4,1fr)}}
-  .step{position:relative; padding:1.25rem 1.2rem 1.3rem; border:1px solid var(--line); border-radius:12px; background:var(--panel); display:flex; flex-direction:column; gap:.45rem}
-  .step .dot{width:.7rem; height:.7rem; border-radius:50%; background:var(--lamp); box-shadow:0 0 10px -1px var(--lamp); margin-bottom:.2rem}
-  .step .t{font-family:var(--myeongjo); font-weight:600; font-size:1.05rem}
-  .step p{margin:0; color:var(--muted); font-size:.9rem}
-  .step .verb{font-family:var(--serif); font-style:italic; color:var(--faint); font-size:.78rem; letter-spacing:.03em}
+  .quest{position:relative; margin-top:1.6rem; display:grid; grid-template-columns:1fr; gap:1.3rem}
+  @media(min-width:760px){.quest{grid-template-columns:repeat(4,1fr); gap:.5rem}
+    .quest::before{content:""; position:absolute; top:.55rem; left:8%; right:8%; height:2px;
+      background:repeating-linear-gradient(90deg,var(--lapis) 0 8px,transparent 8px 14px); opacity:.6}}
+  .qstep{display:flex; flex-direction:column; gap:.5rem; position:relative}
+  .qnode{width:1.15rem; height:1.15rem; border-radius:50%; background:var(--gold);
+    box-shadow:0 0 0 4px var(--paper), 0 0 12px -2px var(--gold); position:relative; z-index:1}
+  .qstep .verb{font-family:var(--serif); font-style:italic; color:var(--gold-ink); font-size:.76rem; letter-spacing:.03em}
+  .qstep .t{font-family:var(--myeongjo); font-weight:600; font-size:1.06rem; color:var(--ink)}
+  .qstep p{margin:0; color:var(--ink2); font-size:.9rem}
 
-  /* honesty */
-  .honesty{background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--clay); border-radius:12px; padding:clamp(1.5rem,4vw,2.2rem)}
+  .honesty{background:var(--card); border:1px solid var(--hair); border-radius:12px; padding:clamp(1.5rem,4vw,2.2rem); position:relative; overflow:hidden}
+  .honesty::before{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(var(--gold),var(--lapis))}
   .honesty p{margin:0 0 .7rem; color:var(--ink); font-size:1.05rem; text-wrap:pretty}
+  .honesty p b{color:var(--lapis)}
   .honesty p.sub{color:var(--muted); font-size:.98rem; margin-bottom:0}
 
-  /* cta block */
   .final{text-align:center; display:flex; flex-direction:column; align-items:center; gap:1.1rem}
   .final h2{font-size:clamp(1.7rem,4vw,2.3rem)}
-  .final .lede{margin:0; max-width:34rem}
-  .final .cta-row{justify-content:center}
+  .final .lede{margin:0; max-width:33rem}
+  .final .cta-row{justify-content:center; margin-top:.3rem}
 
-  /* footer */
-  footer{border-top:1px solid var(--line); padding-block:2.2rem 2.8rem; color:var(--muted); display:flex; flex-direction:column; gap:1rem}
+  footer{border-top:1px solid var(--hair); padding-block:2.2rem 2.8rem; color:var(--ink2); display:flex; flex-direction:column; gap:1rem}
   footer .quiet{font-family:var(--myeongjo); font-size:1.05rem; color:var(--ink); max-width:30rem; text-wrap:balance}
-  footer .meta{font-size:.82rem; color:var(--faint); display:flex; flex-wrap:wrap; gap:.4rem 1.1rem}
-  footer .meta span{display:inline-flex; align-items:center; gap:.4rem}
-  .priv{font-size:.82rem; color:var(--faint)}
+  footer .meta{font-size:.82rem; color:var(--muted); display:flex; flex-wrap:wrap; gap:.4rem 1.1rem}
+  .priv{font-size:.82rem; color:var(--muted)}
 
   @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
 </style>
@@ -157,36 +168,33 @@
   <div class="shell">
 
     <div class="top">
-      <div class="brand"><span class="lamp" aria-hidden="true"></span><b>THE&nbsp;WAY</b></div>
+      <div class="brand"><span class="seal" aria-hidden="true"></span><b>THE&nbsp;WAY</b></div>
       <div class="kick">디지털 순례길</div>
     </div>
 
     <header class="hero">
       <p class="eyebrow">Walk the Gospels · 함께 걷는 길</p>
-      <h1 class="measure">예수님이 걸으신 길을,<br><span class="accent">오늘 당신의 자리에서</span> 달린다</h1>
+      <h1 class="measure">달린 거리가,<br>예수님의 길을 <span class="lapisword">한 자리씩</span> 연다</h1>
       <p class="latin">Run the Way. Walk with the Gospel.</p>
-      <p class="lede measure">산티아고를 걷듯, 어디서든 걸을 수 있는 디지털 순례길입니다. 당신이 실제로 달린 거리만큼 예수님의 사역 여정이 이어지고, 도착한 자리에서 말씀을 만납니다.</p>
+      <p class="lede measure">당신이 실제로 달린 거리만큼 여정이 전진하고, <b>34개의 자리가 하나씩 열립니다.</b> 도착한 자리에서 말씀을 만나고, 소그룹이 거리를 모아 <b>하나의 길을 함께 완성</b>합니다.</p>
 
       <div class="mapcard">
-        <canvas id="route" aria-label="스스로 그려지는 순례 경로"></canvas>
-        <div class="frame" aria-hidden="true"></div>
-        <div class="mapcap">
-          <div class="q">한 걸음씩, 당신만의 순례 지도가 채워집니다.</div>
-          <div class="n">Jordan → Galilee → Jerusalem</div>
+        <span class="corner tl" aria-hidden="true"></span><span class="corner tr" aria-hidden="true"></span>
+        <span class="corner bl" aria-hidden="true"></span><span class="corner br" aria-hidden="true"></span>
+        <div class="mappanel">
+          <div class="maphead">
+            <span class="lbl">여정 진행</span>
+            <span class="val"><b>4</b> <span style="opacity:.55">/ 34 자리</span></span>
+          </div>
+          <ol class="itinerary">
+            <li class="stop lit"><span class="node" aria-hidden="true"></span><span class="nm">세례</span><span class="pl">Jordan</span></li>
+            <li class="stop lit"><span class="node" aria-hidden="true"></span><span class="nm">광야</span><span class="pl">Wilderness</span></li>
+            <li class="stop lit"><span class="node" aria-hidden="true"></span><span class="nm">갈릴리</span><span class="pl">Galilee</span></li>
+            <li class="stop now"><span class="node" aria-hidden="true"></span><span class="nm">예루살렘</span><span class="pl">지금 여기</span></li>
+            <li class="stop sealed"><span class="node" aria-hidden="true"></span><span class="nm">봉인된 자리</span><span class="pl">Sealed</span></li>
+          </ol>
+          <p class="mapfoot">한 걸음씩, 어둠 속의 자리가 하나씩 열립니다.</p>
         </div>
-      </div>
-
-      <p class="wp-cap">이 길에서 만나는 자리</p>
-      <div class="waypoints" role="list" aria-label="여정 미리보기">
-        <div class="wp" role="listitem"><i aria-hidden="true"></i><b>세례</b><em>Jordan</em></div>
-        <span class="wp-rail" aria-hidden="true"></span>
-        <div class="wp" role="listitem"><i aria-hidden="true"></i><b>갈릴리</b><em>Galilee</em></div>
-        <span class="wp-rail" aria-hidden="true"></span>
-        <div class="wp" role="listitem"><i aria-hidden="true"></i><b>예루살렘</b><em>Jerusalem</em></div>
-        <span class="wp-rail" aria-hidden="true"></span>
-        <div class="wp" role="listitem"><i aria-hidden="true"></i><b>십자가</b><em>Golgotha</em></div>
-        <span class="wp-rail" aria-hidden="true"></span>
-        <div class="wp" role="listitem"><i aria-hidden="true"></i><b>부활</b><em>The Tomb</em></div>
       </div>
 
       <div class="cta-row">
@@ -195,35 +203,46 @@
       </div>
     </header>
 
+    <div class="verse">
+      <p><span class="versal">나</span>는 길이요 진리요 생명이니</p>
+      <cite>요한복음 14:6</cite>
+    </div>
+
     <section>
       <p class="slabel">왜 이 길인가</p>
-      <div class="cards">
-        <div class="card">
-          <span class="idx">i.</span>
-          <h3>다크패턴 없는,<br>정말 좋은 러닝 앱</h3>
-          <p>스트릭으로 죄책감 주지 않습니다. 쉼도 축복입니다. 조작하지 않는 앱, 그 자체가 드뭅니다.</p>
+      <div class="why">
+        <div class="item lead">
+          <span class="num" aria-hidden="true">i</span>
+          <div>
+            <h3>누군가를 품고<br>달리는 시간</h3>
+            <p>아픈 친구, 멀리 있는 가족. ‘기도’라 부르지 않아도, 한 사람을 마음에 붙들고 달리는 경험은 누구에게나 있습니다. 그 마음이 이 길 위에 등불로 남습니다.</p>
+          </div>
         </div>
-        <div class="card">
-          <span class="idx">ii.</span>
-          <h3>누군가를 품고<br>달리는 시간</h3>
-          <p>아픈 친구, 멀리 있는 가족. ‘기도’라 부르지 않아도, 한 사람을 마음에 붙들고 달리는 경험은 누구에게나 있습니다.</p>
+        <div class="item">
+          <span class="num" aria-hidden="true">ii</span>
+          <div>
+            <h3>다크패턴 없는, 정말 좋은 러닝 앱</h3>
+            <p>스트릭으로 죄책감 주지 않습니다. 쉼도 축복입니다.</p>
+          </div>
         </div>
-        <div class="card">
-          <span class="idx">iii.</span>
-          <h3>통계가 아니라,<br>그려지는 하나의 길</h3>
-          <p>막대그래프 대신, 당신만의 순례 지도가 한 걸음씩 채워집니다. 자랑하고 싶은 아름다운 오브제.</p>
+        <div class="item">
+          <span class="num" aria-hidden="true">iii</span>
+          <div>
+            <h3>통계가 아니라, 그려지는 하나의 길</h3>
+            <p>막대그래프 대신, 자리가 하나씩 열리며 여정이 완성됩니다.</p>
+          </div>
         </div>
       </div>
     </section>
 
     <section>
       <p class="slabel">어떻게 걷나</p>
-      <h2 class="measure">달린다 · 자리에 닿는다 · 말씀을 만난다 · 함께 중보한다</h2>
-      <div class="loop" style="margin-top:1.6rem">
-        <div class="step"><span class="dot" aria-hidden="true"></span><span class="verb">Run</span><span class="t">달린다</span><p>평소처럼 달리거나 걷습니다. 그 실제 거리가 여정을 전진시킵니다.</p></div>
-        <div class="step"><span class="dot" aria-hidden="true"></span><span class="verb">Arrive</span><span class="t">자리에 닿는다</span><p>일정 거리를 넘으면 예수님 사역의 한 ‘자리’가 열립니다.</p></div>
-        <div class="step"><span class="dot" aria-hidden="true"></span><span class="verb">Reveal</span><span class="t">말씀을 만난다</span><p>그 자리의 성경 본문과 짧은 묵상이 도착의 선물로 펼쳐집니다.</p></div>
-        <div class="step"><span class="dot" aria-hidden="true"></span><span class="verb">Together</span><span class="t">함께 중보한다</span><p>소그룹이 거리를 모아 하나의 길을 완성하고, 서로를 위해 기도합니다.</p></div>
+      <h2 class="measure">달린다 · 자리를 연다 · 말씀을 만난다 · 함께 중보한다</h2>
+      <div class="quest">
+        <div class="qstep"><span class="qnode" aria-hidden="true"></span><span class="verb">Run</span><span class="t">달린다</span><p>평소처럼 달리거나 걷습니다. 실제 거리가 여정을 전진시킵니다.</p></div>
+        <div class="qstep"><span class="qnode" aria-hidden="true"></span><span class="verb">Unlock</span><span class="t">자리를 연다</span><p>거리를 넘으면 예수님 사역의 다음 ‘자리’가 어둠에서 열립니다.</p></div>
+        <div class="qstep"><span class="qnode" aria-hidden="true"></span><span class="verb">Reveal</span><span class="t">말씀을 만난다</span><p>그 자리의 성경 본문과 짧은 묵상이 도착의 선물로 열립니다.</p></div>
+        <div class="qstep"><span class="qnode" aria-hidden="true"></span><span class="verb">Together</span><span class="t">함께 중보한다</span><p>소그룹이 거리를 모아 한 길을 완성하고, 서로를 위해 기도합니다.</p></div>
       </div>
     </section>
 
@@ -240,8 +259,7 @@
       <h2>이 순례, 같이 걸을래요?</h2>
       <p class="lede">이메일 하나만 남겨 주세요. 준비되면 가장 먼저, 조용히 초대장을 보내드릴게요.</p>
       <div class="cta-row">
-        <!-- ▶ 대기자 폼(Tally/Google Form)을 만들면 아래 href를 그 링크로 교체하세요.
-             변형 A 유입 구분을 위해 subject/파라미터에 'A' 태그가 들어가 있습니다. -->
+        <!-- ▶ 대기자 폼(Tally/Google Form)을 만들면 아래 href를 그 링크로 교체하세요. 변형 A 태그 'A'. -->
         <a class="btn primary" id="joinBtn"
            href="mailto:wnswns1946@kloint.team?subject=THE%20WAY%20%EB%8C%80%EA%B8%B0%EC%9E%90%20%C2%B7%20A&body=%EA%B0%99%EC%9D%B4%20%EA%B1%B7%EA%B3%A0%20%EC%8B%B6%EC%96%B4%EC%9A%94.%20%EC%A4%80%EB%B9%84%EB%90%98%EB%A9%B4%20%EC%95%8C%EB%A0%A4%EC%A3%BC%EC%84%B8%EC%9A%94.">
           함께 걸을게요 →
@@ -253,8 +271,7 @@
     <footer>
       <p class="quiet">우리는 달린 거리로 믿음을 증명하지 않습니다. 다만 그 길을 함께 걷습니다.</p>
       <div class="meta">
-        <span>🕯️ THE WAY</span>
-        <span>신앙생활을 돕는 보조 도구 — 예배·성경·교회를 대체하지 않습니다.</span>
+        <span>THE WAY — 신앙생활을 돕는 보조 도구. 예배·성경·교회를 대체하지 않습니다.</span>
       </div>
       <p class="priv">개인정보: 이메일 주소만 받습니다. 위치(GPS)·기도 내용은 수집하지 않습니다.</p>
     </footer>
@@ -262,127 +279,4 @@
   </div>
 </div>
 
-<script>
-(function(){
-  var canvas = document.getElementById('route');
-  if(!canvas) return;
-  var ctx = canvas.getContext('2d');
-  var reduce = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
-
-  // 순례 경로 제어점(상대 0~1). 아래→위로 굽이치며 오르는 트레일.
-  var ctrl = [
-    [0.10,0.90],[0.28,0.78],[0.20,0.60],[0.42,0.50],
-    [0.64,0.56],[0.56,0.36],[0.78,0.26],[0.88,0.12]
-  ];
-  // 등불이 켜지는 자리(제어점 인덱스)
-  var lamps = [0,2,4,6,7];
-
-  function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
-
-  // Catmull-Rom → 촘촘한 폴리라인 샘플
-  function sample(pts, seg){
-    var out=[];
-    for(var i=0;i<pts.length-1;i++){
-      var p0=pts[i-1]||pts[i], p1=pts[i], p2=pts[i+1], p3=pts[i+2]||pts[i+1];
-      for(var t=0;t<seg;t++){
-        var s=t/seg, s2=s*s, s3=s2*s;
-        var x=0.5*((2*p1[0])+(-p0[0]+p2[0])*s+(2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*s2+(-p0[0]+3*p1[0]-3*p2[0]+p3[0])*s3);
-        var y=0.5*((2*p1[1])+(-p0[1]+p2[1])*s+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*s2+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*s3);
-        out.push([x,y]);
-      }
-    }
-    out.push(pts[pts.length-1]);
-    return out;
-  }
-
-  var W=0,H=0,dpr=1, poly=[], lampT=[];
-  function layout(){
-    dpr = Math.min(window.devicePixelRatio||1, 2);
-    W = canvas.clientWidth; H = canvas.clientHeight;
-    canvas.width = W*dpr; canvas.height = H*dpr;
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    var pad = 26;
-    var pts = ctrl.map(function(p){ return [pad + p[0]*(W-2*pad), pad + p[1]*(H-2*pad)]; });
-    poly = sample(pts, 24);
-    // 각 등불 제어점의 폴리라인상 진행도(0~1)
-    lampT = lamps.map(function(ci){
-      var target = pts[ci], best=0, bd=1e9;
-      for(var i=0;i<poly.length;i++){ var dx=poly[i][0]-target[0], dy=poly[i][1]-target[1], d=dx*dx+dy*dy; if(d<bd){bd=d;best=i;} }
-      return best/(poly.length-1);
-    });
-  }
-
-  function draw(prog){
-    ctx.clearRect(0,0,W,H);
-    var route=css('--route'), lamp=css('--lamp'), line=css('--line');
-
-    // 옅은 격자(지도 결)
-    ctx.strokeStyle=line; ctx.globalAlpha=.5; ctx.lineWidth=1;
-    for(var gx=0;gx<=W;gx+=Math.max(34,W/9)){ ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke(); }
-    for(var gy=0;gy<=H;gy+=Math.max(34,H/6)){ ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
-    ctx.globalAlpha=1;
-
-    var last = Math.max(1, Math.floor(prog*(poly.length-1)));
-    // 경로 밑선(옅게 전체)
-    ctx.strokeStyle=line; ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.globalAlpha=.55;
-    ctx.beginPath(); ctx.moveTo(poly[0][0],poly[0][1]);
-    for(var i=1;i<poly.length;i++) ctx.lineTo(poly[i][0],poly[i][1]);
-    ctx.stroke(); ctx.globalAlpha=1;
-
-    // 걸어온 길(진하게, 점선 느낌의 손맛)
-    ctx.strokeStyle=route; ctx.lineWidth=3.2; ctx.setLineDash([1,7]); ctx.lineDashOffset=0;
-    ctx.beginPath(); ctx.moveTo(poly[0][0],poly[0][1]);
-    for(var j=1;j<=last;j++) ctx.lineTo(poly[j][0],poly[j][1]);
-    ctx.stroke(); ctx.setLineDash([]);
-
-    // 실선 위에 얇게 한 겹 더(연속감)
-    ctx.strokeStyle=route; ctx.globalAlpha=.9; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(poly[0][0],poly[0][1]);
-    for(var k=1;k<=last;k++) ctx.lineTo(poly[k][0],poly[k][1]);
-    ctx.stroke(); ctx.globalAlpha=1;
-
-    // 등불
-    lampT.forEach(function(t){
-      var lit = prog >= t - 0.001;
-      var idx = Math.floor(t*(poly.length-1));
-      var p = poly[idx];
-      if(lit){
-        var glow = ctx.createRadialGradient(p[0],p[1],0,p[0],p[1],16);
-        glow.addColorStop(0, lamp); glow.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.globalAlpha=.55; ctx.fillStyle=glow;
-        ctx.beginPath(); ctx.arc(p[0],p[1],16,0,7); ctx.fill(); ctx.globalAlpha=1;
-        ctx.fillStyle=lamp; ctx.beginPath(); ctx.arc(p[0],p[1],4.2,0,7); ctx.fill();
-        ctx.fillStyle=css('--bg'); ctx.beginPath(); ctx.arc(p[0],p[1],1.7,0,7); ctx.fill();
-      } else {
-        ctx.strokeStyle=line; ctx.lineWidth=2; ctx.fillStyle=css('--panel');
-        ctx.beginPath(); ctx.arc(p[0],p[1],3.6,0,7); ctx.fill(); ctx.stroke();
-      }
-    });
-
-    // 현재 순례자 위치(진행 끝)
-    if(prog<1){
-      var cur=poly[last];
-      ctx.fillStyle=route; ctx.beginPath(); ctx.arc(cur[0],cur[1],3,0,7); ctx.fill();
-    }
-  }
-
-  var start=null, DUR=2200;
-  function frame(ts){
-    if(start===null) start=ts;
-    var prog=Math.min(1,(ts-start)/DUR);
-    var e = prog<0.5 ? 2*prog*prog : 1-Math.pow(-2*prog+2,2)/2; // easeInOutQuad
-    draw(e);
-    if(prog<1) requestAnimationFrame(frame);
-  }
-
-  function run(){ layout(); if(reduce){ draw(1); } else { start=null; requestAnimationFrame(frame); } }
-
-  run();
-  var rt;
-  window.addEventListener('resize', function(){ clearTimeout(rt); rt=setTimeout(function(){ layout(); draw(1); }, 150); });
-  // 테마 전환 시 경로·등불 색을 다시 칠한다(옛 색 잔상 방지)
-  var repaint = function(){ layout(); draw(1); };
-  try{ window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change', repaint); }catch(e){}
-  try{ new MutationObserver(repaint).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']}); }catch(e){}
-})();
-</script>
+<!-- 지도는 인라인 SVG + CSS로 렌더 (스크립트 불필요) -->
