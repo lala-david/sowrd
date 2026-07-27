@@ -29,6 +29,9 @@
 | [`docs/BEACHHEAD.md`](BEACHHEAD.md) | **비치헤드 확정** — 1순위 고객(한국 도시권 2030 개신교 소그룹 러너), 러너/걷기·신자/온램프·B2C/B2B·국가·여정 1차→2차 순서화 | ✅ |
 | [`docs/FOCUS-ROADMAP.md`](FOCUS-ROADMAP.md) | **초점 로드맵** — NOW(WIP=1 수요검증)/NEXT/LATER/**Won't-do-yet**. MASTERPLAN §7 "전부 구현" 해체 | ✅ |
 | [`docs/VALIDATION.md`](VALIDATION.md) | **수요 검증 설계** — Mom Test 인터뷰·경쟁앱 리뷰 코딩·랜딩 A/B 스모크테스트·KPI 임계값·결정 게이트 | ✅ |
+| [`docs/VALIDATION-KIT.md`](VALIDATION-KIT.md) | **검증 실행 키트** — 폼 스펙·모집 DM 3종·코딩 시트·리뷰 CSV 템플릿(바로 복붙) | ✅ |
+| [`docs/GO-NO-GO.md`](GO-NO-GO.md) | **구조 실사** — 수요가 못 재는 킬팩터(수익·리치·해자·채널·경쟁 거인) + go/pivot/no-go | ✅ |
+| [`docs/SUMMARY-2026-07-27.md`](SUMMARY-2026-07-27.md) | **⭐ 세션 종합 정리** — 팩폭→정본화→자기검증→재작업 전체 서사·산출물 지도·다음 수 | ✅ |
 | [`docs/DESIGN-TOOLING.md`](DESIGN-TOOLING.md) | 디자인/UI/이미지·아이콘 MCP 20여종 조사 + 추천 스택 | ✅ |
 | [`docs/ART-DIRECTION.md`](ART-DIRECTION.md) | Nike풍 미니멀 애슬레틱 아트 방향, 프롬프트 템플릿, 일관성 워크플로 | ✅ |
 | [`docs/DESIGN-PHILOSOPHY.md`](DESIGN-PHILOSOPHY.md) | **디자인 철학** — "빛이 이긴 길"(라이트), 7원칙, AI-slop 금지 목록, 토큰. 모든 화면 심사 기준 | ✅ |
