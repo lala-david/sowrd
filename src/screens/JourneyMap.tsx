@@ -17,6 +17,7 @@ export default function JourneyMap() {
   const go = useNav((s) => s.go)
   const journeyId = useNav((s) => s.journeyId)
   const openJourney = useNav((s) => s.openJourney)
+  const openEpisode = useNav((s) => s.openEpisode)
   const pilgrim = usePilgrim()
 
   const journey = (journeyId ? journeyById(journeyId) : undefined) ?? journeyById(pilgrim.activeJourneyId) ?? JOURNEYS[0]
@@ -68,11 +69,7 @@ export default function JourneyMap() {
 
       {/* 길 전체. 자리 서른셋이 한 장에 들어가므로 세로로 넉넉히 준다. */}
       <div className="flex flex-1 flex-col justify-center px-4 pb-6 pt-3">
-        <button
-          onClick={() => openJourney(journey.id)}
-          aria-label={`${journey.name} 자리 목록 열기`}
-          className="block w-full text-left transition active:scale-[0.995]"
-        >
+        <div>
           {/* 카드 높이를 **길의 모양**에 맞춘다.
               430으로 고정했더니 길이 가로로 누운 여정에서 위아래가 통째로 비었다(카드 절반이 여백).
               종횡비를 왜곡하지 않는 것이 원칙이므로, 늘릴 수 없으면 카드를 줄이는 쪽이 맞다. */}
@@ -83,11 +80,18 @@ export default function JourneyMap() {
             units={pilgrim.units}
             journeyId={journey.id}
             height={mapHeight}
+            onSelectStop={(id) => openEpisode(journey.id, id)}
           />
-        </button>
+        </div>
         <p className="mt-3 px-2 text-center text-[12px] text-muted">
-          {q.next ? `다음 자리 ${q.next.place}` : '이 길을 끝까지 걸었습니다'}
+          자리를 누르면 그곳의 말씀과 이야기가 열립니다
         </p>
+        <button
+          onClick={() => openJourney(journey.id)}
+          className="mx-auto mt-3 rounded-full border border-line px-4 py-2 text-[12.5px] text-ink-soft transition active:scale-95"
+        >
+          자리 목록으로 보기
+        </button>
       </div>
     </div>
   )

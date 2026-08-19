@@ -31,6 +31,11 @@ export interface QuestMapProps {
   units: string
   /** 어느 길인가 — 그 땅의 밤(배경·지형)이 달라진다 */
   journeyId: string
+  /* 자리를 누를 수 있게 할지.
+     **접힌 지도(홈)와 펼친 지도(전체)의 차이가 여기 있다.** 홈의 지도는 한 번 탭하면
+     지도를 여는 하나의 버튼이다(작은 창에 버튼을 여섯 개 겹쳐 놓으면 오탭만 는다).
+     펼친 지도에서는 자리 하나하나가 퀘스트 입구가 된다 — 누르면 그 자리의 상세로 간다. */
+  onSelectStop?: (episodeId: string) => void
   height?: number
   className?: string
 }
@@ -146,6 +151,7 @@ export default function QuestMap({
   atStart,
   units,
   journeyId,
+  onSelectStop,
   height = 234,
   className = '',
 }: QuestMapProps) {
@@ -408,6 +414,30 @@ export default function QuestMap({
                 />
               )}
               <MapNode x={p[0]} y={p[1]} state={st.state} scale={nodeScale} order={st.index + 1} uid={uid} />
+              {/* 히트 영역은 그림보다 크다 — 봉인된 자리는 반지름 5.5라 손가락으로 못 누른다.
+                  SVG 안이라 min-height 44px 규칙을 CSS로 못 걸므로 원으로 직접 넓힌다. */}
+              {onSelectStop && (
+                <circle
+                  cx={p[0]}
+                  cy={p[1]}
+                  r={Math.max(15, 20 * nodeScale)}
+                  fill="transparent"
+                  style={{ cursor: 'pointer' }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${st.ep.place} 자리 열기`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onSelectStop(st.ep.id)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      onSelectStop(st.ep.id)
+                    }
+                  }}
+                />
+              )}
             </motion.g>
           )
         })}

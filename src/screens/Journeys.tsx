@@ -1,7 +1,7 @@
 import { useNav } from '../store'
 import { usePilgrim, journeyKmOf } from '../state/pilgrim'
 import { JOURNEYS, JOURNEY_CHROME, journeyProgress, toJourneyKm, toRealKm } from '../data/geo/journeys'
-import { sceneArt, crestArt } from '../assets/art'
+import { sceneArt, crestArt, propArt } from '../assets/art'
 import { sceneFocus } from '../lib/scene'
 import { SectionLabel } from '../components/ui'
 import TabBar from '../components/TabBar'
@@ -55,7 +55,21 @@ export default function Journeys() {
               onClick={() => { setActiveJourney(j.id); openJourney(j.id) }}
               className="relative w-full overflow-hidden rounded-3xl border border-line-strong text-left transition active:scale-[0.99]"
             >
-              <img src={sceneArt(chrome.scene)} alt="" loading="lazy" decoding="async" className="h-[132px] w-full object-cover" style={{ objectPosition: sceneFocus(chrome.scene, 'card') }} />
+              {/* 그 길의 그림 — recraft 컷페이퍼 벡터. 없으면 지역 씬으로 폴백한다.
+                  예전엔 다섯 카드가 씬 8종을 돌려 써서 아브라함과 바울이 같은 새벽길이었다.
+                  카드는 132px로 **큰 자리**라 생성 아트의 결이 살아난다(20px 노드와 다르다). */}
+              {propArt(j.id) ? (
+                <img
+                  src={propArt(j.id)}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="h-[132px] w-full object-cover"
+                  style={{ objectPosition: 'center 45%' }}
+                />
+              ) : (
+                <img src={sceneArt(chrome.scene)} alt="" loading="lazy" decoding="async" className="h-[132px] w-full object-cover" style={{ objectPosition: sceneFocus(chrome.scene, 'card') }} />
+              )}
               <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to right, var(--color-sand) 0%, var(--color-sand) 44%, transparent 82%)' }} />
 
               <div className="absolute inset-y-0 left-0 flex w-[62%] flex-col justify-center px-5">

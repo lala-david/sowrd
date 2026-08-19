@@ -72,10 +72,12 @@ export default function EpisodeDetail() {
         </button>
       </div>
 
-      <div className="relative z-10 px-7" style={{ paddingBottom: 'max(2.5rem, env(safe-area-inset-bottom))' }}>
-        {/* 자리 머리 — 도달 여부는 인장으로만 표시하고, 본문 접근은 막지 않는다 */}
+      <div className="stagger relative z-10 px-7" style={{ paddingBottom: 'max(2.5rem, env(safe-area-inset-bottom))' }}>
+        {/* 자리 머리 — 도달 여부는 인장으로만 표시하고, 본문 접근은 막지 않는다.
+            닿은 자리에는 인장이 찍히는 연출이 한 번 돈다(수난 자리에서는 mood가 끄지만,
+            여기는 이미 지나온 자리를 다시 여는 화면이라 조용한 등장만 쓴다). */}
         <div className="flex items-center gap-2" style={{ color: chrome.accent }}>
-          {reached ? <IconSeal size={16} /> : <IconScroll size={16} />}
+          {reached ? <IconSeal size={16} className="anim-seal" /> : <IconScroll size={16} />}
           <span className="font-display text-[11.5px] uppercase tracking-[0.18em]">
             {ep.placeLatin} · {reached ? '닿은 자리' : '아직 가는 중'}
           </span>
