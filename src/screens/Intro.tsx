@@ -18,7 +18,8 @@ export default function Intro() {
 
   const steps = [
     { Icon: IconPath, text: '달립니다. 실제 GPS로 거리를 잽니다.' },
-    { Icon: IconCairn, text: '그만큼 아브라함·모세·바울·베드로가 걸었던 실제 길이 전진합니다.' },
+    // 예수님의 사역 길이 기본 여정이 됐는데 목록에서 빠져 있었다(geo/journeys/jesus.ts).
+    { Icon: IconCairn, text: '그만큼 예수님이 걸으신 실제 길이 전진합니다. 아브라함·모세·바울·베드로의 길도 함께 있습니다.' },
     { Icon: IconScroll, text: '자리에 닿으면 그곳의 말씀을 함께 읽습니다.' },
   ]
 

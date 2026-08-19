@@ -118,10 +118,18 @@ export default function Collection() {
                   <span className="mt-1.5 block h-[3px] w-full overflow-hidden rounded-full bg-line">
                     <span className="block h-full rounded-full" style={{ width: `${(done / total) * 100}%`, background: chrome.accent }} />
                   </span>
+                  {/* 빈 상태를 "아직 없음"으로 두지 않는다.
+                      처음 켠 사람이 이 화면에서 만나던 것은 0/10 · 0/16 · 0/28 · 0/14와
+                      "아직 이 길을 걷지 않았습니다" 네 줄, 한 화면에 0과 없음이 열네 개였다.
+                      장부 대신 초대를 놓는다 — 지금 갈 수 있는 첫 자리와 거기까지의 거리. */}
                   <span className="mt-1.5 block truncate text-[11.5px] text-muted">
-                    {last
-                      ? `마지막으로 닿은 자리 · ${last.place}${at ? ` · ${new Date(at).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })}` : ''}`
-                      : '아직 이 길을 걷지 않았습니다'}
+                    {last ? (
+                      `마지막으로 닿은 자리 · ${last.place}${at ? ` · ${new Date(at).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })}` : ''}`
+                    ) : (
+                      <>
+                        첫 자리 <span className="text-ink-soft">{j.episodes[0]?.place}</span>에서 시작합니다
+                      </>
+                    )}
                   </span>
                 </span>
                 <IconSeal size={16} className={done > 0 ? 'text-sun-deep' : 'text-line-strong'} />

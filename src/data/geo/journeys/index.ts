@@ -6,6 +6,9 @@ import abraham from './abraham.json'
 import exodus from './exodus.json'
 import paul from './paul.json'
 import peter from './peter.json'
+import type { Mood } from '../../journey'
+import { moodOfEpisode } from './moods'
+import { JESUS_JOURNEY } from './jesus'
 
 export interface JourneyEpisode {
   id: string
@@ -25,6 +28,9 @@ export interface JourneyEpisode {
   feel: string
   leg?: 'land' | 'sea'
   confidence?: string // biblical | tradition | symbolic
+  /* 톤. JSON에는 없고 moods.ts가 얹는다 — 좌표 리서치와 신학·편집 판단은 다른 종류의 데이터다.
+   * 이 값이 'lament'면 축하·인장 애니메이션이 꺼진다(CONTENT-UX §수난 = 게임 완전 OFF). */
+  mood: Mood
 }
 
 export interface JourneyTier {
@@ -77,7 +83,10 @@ export const JOURNEY_CHROME: Record<string, JourneyChrome> = {
 export const JOURNEY_SCALE: Record<string, number> = {
   abraham: 12, // 3,490km → 실제 약 291km
   exodus: 4, //  1,060km → 실제 약 265km
-  jesus: 10, //  3,020km → 실제 약 302km
+  /* 예수: 891km(사역 지리 안 33자리의 실측 합) → 실제 약 297km.
+     문서의 3,020km는 상징 좌표인 로마('땅 끝')까지 포함한 값이라 축척 10배로 잡혀 있었는데,
+     지도의 자리에서 로마를 뺀 뒤에는 그 배율이면 89km 만에 완주가 된다. 3배가 맞는 값이다. */
+  jesus: 3,
   paul: 30, //   9,980km → 실제 약 333km
   peter: 12, //  3,673km → 실제 약 306km
 }
@@ -90,11 +99,23 @@ export const toJourneyKm = (journeyId: string, realKm: number): number => realKm
 /** 여정 거리 → 실제로 달려야 하는 거리(“여기까지 몇 km 남았나”를 사람 말로 옮길 때) */
 export const toRealKm = (journeyId: string, journeyKm: number): number => journeyKm / scaleOf(journeyId)
 
+/* JSON에 톤을 얹어 Journey를 완성한다.
+ * 얹지 않으면 ep.mood가 undefined라, 이삭의 결박과 모세의 죽음에도 축하 인장이 찍힌다. */
+function withMoods(raw: unknown): Journey {
+  const j = raw as Journey
+  return { ...j, episodes: j.episodes.map((e) => ({ ...e, mood: moodOfEpisode(j.id, e.id) })) }
+}
+
+/* 예수 여정을 **맨 앞에** 둔다.
+ * DECISIONS.md가 출시 범위를 "예수 단일 여정"으로 정했는데도 목록에 예수가 아예 없어서
+ * 홈은 베드로를, Setup은 갈릴리 코스를 말하고 있었다. jesus.ts가 좌표(jesus-journey.json)와
+ * 서사(journey.ts STATIONS)를 조인해 Journey를 만든다. mood를 이미 들고 오므로 withMoods를 안 탄다. */
 export const JOURNEYS: Journey[] = [
-  abraham as unknown as Journey,
-  exodus as unknown as Journey,
-  paul as unknown as Journey,
-  peter as unknown as Journey,
+  JESUS_JOURNEY,
+  withMoods(abraham),
+  withMoods(exodus),
+  withMoods(paul),
+  withMoods(peter),
 ]
 
 export const journeyById = (id: string): Journey | undefined => JOURNEYS.find((j) => j.id === id)

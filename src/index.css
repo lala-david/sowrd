@@ -30,6 +30,25 @@
   --color-lapis: #2e3f8f;
   --color-lapis-deep: #263573;
 
+  /* ── 게임 레이어 — "게임의 뼈, 순례의 살"(DECISIONS D3) ───────────────────
+     어휘는 순례(자리·인장·봉인)로 두되, 상태는 게임처럼 한눈에 갈리게 만든다.
+     여기서 라피스가 **선에서 면으로** 승격한다. 실측상 앱 7화면 전부가 유채색 픽셀의
+     100%를 적–황 색상환에 두고 있었다(명도 폭 2~31). 찬 색을 덩어리로 들여야 따뜻함이
+     비로소 따뜻하게 보인다 — 대비가 없으면 온기도 안 읽힌다. */
+  --color-lapis-surface: #1d2557; /* 봉인 구간·밤 지도의 바탕(면) */
+  --color-lapis-raised: #2a3570; /* 그 위에 얹는 카드 */
+  --color-lapis-veil: #4054ad; /* 봉인 테두리·안개 */
+  --color-lapis-bright: #6478d8; /* 아직 가지 않은 길의 점선 */
+
+  /* 인장 — 도달한 자리에 찍힌다. 금은 "보상"이 아니라 "다녀왔다는 표"다. */
+  --color-seal: #cf9a34;
+  --color-seal-bright: #f7d074;
+
+  /* 유쾌한 주홍 — 오늘의 목표·축하에만. 클레이보다 한 뼘 밝고 채도가 높다.
+     기존 팔레트의 평균 채도는 0.12였다(러닝 화면만 0.25). 한 점을 튀게 둔다. */
+  --color-joy: #e5673a;
+  --color-joy-soft: #fbe3d6;
+
   /* ── 러닝 데이터 색 ────────────────────────────────────────────────────
      기존 5존(올리브2 + 선골드 + 클레이2)은 검증기에서 양쪽 테마 전부 실패했다:
      다크에서 clay와 clay-deep이 ΔE 3.9로 같은 색이고, 라이트/다크에서 명도 순서가
@@ -97,6 +116,18 @@ body {
   /* 밤에는 라피스를 발광 톤으로 올린다 — 어두운 흙빛 위에서 #2e3f8f는 묻힌다. */
   --color-lapis: #7488db;
   --color-lapis-deep: #8e9ee6;
+
+  /* 밤에는 라피스 면이 배경과 붙어버린다 — 한 단 올려 "깊은 밤"으로 유지한다. */
+  --color-lapis-surface: #151c46;
+  --color-lapis-raised: #212a63;
+  --color-lapis-veil: #5669c4;
+  --color-lapis-bright: #8497e4;
+
+  --color-seal: #e2b25a;
+  --color-seal-bright: #f9dc96;
+
+  --color-joy: #f0805a;
+  --color-joy-soft: #3a2015;
 
   /* 다크에서는 램프 방향이 뒤집힌다(어두움 → 밝음). 같은 데이터가 두 테마에서
      반대로 읽히지 않게 순서를 유지하려면 값 자체를 뒤집어야 한다. */
@@ -167,6 +198,78 @@ body::after {
 }
 .anim-pop {
   animation: pop 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── 게임 레이어의 모션 ────────────────────────────────────────────────────
+   "느린 숨"은 계속 지킨다(팡파레 금지). 다만 **자리에 닿는 순간**만은 예외로 둔다 —
+   열 번 달리면 여덟아홉 번은 아무 일도 안 일어나는 것이 이 앱이 지루했던 가장 큰 이유였고,
+   드물게 오는 그 한 번이 밋밋하면 다음 한 번을 기다릴 이유가 안 생긴다. */
+
+/* 인장이 찍힌다 — 위에서 눌러 찍고 살짝 튄다. 200ms 안에 끝난다. */
+@keyframes seal-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.9) rotate(-14deg);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(0.88) rotate(2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+.anim-seal {
+  animation: seal-stamp 460ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* 내 토큰 — 길 위에서 살짝 떠 있다. "지금 여기"가 정지한 점이 아니라 살아있게. */
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2.5px);
+  }
+}
+.anim-bob {
+  animation: bob 2.6s ease-in-out infinite;
+}
+
+/* 봉인 위를 빛이 스쳐간다 — "여기 잠겨 있다, 그리고 열릴 수 있다"를 동시에 말한다. */
+@keyframes shimmer {
+  0% {
+    background-position: -160% 0;
+  }
+  100% {
+    background-position: 260% 0;
+  }
+}
+.anim-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    transparent 38%,
+    color-mix(in srgb, var(--color-seal-bright) 42%, transparent) 50%,
+    transparent 62%
+  );
+  background-size: 220% 100%;
+  animation: shimmer 4.5s ease-in-out infinite;
+}
+
+/* 목표까지 남은 거리가 줄어드는 게이지 — 차오르는 방향을 눈으로 따라가게 */
+@keyframes gauge-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.anim-gauge {
+  transform-origin: left center;
+  animation: gauge-fill 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* 최소 터치 타깃 44px.

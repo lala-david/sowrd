@@ -4,12 +4,12 @@ import { STATIONS } from '../data/journey'
 import { fmtDistance, fmtDuration, fmtPace, unitLabel } from '../lib/format'
 import { StatTile, SectionLabel, ProgressBar, SettingSwitch, WeeklyBars } from '../components/ui'
 import TabBar from '../components/TabBar'
-import { IconPilgrim, IconHeld, IconEmber, IconReached, IconSettings } from '../components/icons'
+import { IconPilgrim, IconHeld, IconEmber, IconReached, IconSettings, IconLamp } from '../components/icons'
 import { validateAlias } from '../data/prayer'
 
 export default function Profile() {
   const pilgrim = usePilgrim()
-  const { units, setUnits, intercessions, addIntercession, removeIntercession, runs, resetAll, textScale, setTextScale } = pilgrim
+  const { units, setUnits, intercessions, addIntercession, removeIntercession, runs, resetAll, textScale, setTextScale, theme, setTheme } = pilgrim
   const totals = pilgrimTotals(pilgrim)
   const overall = overallJourneyPct(pilgrim)
   const tier = activeTier(pilgrim)
@@ -84,19 +84,40 @@ export default function Profile() {
       {/* 개인 기록 */}
       <div className="mt-5 px-6">
         <SectionLabel>개인 기록</SectionLabel>
+        {/* 기록이 없을 때 '—'를 두지 않는다.
+            처음 켠 사람의 프로필에는 0·0·0·0일·0%·"아직 없어요"·—·— 가 한 화면에 열네 개 있었다.
+            빈 칸은 사실이지만 아무 일도 시키지 않는다. 첫 기록이 어떻게 생기는지를 대신 말한다. */}
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div className="flex items-center gap-3 rounded-xl border border-line bg-sand-raised/30 px-4 py-3.5">
             <IconEmber size={18} className="text-clay-deep" />
-            <div>
-              <p className="font-display text-[17px] text-ink" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>{totals.fastest1kSec ? fmtPace(totals.fastest1kSec, units) : '—'}</p>
-              <p className="text-[11px] text-muted">가장 빠른 1{unitLabel(units).toLowerCase()}</p>
+            <div className="min-w-0">
+              {totals.fastest1kSec ? (
+                <>
+                  <p className="font-display text-[17px] text-ink" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>{fmtPace(totals.fastest1kSec, units)}</p>
+                  <p className="text-[11px] text-muted">가장 빠른 1{unitLabel(units).toLowerCase()}</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-serif text-[14px] leading-tight text-ink-soft">첫 1{unitLabel(units).toLowerCase()}을 달리면</p>
+                  <p className="text-[11px] text-muted">여기 기록이 남습니다</p>
+                </>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3 rounded-xl border border-line bg-sand-raised/30 px-4 py-3.5">
             <IconReached size={18} className="text-olive-deep" />
-            <div>
-              <p className="font-display text-[17px] text-ink" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>{totals.longestRunKm > 0 ? `${fmtDistance(totals.longestRunKm, units, 1)}${unitLabel(units).toLowerCase()}` : '—'}</p>
-              <p className="text-[11px] text-muted">가장 긴 순례</p>
+            <div className="min-w-0">
+              {totals.longestRunKm > 0 ? (
+                <>
+                  <p className="font-display text-[17px] text-ink" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>{`${fmtDistance(totals.longestRunKm, units, 1)}${unitLabel(units).toLowerCase()}`}</p>
+                  <p className="text-[11px] text-muted">가장 긴 순례</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-serif text-[14px] leading-tight text-ink-soft">가장 멀리 간 날</p>
+                  <p className="text-[11px] text-muted">아직 그 날이 오지 않았습니다</p>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -191,6 +212,27 @@ export default function Profile() {
                 onClick={() => setTextScale(v)}
                 aria-pressed={textScale === v}
                 className={`min-h-[44px] px-3 text-[13px] ${textScale === v ? 'bg-clay-deep text-sand-raised' : 'text-muted'}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 테마 — "밤의 순례길 · 등불" 토큰은 처음부터 다 정의돼 있었는데 켜지는 곳이
+            러닝 화면 한 군데뿐이었다. 새벽 5시에 열어도 크림색이었다는 뜻이다.
+            기본은 '기기 설정'이라 아무것도 안 만져도 밤에는 밤이 된다. */}
+        <div className="mt-3 flex items-center justify-between rounded-xl border border-line bg-sand-raised/30 px-4 py-3">
+          <span className="flex items-center gap-2.5 text-[14px] text-ink-soft">
+            <IconLamp size={18} className="text-muted" /> 화면
+          </span>
+          <div className="flex overflow-hidden rounded-lg border border-line-strong">
+            {([['system', '기기'], ['light', '낮'], ['dark', '밤']] as const).map(([v, label]) => (
+              <button
+                key={v}
+                onClick={() => setTheme(v)}
+                aria-pressed={theme === v}
+                className={`min-h-[44px] px-3 text-[13px] ${theme === v ? 'bg-clay-deep text-sand-raised' : 'text-muted'}`}
               >
                 {label}
               </button>

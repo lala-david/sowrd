@@ -59,6 +59,26 @@ export default function App() {
     return () => window.removeEventListener('focus', apply)
   }, [textScale])
 
+  /* 테마 — 다크 토큰은 처음부터 전부 정의돼 있었는데 실제로 켜지는 곳은 러닝 화면
+   * 한 군데(Run.tsx의 data-theme="dark")뿐이었다. 새벽에 열어도 크림색이라는 뜻이다.
+   * 여기서 <html>에 걸어 앱 전체가 따르게 한다. 'system'이면 OS 설정을 실시간으로 따라간다.
+   * (러닝 화면은 자기 컨테이너에 dark를 직접 걸므로 라이트를 골라도 몰입 화면은 그대로 밤이다.) */
+  const theme = usePilgrim((s) => s.theme)
+  useEffect(() => {
+    const root = document.documentElement
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const apply = () => {
+      const dark = theme === 'dark' || (theme === 'system' && mq.matches)
+      root.setAttribute('data-theme', dark ? 'dark' : 'light')
+      // 스크롤바·폼 컨트롤 같은 브라우저 UI도 같이 따라오게 한다
+      root.style.colorScheme = dark ? 'dark' : 'light'
+    }
+    apply()
+    if (theme !== 'system') return
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [theme])
+
   /* 첫 실행 안내는 심플/전체 모드와 무관하게 앱 전체 위에 한 번 뜬다. */
   const seenIntro = usePilgrim((s) => s.seenIntro)
 

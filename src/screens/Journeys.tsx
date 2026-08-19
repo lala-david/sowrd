@@ -5,7 +5,8 @@ import { sceneArt, crestArt } from '../assets/art'
 import { sceneFocus } from '../lib/scene'
 import { SectionLabel } from '../components/ui'
 import TabBar from '../components/TabBar'
-import { IconArrow } from '../components/icons'
+import { IconArrow, IconSeal } from '../components/icons'
+import { questNow } from '../lib/quest'
 
 /* 문장은 recraft가 불투명 배경째로 뱉으므로 원형으로 잘라 인장처럼 앉힌다.
  * 사각형 그대로 두면 씬 위에 흰 상자가 떠 보인다. */
@@ -19,7 +20,7 @@ function Crest({ src }: { src: string }) {
 
 /* 여정 선택 — 월드맵. 한 화면에 다 몰지 않고, 여정을 고르는 것부터 시작한다.
  * 카드 = 지역 씬(래스터 배경) + 문장(벡터 엠블럼) + 진행 링.
- * 예수님 사역 길은 기존 journey.ts/코스 구조가 구동하므로 별도 카드로 둔다. */
+ * 예수님 사역 길도 이제 같은 목록의 같은 카드다(geo/journeys/jesus.ts가 좌표와 서사를 조인한다). */
 export default function Journeys() {
   const openJourney = useNav((s) => s.openJourney)
   const go = useNav((s) => s.go)
@@ -37,26 +38,17 @@ export default function Journeys() {
       </header>
 
       <div className="mt-6 flex flex-col gap-3.5 px-5 pb-4">
-        {/* 예수님의 사역 길 — 기존 코스 구조 */}
-        <button
-          onClick={() => go('collection')}
-          className="relative w-full overflow-hidden rounded-3xl border border-line-strong text-left transition active:scale-[0.99]"
-        >
-          <img src={sceneArt('sea')} alt="" loading="lazy" decoding="async" className="h-[132px] w-full object-cover" style={{ objectPosition: sceneFocus('sea', 'card') }} />
-          <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to right, var(--color-sand) 0%, var(--color-sand) 44%, transparent 82%)' }} />
-          <div className="absolute inset-y-0 left-0 flex w-[62%] flex-col justify-center px-5">
-            <span className="font-display text-[10.5px] uppercase tracking-[0.2em] text-clay-deep">Via Christi</span>
-            <p className="mt-1 font-serif text-[20px] font-bold leading-tight text-ink">예수님의 사역 길</p>
-            <p className="mt-1 text-[11.5px] text-muted">37자리 · 약 3,020km</p>
-          </div>
-          {crestArt('jesus') && <Crest src={crestArt('jesus')!} />}
-        </button>
-
+        {/* 예수님의 사역 길은 이제 JOURNEYS의 첫 항목이다(geo/journeys/jesus.ts).
+            예전엔 여기에 별도 카드가 하드코딩돼 있었다 — 진행도도 없고("37자리 · 약 3,020km"라는
+            고정 문구뿐), 누르면 수집 화면으로 새는, 다른 네 여정과 규칙이 다른 카드였다.
+            같은 목록의 같은 카드가 되면서 진행·다음 자리·인장이 전부 붙는다. */}
         {JOURNEYS.map((j) => {
           const chrome = JOURNEY_CHROME[j.id]
           const km = toJourneyKm(j.id, journeyKmOf(pilgrim, j.id))
           const prog = journeyProgress(j, km)
           const crest = crestArt(j.id)
+          const chapter = questNow(j, km).chapter
+          const active = j.id === pilgrim.activeJourneyId
           return (
             <button
               key={j.id}
@@ -67,8 +59,20 @@ export default function Journeys() {
               <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to right, var(--color-sand) 0%, var(--color-sand) 44%, transparent 82%)' }} />
 
               <div className="absolute inset-y-0 left-0 flex w-[62%] flex-col justify-center px-5">
-                <span className="font-display text-[10.5px] uppercase tracking-[0.2em]" style={{ color: chrome.accent }}>
-                  {j.nameLatin}
+                <span className="flex items-center gap-1.5">
+                  <span className="font-display text-[10.5px] uppercase tracking-[0.2em]" style={{ color: chrome.accent }}>
+                    {j.nameLatin}
+                  </span>
+                  {/* 지금 걷는 길 — 예전엔 목록에서 어느 길을 걷고 있는지 알 수 없었다.
+                      카드 위에 절대배치했더니 제목을 덮어서, 라틴명 옆 칩으로 내렸다. */}
+                  {active && (
+                    <span
+                      className="rounded-full px-1.5 py-[2px] text-[9.5px] leading-none"
+                      style={{ background: 'var(--color-clay-deep)', color: 'var(--color-sand-raised)' }}
+                    >
+                      지금 걷는 길
+                    </span>
+                  )}
                 </span>
                 <p className="mt-1 font-serif text-[20px] font-bold leading-tight text-ink">{j.name}</p>
                 {/* 여정 거리(바울 3,490km)가 아니라 **내가 실제로 달릴 거리**를 적는다.
@@ -95,9 +99,29 @@ export default function Journeys() {
                     {prog.reachedCount}/{prog.total}
                   </span>
                 </div>
+
+                {/* 지금 어느 장을 걷는 중인지 — 목록에서도 진행이 이야기로 읽히게 */}
+                {chapter && (
+                  <p className="mt-1.5 flex items-center gap-1 text-[10.5px] text-muted">
+                    <span className="font-display">{chapter.index}장</span> · {chapter.name}
+                  </p>
+                )}
               </div>
 
               {crest && <Crest src={crest} />}
+              {/* 인장 — **실제로 걸은** 길에만 붙는다.
+                  reachedCount로 판정했더니 모든 카드에 인장이 찍혔다: 어느 여정이든 첫 자리가
+                  누적 0km라 한 걸음도 안 뛴 사람도 reachedCount가 1이기 때문이다.
+                  표가 전부에게 붙으면 표가 아니다. 달린 거리로 판정한다. */}
+              {km > 0 && (
+                <span
+                  className="absolute right-3.5 top-3.5 flex h-7 w-7 items-center justify-center rounded-full"
+                  style={{ background: 'var(--color-seal)', color: 'var(--color-lapis-surface)' }}
+                  aria-hidden
+                >
+                  <IconSeal size={15} strokeWidth={1.8} />
+                </span>
+              )}
             </button>
           )
         })}

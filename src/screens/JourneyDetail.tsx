@@ -8,6 +8,8 @@ import { episodeArt } from '../assets/art'
 import { MILESTONES, milestonesPassed } from '../data/geo/journeys/milestones'
 import { IconArrow, IconSeal, IconCairn } from '../components/icons'
 import { sceneFocus } from '../lib/scene'
+import QuestMap from '../components/QuestMap'
+import { questWindow } from '../lib/quest'
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII']
 
@@ -86,6 +88,18 @@ export default function JourneyDetail() {
         <span className="font-display text-[11px] uppercase tracking-[0.2em]" style={{ color: chrome.accent }}>{journey.nameLatin}</span>
         <h1 className="mt-1.5 font-serif text-[28px] font-bold leading-tight">{journey.name}</h1>
         <p className="mt-1 text-[12.5px] text-muted">{journey.who} · {journey.era}</p>
+
+        {/* 이 여정의 지금 구간 — 홈과 같은 지도를 여기서도 본다.
+            여정 상세는 자리 **목록**만 있어서 "어디에서 어디로 가는 길인가"가 안 보였다.
+            목록은 순서를 말하고 지도는 지리를 말한다. 둘 다 있어야 이 길이 실재한다. */}
+        <QuestMap
+          className="mt-4"
+          stops={questWindow(journey, km)}
+          segProgress={prog.segProgress}
+          atStart={prog.reachedCount === 0}
+          units={pilgrim.units}
+          height={200}
+        />
 
         <div className="mt-4 flex items-center gap-3">
           <div className="h-[4px] flex-1 overflow-hidden rounded-full bg-line">

@@ -3,21 +3,14 @@ import { usePilgrim, journeyKmOf, daysThisWeek, pilgrimTotals } from '../state/p
 import { useRun } from '../state/run'
 import { STATIONS, JESUS_ORDER, type PassageSlug } from '../data/journey'
 import { featuredVerse } from '../data/scripture'
-import { fmtDistance } from '../lib/format'
 import TabBar from '../components/TabBar'
 import InstallPrompt from '../components/InstallPrompt'
-import { IconHeld, IconChevron, IconStep, IconCairn, IconScroll } from '../components/icons'
-import { sceneArt, crestArt, stationArt } from '../assets/art'
-import {
-  JOURNEYS,
-  JOURNEY_CHROME,
-  journeyById,
-  journeyProgress,
-  toJourneyKm,
-  toRealKm,
-} from '../data/geo/journeys'
+import QuestMap from '../components/QuestMap'
+import { IconHeld, IconChevron, IconStep, IconCairn, IconScroll, IconSeal } from '../components/icons'
+import { crestArt, stationArt } from '../assets/art'
+import { JOURNEYS, JOURNEY_CHROME, journeyById, journeyProgress, toJourneyKm } from '../data/geo/journeys'
 import { MILESTONES, milestonesPassed } from '../data/geo/journeys/milestones'
-import { sceneFocus } from '../lib/scene'
+import { questNow, questWindow, questCall } from '../lib/quest'
 
 /* 홈 — 화면 하나, 질문 하나: **오늘 어디로 달릴까?**
  *
@@ -25,13 +18,14 @@ import { sceneFocus } from '../lib/scene'
  * 탭바에서 여정 탭까지 감췄고, 에피소드는 여정 안에만 있으므로 **에피소드로 들어갈 길이
  * 통째로 막혔다**. 모드를 없앤다. 처음부터 전부 보이고, 간단히 보고 싶으면 그 자리에서 접는다.
  *
- * 그리고 예전 홈은 예수 코스(히어로·자리 00/5)와 성경 여정(스트립)이 한 화면에서 서로 다른
- * 진행도를 말했다. 220px 히어로 · 32px 지명 · 40px 숫자 · 여정 스트립이 각자 1순위를 다투고,
- * 정작 주 행동(순례 시작)은 그 전부 아래에 있었다(실측 y=490~566, 640px 기기에서 탭바에 걸림).
+ * 그리고 이번에 히어로를 갈았다. 예전 홈의 주인공은 **정적 씬 일러스트 한 장**이었다.
+ * 예쁘지만 아무 말도 하지 않는 그림이라, 이 앱을 여는 유일한 이유("내가 그 길 어디쯤 와 있나")가
+ * 홈에 없었다 — MASTERPLAN이 P0로 못박은 "홈이 살아있는 여정 지도"가 정작 홈에 없었던 셈이다.
+ * 지금 히어로는 실좌표로 그린 여정 지도다. 닿은 자리엔 인장이, 다음 자리엔 봉인이 있다.
  *
- * 지금 위계는 하나다:
- *   ① 지금 걷는 여정 — 다음 자리까지 실제 몇 km인가 (달릴 이유)
- *   ② 달리기 시작 (행동)
+ * 위계는 하나다:
+ *   ① 내가 선 자리 — 지도 (달릴 이유)
+ *   ② 바로 달리기 (행동, **한 번의 탭**)
  *   ③ 오늘의 말씀 (묵상)
  *   ④ 길 바꾸기 · 품은 사람 (전환)
  * 간단히 보기를 켜면 ③④가 접히고 ①②만 남는다 — 감추는 것은 화면이지 기능이 아니다.
@@ -64,17 +58,22 @@ export default function Home() {
   const journey = journeyById(activeJourneyId) ?? JOURNEYS[0]
   const chrome = JOURNEY_CHROME[journey.id]
   const jKm = toJourneyKm(journey.id, journeyKmOf(pilgrim, journey.id))
-  const prog = journeyProgress(journey, jKm)
-  const nextRealKm = toRealKm(journey.id, prog.toNextKm)
+  const q = questNow(journey, jKm)
+  const stops = questWindow(journey, jKm)
   const mileNow = milestonesPassed(journey.id, jKm)
   const mileTotal = (MILESTONES[journey.id] ?? []).length
 
   const today = verseOfToday(totals.totalRuns === 0)
   const week = daysThisWeek(pilgrim)
+  const firstRun = totals.totalRuns === 0
 
-  const startRun = () => {
+  /* 한 번의 탭으로 출발한다.
+   * 예전에는 홈 → Setup(모드 4종 + GPS 확인 + 품은 사람) → 다시 "달리기 시작"이었다.
+   * 매번 설정 화면을 통과해야 하면 그 행위는 의식이 아니라 서류가 된다. 기본값으로 바로 뛰고,
+   * 고르고 싶은 사람만 아래 작은 링크로 들어간다(모드·목표·품은 사람은 거기 그대로 있다). */
+  const runNow = () => {
     configure({ mode: 'guided', courseId: activeCourseId, journeyId: activeJourneyId })
-    go('setup')
+    go('run')
   }
 
   const d = new Date()
@@ -94,88 +93,86 @@ export default function Home() {
       </header>
 
       <div className="relative z-10 flex flex-1 flex-col">
-        {/* ① 지금 걷는 여정 — 이 화면의 주인공.
-            탭하면 그 여정의 자리 목록(에피소드)으로 들어간다. */}
-        <section className="px-6 pt-5">
+        {/* ① 내가 선 자리 — 이 화면의 주인공. 탭하면 그 여정의 자리 목록으로 들어간다. */}
+        <section className="px-5 pt-4">
           <h1 className="sr-only">오늘의 길</h1>
-          <button
-            onClick={() => openJourney(journey.id)}
-            className="block w-full overflow-hidden rounded-[26px] text-left shadow-[0_1px_2px_rgba(44,33,24,.06),0_22px_44px_-26px_rgba(156,69,34,.42)] ring-1 ring-line-strong/60 transition active:scale-[0.995]"
-          >
-            {/* 히어로를 220 → 160px로 줄였다. 220px는 CTA를 화면 밖으로 밀어냈고,
-                그림은 이 화면의 주장이 아니라 배경이다. */}
-            <img
-              src={sceneArt(chrome.scene)}
-              alt=""
-              className="h-[160px] w-full object-cover"
-              style={{ objectPosition: sceneFocus(chrome.scene, 'card') }}
-              fetchPriority="high"
-              decoding="async"
-            />
-            <div className="bg-sand-raised px-5 pb-4 pt-3.5">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="font-display text-[10.5px] uppercase tracking-[0.2em]" style={{ color: chrome.accent }}>
-                  {journey.nameLatin}
-                </span>
-                <span
-                  className="shrink-0 font-display text-[12px] text-muted"
-                  style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}
-                >
-                  자리 {prog.reachedCount}/{prog.total}
-                </span>
-              </div>
-              <p className="mt-1 font-serif text-[22px] font-bold leading-tight text-ink">{journey.name}</p>
 
-              <div className="mt-3 h-[4px] w-full overflow-hidden rounded-full bg-line">
-                <div
-                  className="h-full rounded-full transition-[width] duration-700"
-                  style={{ width: `${prog.pct}%`, background: 'var(--color-lapis)' }}
-                />
-              </div>
+          <div className="mb-2.5 flex items-baseline justify-between px-1.5">
+            <span
+              className="font-display text-[10.5px] uppercase tracking-[0.2em]"
+              style={{ color: chrome?.accent ?? 'var(--color-clay-deep)' }}
+            >
+              {journey.nameLatin}
+            </span>
+            {q.chapter && (
+              <span className="text-[11.5px] text-muted">
+                {q.chapter.index}장 · {q.chapter.name}
+              </span>
+            )}
+          </div>
 
-              {/* 이 화면에서 가장 행동에 가까운 숫자 — 다음 자리까지 **내가 달릴** km.
-                  여정km(바울 210km)를 그대로 보여주면 도달 불가능해 보인다(실제 7km). */}
-              {prog.next ? (
-                <p className="mt-2.5 text-[13px] leading-relaxed text-ink-soft">
-                  다음 자리 <span className="text-ink">{prog.next.place}</span>까지{' '}
-                  <span
-                    className="font-display text-[15px] text-clay-deep"
-                    style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}
-                  >
-                    {fmtDistance(nextRealKm, units)}
-                  </span>
-                  {units}
-                </p>
-              ) : (
-                <p className="mt-2.5 text-[13px] text-ink-soft">이 길을 끝까지 걸었습니다.</p>
-              )}
-
-              {mileTotal > 0 && (
-                <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-muted">
-                  <IconCairn size={12} style={{ color: 'var(--color-lapis)' }} />
-                  지나온 이정표{' '}
-                  <span className="font-display" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>
-                    {mileNow}
-                  </span>
-                  / {mileTotal}
-                </p>
-              )}
-            </div>
+          <button onClick={() => openJourney(journey.id)} className="block w-full text-left transition active:scale-[0.995]">
+            <QuestMap stops={stops} segProgress={q.segProgress} atStart={q.reachedCount === 0} units={units} />
           </button>
+
+          {/* 여정 이름 + 진행 — 지도 아래 한 줄로 정리한다. 지도가 이미 대부분을 말했다. */}
+          <div className="mt-3 flex items-center justify-between gap-3 px-1.5">
+            <p className="font-serif text-[19px] font-bold leading-tight text-ink">{journey.name}</p>
+            <span
+              className="shrink-0 font-display text-[12px] text-muted"
+              style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}
+            >
+              자리 {q.reachedCount}/{q.total}
+            </span>
+          </div>
+
+          <div className="mt-2 h-[4px] w-full overflow-hidden rounded-full bg-line">
+            <div
+              className="anim-gauge h-full rounded-full"
+              style={{ width: `${q.pct}%`, background: 'var(--color-lapis)' }}
+            />
+          </div>
         </section>
 
-        {/* ② 달리기 시작 — 히어로 바로 아래. 엄지 범위이자 첫 화면 안. */}
-        <div className="px-6 pt-4">
+        {/* ② 바로 달리기 — 오늘의 부름을 버튼 안에 넣는다. 왜 달리는지가 버튼에 적혀 있어야 한다. */}
+        <div className="px-5 pt-5">
           <button
-            onClick={startRun}
-            className="flex w-full items-center justify-between rounded-2xl bg-clay-deep py-4 pl-7 pr-4 text-sand-raised shadow-[0_1px_2px_rgba(192,90,48,.25),0_18px_40px_-18px_rgba(156,69,34,.6)] transition active:scale-[0.99]"
+            onClick={runNow}
+            className="flex w-full items-center justify-between rounded-[22px] py-4 pl-6 pr-4 text-left shadow-[0_1px_2px_rgba(192,90,48,.25),0_18px_40px_-18px_rgba(156,69,34,.6)] transition active:scale-[0.99]"
+            style={{ background: 'var(--color-clay-deep)', color: 'var(--color-sand-raised)' }}
           >
-            <span className="font-serif text-[18px]">달리기 시작</span>
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-sun-bright text-ink shadow-[0_0_16px_rgba(240,195,104,.5)]">
-              <IconStep size={20} strokeWidth={1.7} />
+            <span className="min-w-0">
+              <span className="block font-serif text-[19px] leading-tight">바로 달리기</span>
+              <span className="mt-0.5 block truncate text-[12.5px] opacity-80">{questCall(q, units, firstRun)}</span>
+            </span>
+            <span
+              className="ml-3 flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-ink shadow-[0_0_18px_rgba(240,195,104,.55)]"
+              style={{ background: 'var(--color-seal-bright)' }}
+            >
+              <IconStep size={21} strokeWidth={1.7} />
             </span>
           </button>
-          <p className="mt-2 px-1 text-[11.5px] text-muted">달린 거리만큼 이 길이 앞으로 나아갑니다.</p>
+
+          <div className="mt-2.5 flex items-center justify-between px-1.5">
+            {mileTotal > 0 ? (
+              <span className="flex items-center gap-1.5 text-[11.5px] text-muted">
+                <IconCairn size={13} style={{ color: 'var(--color-lapis)' }} />
+                이정표{' '}
+                <span className="font-display text-ink-soft" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>
+                  {mileNow}
+                </span>
+                <span className="text-muted">/ {mileTotal}</span>
+              </span>
+            ) : (
+              <span />
+            )}
+            <button
+              onClick={() => go('setup')}
+              className="tap text-[12px] text-muted underline-offset-4 transition active:scale-95 hover:underline"
+            >
+              고르고 시작하기
+            </button>
+          </div>
         </div>
 
         {/* 홈 화면에 추가 — 설치 가능할 때만, 조용히. 이미 설치됐으면 아무것도 안 그린다.
@@ -252,6 +249,17 @@ export default function Home() {
                           style={{ boxShadow: on ? '0 0 0 2px var(--color-clay)' : 'none' }}
                         >
                           <img src={crest} alt="" className="h-full w-full scale-[1.06] object-cover" loading="lazy" decoding="async" />
+                        </span>
+                      )}
+                      {/* 실제로 걸어 본 길에만 인장을 단다.
+                          reachedCount로 판정하면 전부 붙는다 — 어느 여정이든 첫 자리가 누적 0km라
+                          한 걸음도 안 뛴 사람도 1이 된다. 표가 전부에게 붙으면 표가 아니다. */}
+                      {journeyKmOf(pilgrim, j.id) > 0 && (
+                        <span
+                          className="absolute -right-0.5 -top-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full"
+                          style={{ background: 'var(--color-seal)', color: 'var(--color-sand-raised)' }}
+                        >
+                          <IconSeal size={11} strokeWidth={2} />
                         </span>
                       )}
                     </span>

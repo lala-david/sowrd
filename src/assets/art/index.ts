@@ -179,6 +179,10 @@ const EPISODE_MAP: Record<string, string> = Object.fromEntries(
   ]),
 )
 
-/** 그 여정 그 자리의 그림. 없으면 undefined — 호출부가 씬으로 폴백한다. */
+/* 그 여정 그 자리의 그림. 없으면 undefined — 호출부가 씬으로 폴백한다.
+ *
+ * 예수 여정은 episodes/ 에 그림이 없다. 대신 같은 자리의 그림이 stations/ 에 이미 37장 있다
+ * (예수 자리와 여정 자리가 같은 id를 쓴다 — geo/journeys/jesus.ts가 그 id로 조인한다).
+ * 폴백을 안 걸면 예수 여정만 리빌·수집에서 씬 배경으로 떨어져, 있는 그림 37장을 놀린다. */
 export const episodeArt = (journeyId: string, episodeId: string): string | undefined =>
-  EPISODE_MAP[`${journeyId}-${episodeId}`]
+  EPISODE_MAP[`${journeyId}-${episodeId}`] ?? (journeyId === 'jesus' ? stationArt(episodeId as never) : undefined)

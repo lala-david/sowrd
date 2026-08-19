@@ -4,7 +4,20 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'node:path'
 
-export default defineConfig({
+/* 배포 하위 경로.
+ *
+ * config.ts의 APP_URL 기본값이 https://lala-david.github.io/sowrd — GitHub Pages **프로젝트 페이지**라
+ * 앱이 `/sowrd/` 아래에서 서빙된다. 그런데 base가 없어서 빌드 산출물이 `/assets/index-*.js`를
+ * 절대경로로 가리켰다. 그대로 올리면 첫 요청부터 전부 404다.
+ * 게다가 그 주소는 공유 카드에 새겨 넣는 바로 그 URL이라(성장 고리의 마지막 고리),
+ * 받은 사람이 링크를 누르면 백지를 만나게 된다.
+ *
+ * dev는 루트로 둔다 — 개발 중에 /sowrd/ 를 붙이고 다닐 이유가 없다.
+ * 루트 도메인이나 다른 경로에 올릴 때는 VITE_BASE로 덮는다(예: VITE_BASE=/ npm run build). */
+const BASE = process.env.VITE_BASE ?? '/sowrd/'
+
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? BASE : '/',
   /* dev 터널(cloudflared/ngrok)로 낯선 호스트에서 접속할 때만 허용한다.
    * 평소엔 비어 있어 Vite 기본 보안(낯선 호스트 403)이 그대로 걸린다.
    * 켜려면: VITE_ALLOW_TUNNEL=1 npx vite --host 127.0.0.1 --port 5173 */
@@ -71,12 +84,17 @@ export default defineConfig({
       manifest: {
         name: 'THE WAY',
         short_name: 'THE WAY',
-        /* 아이콘이 없으면 크롬이 설치 자체를 제안하지 않는다 — SW를 아무리 갖춰도 PWA가 안 된다. */
+        /* 아이콘이 없으면 크롬이 설치 자체를 제안하지 않는다 — SW를 아무리 갖춰도 PWA가 안 된다.
+           경로에 base를 직접 붙인다: 매니페스트의 절대경로는 Vite가 안 고쳐 주므로
+           하위 경로 배포에서 `/icon-192.png`가 그대로 404가 된다(= 설치 불가). */
         icons: [
-          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: `${BASE}icon-192.png`, sizes: '192x192', type: 'image/png' },
+          { src: `${BASE}icon-512.png`, sizes: '512x512', type: 'image/png' },
+          { src: `${BASE}icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
+        id: BASE,
+        start_url: BASE,
+        scope: BASE,
         lang: 'ko', // 한국어 앱인데 기본값 en으로 나가고 있었다
         theme_color: '#f4ead7', // index.html의 meta theme-color와 맞춘다(서로 달랐다)
         background_color: '#f4ead7',
@@ -107,4 +125,4 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },
-})
+}))

@@ -117,6 +117,10 @@ interface PilgrimState {
   /* 글자 크기. 이 앱의 폰트는 전부 px 하드코딩이라 브라우저 글꼴 설정도 iOS Dynamic Type도
    * 듣지 않는다 — 노안 사용자에게 글자를 키울 수단이 앱 안에도 밖에도 없었다. */
   textScale: 'normal' | 'large' | 'xlarge'
+  /* 테마. 다크 토큰("밤의 순례길 · 등불")은 처음부터 다 정의돼 있었는데,
+   * 실제로 켜지는 곳이 러닝 화면 한 군데뿐이었다(Run.tsx의 data-theme="dark").
+   * 새벽 5시에 앱을 열어도 크림색이었다는 뜻이다. 'system'이 기본 — OS 설정을 따른다. */
+  theme: 'system' | 'light' | 'dark'
   /* 첫 실행 안내를 봤는가.
    * 예전엔 처음 켠 사람이 보는 화면이 "오늘의 말씀 + 0.0km + 달리기 시작"뿐이라,
    * 이게 GPS로 달린 거리를 재는 앱이라는 사실을 알려주는 문장이 한 줄도 없었다. */
@@ -130,6 +134,7 @@ interface PilgrimState {
   loadDemo: () => void
   setTraceRoute: (v: boolean) => void
   setTextScale: (v: 'normal' | 'large' | 'xlarge') => void
+  setTheme: (v: 'system' | 'light' | 'dark') => void
   setSeenIntro: (v: boolean) => void
   setActiveJourney: (id: string) => void
   addIntercession: (alias: string, note?: string) => void
@@ -283,10 +288,13 @@ export const usePilgrim = create<PilgrimState>()(
       homeCompact: false,
       traceRoute: false,
       textScale: 'normal',
+      theme: 'system',
       seenIntro: false,
-      /* 기본 여정은 첫 보상이 가장 가까운 길로 둔다.
-       * 아브라함은 두 번째 자리가 1,700km라 주 3회 3km 기준 3년 7개월이 걸린다. */
-      activeJourneyId: 'peter',
+      /* 기본 여정 = 예수님의 사역 길.
+       * DECISIONS.md의 출시 범위가 "예수 단일 여정"인데도 기본값이 'peter'였다 —
+       * 예수 여정이 JOURNEYS 목록에 아예 없어서 고를 수가 없었기 때문이다(geo/journeys/jesus.ts 참고).
+       * 이제는 홈과 Setup이 같은 길을 말한다. 첫 보상도 가깝다(첫 구간 10.7km ÷ 축척 3 = 실제 3.6km). */
+      activeJourneyId: 'jesus',
       journeyKm: {},
       intercessions: [],
 
@@ -316,6 +324,7 @@ export const usePilgrim = create<PilgrimState>()(
       loadDemo: () => set({ ...demo() }),
       setTraceRoute: (traceRoute) => set({ traceRoute }),
       setTextScale: (textScale) => set({ textScale }),
+      setTheme: (theme) => set({ theme }),
       setSeenIntro: (seenIntro) => set({ seenIntro }),
 
       commitRun: (r) => {
@@ -412,7 +421,7 @@ export const usePilgrim = create<PilgrimState>()(
         })
       },
 
-      resetAll: () => set({ ...seed(), admin: false, homeCompact: false, breathPrayer: false, traceRoute: false, activeJourneyId: 'peter', progress: {}, collectedVerses: [], collectedEpisodes: [], runs: [], lifetime: emptyLifetime(), journeyKm: {}, intercessions: [], lastRunDay: undefined }),
+      resetAll: () => set({ ...seed(), admin: false, homeCompact: false, breathPrayer: false, traceRoute: false, activeJourneyId: 'jesus', progress: {}, collectedVerses: [], collectedEpisodes: [], runs: [], lifetime: emptyLifetime(), journeyKm: {}, intercessions: [], lastRunDay: undefined }),
     }),
     {
       name: 'theway-pilgrim-v1',
@@ -438,6 +447,7 @@ export const usePilgrim = create<PilgrimState>()(
         homeCompact: s.homeCompact,
         traceRoute: s.traceRoute,
         textScale: s.textScale,
+        theme: s.theme,
         seenIntro: s.seenIntro,
       }) as PilgrimState,
       /* 용량 초과에 대한 방어층.

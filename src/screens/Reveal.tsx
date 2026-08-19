@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { motion, useReducedMotion } from 'motion/react'
 import { useNav } from '../store'
 import { journeyById, journeyProgress, toJourneyKm, toRealKm } from '../data/geo/journeys'
 import { journeyKmOf } from '../state/pilgrim'
@@ -84,12 +85,18 @@ export default function Reveal() {
       .filter(Boolean)
       .map((ep) => {
         const e = ep!
+        /* 성경 여정 자리에도 톤을 적용한다.
+         * 예전엔 celebrate가 무조건 true였다 — 아브라함이 이삭을 결박하는 모리아 산과
+         * 모세가 죽는 느보산에도 "닿았습니다"와 축하 인장이 찍혔다. 수난에서 게임 요소를
+         * 끄는 것은 기획서의 절대 원칙인데(PLANNING §4.3 · CONTENT-UX §수난),
+         * 그 가드가 예수 자리에만 걸려 있고 여정 68자리에는 통째로 비어 있었다. */
+        const et = toneOf(e.mood)
         return {
           key: `ep-${e.id}`,
           art: episodeArt(journeyId, e.id) ?? sceneArt(sceneForEpisode(e)),
-          accent: 'var(--color-lapis)',
-          celebrate: true,
-          topLabel: `${journey?.name ?? '여정'} · 닿았습니다`,
+          accent: et.celebrate ? 'var(--color-lapis)' : et.accent,
+          celebrate: et.celebrate,
+          topLabel: et.celebrate ? `${journey?.name ?? '여정'} · 닿았습니다` : `${journey?.name ?? '여정'} · 이 자리를 지나며`,
           title: e.place,
           subtitle: `${e.placeLatin} · ${e.region}`,
           body: e.event,
@@ -122,6 +129,7 @@ export default function Reveal() {
   ]
 
   // 최근에 닿은 것(리스트 끝)을 먼저 보여준다 — 방금의 도달이 첫 화면
+  const sealReduce = useReducedMotion()
   const [momIdx, setMomIdx] = useState(Math.max(0, moments.length - 1))
   const moment = moments[Math.min(momIdx, moments.length - 1)]
 
@@ -232,6 +240,34 @@ export default function Reveal() {
         />
         <div className="pointer-events-none absolute inset-0" style={{ background: moment?.glow ? `radial-gradient(60% 50% at 50% 40%, ${moment.glow}, transparent)` : 'none' }} />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28" style={{ background: 'linear-gradient(to top, var(--color-sand), transparent)' }} />
+
+        {/* 인장이 찍힌다 — 이 앱에서 유일하게 "해냈다"를 몸으로 말하는 순간.
+            열 번 달리면 여덟아홉 번은 자리에 못 닿는다(코드 주석의 실측 78~91%). 그 드문 한 번이
+            밋밋하면 다음 한 번을 기다릴 이유가 안 생긴다. 그래서 여기만 팡파레를 허락한다.
+
+            단 수난(lament)에서는 찍지 않는다. 십자가를 보스전으로 만들지 않는다는 것은
+            기획서의 절대 원칙이고(PLANNING §4.3 · CONTENT-UX §수난 = 게임 완전 OFF),
+            moment.celebrate가 그 판정을 이미 들고 있다. */}
+        {moment && moment.celebrate !== false && (
+          <motion.div
+            key={moment.key}
+            className="pointer-events-none absolute bottom-6 right-6 flex h-[74px] w-[74px] items-center justify-center rounded-full"
+            style={{
+              background: 'var(--color-seal)',
+              color: 'var(--color-sand-raised)',
+              boxShadow: '0 10px 30px -10px rgba(0,0,0,.45), inset 0 0 0 2px rgba(255,255,255,.25)',
+            }}
+            initial={sealReduce ? false : { opacity: 0, scale: 2.1, rotate: -18 }}
+            animate={{ opacity: 1, scale: 1, rotate: -7 }}
+            transition={{ delay: sealReduce ? 0 : 0.55, type: 'spring', stiffness: 380, damping: 15 }}
+            aria-hidden
+          >
+            <span className="flex flex-col items-center leading-none">
+              <IconSeal size={26} strokeWidth={1.6} />
+              <span className="mt-1 font-display text-[9px] uppercase tracking-[0.14em]">닿음</span>
+            </span>
+          </motion.div>
+        )}
       </div>
 
       <div className="relative z-10 flex flex-1 flex-col px-8 pt-4" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
