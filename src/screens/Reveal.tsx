@@ -15,7 +15,8 @@ import { renderShareCard, shareCardBlob } from '../lib/shareCard'
 import { APP_URL, APP_URL_LABEL } from '../config'
 import { SummaryTriple, SplitBars, SectionLabel } from '../components/ui'
 import { IconShare, IconReached, IconCairn, IconSeal } from '../components/icons'
-import { heroArt, sceneArt, episodeArt, stationArt, sealArt } from '../assets/art'
+import { heroArt, sceneArt, episodeArt, stationArt, sealArt, worldArt } from '../assets/art'
+import { currentTierIndex } from '../lib/quest'
 import { sceneForEpisode } from '../lib/scene'
 import Celebration from '../components/Celebration'
 import BoardWindow from '../components/BoardWindow'
@@ -235,7 +236,9 @@ export default function Reveal() {
       <div className="relative h-[42%] min-h-[280px] w-full overflow-hidden">
         <img
           key={moment?.key}
-          src={moment?.art ?? heroArt(course.hero)}
+          /* 자리에 못 닿은 날의 그림은 **지금 걷는 장의 땅**이다 — 보드와 같은 그림.
+             예전 폴백(예수 코스 히어로 6장)은 보드의 결과 다르고, 손이 어색한 인물이 들어 있었다. */
+          src={moment?.art ?? (journey ? worldArt(journey.id, currentTierIndex(journey, jKm)) : undefined) ?? heroArt(course.hero)}
           alt=""
           /* alt=""로 둔다 — 두 요소 뒤 h1이 같은 지명을 말하므로 장식이다(예전엔 두 번 읽혔다) */
           className="h-full w-full object-cover transition-all duration-[1400ms] ease-out"
