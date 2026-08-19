@@ -92,7 +92,7 @@ export default function Home() {
         </span>
       </header>
 
-      <div className="relative z-10 flex flex-1 flex-col">
+      <div className="stagger relative z-10 flex flex-1 flex-col">
         {/* ① 내가 선 자리 — 이 화면의 주인공. 탭하면 그 여정의 자리 목록으로 들어간다. */}
         <section className="px-5 pt-4">
           <h1 className="sr-only">오늘의 길</h1>
@@ -112,7 +112,7 @@ export default function Home() {
           </div>
 
           <button onClick={() => openJourney(journey.id)} className="block w-full text-left transition active:scale-[0.995]">
-            <QuestMap stops={stops} segProgress={q.segProgress} atStart={q.reachedCount === 0} units={units} />
+            <QuestMap stops={stops} segProgress={q.segProgress} atStart={q.reachedCount === 0} units={units} journeyId={journey.id} />
           </button>
 
           {/* 여정 이름 + 진행 — 지도 아래 한 줄로 정리한다. 지도가 이미 대부분을 말했다. */}

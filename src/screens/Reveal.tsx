@@ -17,6 +17,7 @@ import { SummaryTriple, SplitBars, SectionLabel } from '../components/ui'
 import { IconShare, IconReached, IconCairn, IconSeal } from '../components/icons'
 import { heroArt, sceneArt, episodeArt, stationArt } from '../assets/art'
 import { sceneForEpisode } from '../lib/scene'
+import Celebration from '../components/Celebration'
 
 /* 리빌의 한 '순간' — 여정 자리든 예수 코스 자리든 같은 형태로 렌더한다. */
 interface Moment {
@@ -248,6 +249,10 @@ export default function Reveal() {
             단 수난(lament)에서는 찍지 않는다. 십자가를 보스전으로 만들지 않는다는 것은
             기획서의 절대 원칙이고(PLANNING §4.3 · CONTENT-UX §수난 = 게임 완전 OFF),
             moment.celebrate가 그 판정을 이미 들고 있다. */}
+        {/* 빛 조각·파문·금박 — 인장과 같은 판정(celebrate)을 쓴다.
+            수난 자리에서는 인장도 이 연출도 함께 꺼진다. */}
+        {moment && <Celebration celebrate={moment.celebrate !== false} runKey={moment.key} />}
+
         {moment && moment.celebrate !== false && (
           <motion.div
             key={moment.key}

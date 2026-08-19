@@ -98,6 +98,7 @@ export default function JourneyDetail() {
           segProgress={prog.segProgress}
           atStart={prog.reachedCount === 0}
           units={pilgrim.units}
+          journeyId={journey.id}
           height={200}
         />
 

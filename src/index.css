@@ -221,6 +221,34 @@ body::after {
 .anim-rise {
   animation: rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+/* 홈이 차례로 올라온다.
+ *
+ * 전부 한 번에 나타나면 눈이 어디부터 볼지 정하지 못한다 — 순서대로 올리면 그 순서가
+ * 곧 위계가 된다(지도 → 행동 → 말씀 → 길). transform을 쓰지만 애니메이션이 끝나면
+ * `both`가 최종 프레임(transform: none)에 머물러서 position:fixed 자식(탭바)에
+ * 컨테이너를 만들지 않는다 — 그 함정 때문에 화면 전체 전환은 넣지 않았다. */
+.stagger > * {
+  animation: rise 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.stagger > *:nth-child(1) {
+  animation-delay: 40ms;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 130ms;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 220ms;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 310ms;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 400ms;
+}
+.stagger > *:nth-child(n + 6) {
+  animation-delay: 470ms;
+}
 .anim-pop {
   animation: pop 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -281,6 +309,86 @@ body::after {
   );
   background-size: 220% 100%;
   animation: shimmer 4.5s ease-in-out infinite;
+}
+
+/* ── 지도의 결 ────────────────────────────────────────────────────────────
+   전부 **느리다**. 물결 14~26초, 별 3~6초. 눈이 따라갈 만큼 빠르면 지도를 못 읽는다. */
+
+/* 별 — 아브라함의 밤(창 15:5). 큰 별만 반짝인다 */
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* 봉인의 빛 — 다음 자리의 잠금 둘레를 아주 느리게 돈다(9초).
+   빠르면 로딩 스피너로 읽혀서 "기다리는 중"이 되어 버린다. 여기서는 "열릴 수 있다"여야 한다. */
+@keyframes seal-orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 물결 — 두 배 길이로 그려 둔 파형을 한 폭만큼 흘려보내 이음매를 없앤다 */
+@keyframes drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ── 자리에 닿는 순간 ──────────────────────────────────────────────────────
+   이 앱에서 유일하게 팡파레가 허락된 지점이다(수난 자리는 mood로 꺼진다). */
+
+/* 빛 조각이 떠오른다 — 컨페티 대신. 종이가루는 이 제품의 언어가 아니다 */
+@keyframes mote-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.6);
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-78px) scale(1);
+  }
+}
+
+/* 도달 파문 — 자리에서 한 겹 퍼져 나간다 */
+@keyframes ripple-out {
+  0% {
+    opacity: 0.55;
+    transform: scale(0.35);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* 금박이 스쳐 지나간다 — 인장이 찍힌 직후 한 번만 */
+@keyframes gild-sweep {
+  0% {
+    opacity: 0;
+    transform: translateX(-130%) skewX(-14deg);
+  }
+  18% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(230%) skewX(-14deg);
+  }
 }
 
 /* 목표까지 남은 거리가 줄어드는 게이지 — 차오르는 방향을 눈으로 따라가게 */

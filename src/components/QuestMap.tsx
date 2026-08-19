@@ -2,6 +2,8 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import type { QuestStop } from '../lib/quest'
 import { IconLocked, IconSeal } from './icons'
+import MapTexture from './MapTexture'
+import { skinOf } from '../lib/journeySkin'
 
 /* ── 살아있는 여정 지도 ─────────────────────────────────────────────────────
  *
@@ -27,6 +29,8 @@ export interface QuestMapProps {
   /** 아직 한 자리도 못 닿았는가 — 내 토큰을 길 맨 앞에 세운다 */
   atStart: boolean
   units: string
+  /** 어느 길인가 — 그 땅의 밤(배경·지형)이 달라진다 */
+  journeyId: string
   height?: number
   className?: string
 }
@@ -141,10 +145,12 @@ export default function QuestMap({
   segProgress,
   atStart,
   units,
+  journeyId,
   height = 234,
   className = '',
 }: QuestMapProps) {
   const uid = useId().replace(/:/g, '')
+  const skin = skinOf(journeyId)
   const reduce = useReducedMotion()
   const roadRef = useRef<SVGPathElement>(null)
   const walkedRef = useRef<SVGPathElement>(null)
@@ -215,7 +221,10 @@ export default function QuestMap({
      * 이미 그 모습이다(라피스 여정선 + 금 이정표). 앱이 랜딩과 같은 얼굴을 갖게 된다. */
     <div
       className={`relative overflow-hidden rounded-[26px] ring-1 ${className}`}
-      style={{ background: 'var(--color-lapis-surface)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.06)' }}
+      style={{
+        background: `linear-gradient(165deg, ${skin.from} 0%, ${skin.to} 100%)`,
+        boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.06)',
+      }}
     >
       <svg viewBox={`0 0 ${W} ${H}`} className="block w-full" role="img" aria-label="여정 지도">
         <defs>
@@ -226,9 +235,9 @@ export default function QuestMap({
               그래서 방향을 가정하지 않고 **봉인된 자리마다** 안개를 깐다. */}
           {/* 어두운 패널 위에서 안개는 '더 어두워지는 것'이다 — 밝게 덮으면 빛으로 읽힌다 */}
           <radialGradient id={`fog${uid}`}>
-            <stop offset="0%" stopColor="#05060f" stopOpacity="0.55" />
-            <stop offset="55%" stopColor="#05060f" stopOpacity="0.26" />
-            <stop offset="100%" stopColor="#05060f" stopOpacity="0" />
+            <stop offset="0%" stopColor={skin.fog} stopOpacity="0.62" />
+            <stop offset="55%" stopColor={skin.fog} stopOpacity="0.3" />
+            <stop offset="100%" stopColor={skin.fog} stopOpacity="0" />
           </radialGradient>
           <radialGradient id={`lamp${uid}`}>
             <stop offset="0%" stopColor="var(--color-seal-bright)" stopOpacity="0.55" />
@@ -236,17 +245,10 @@ export default function QuestMap({
           </radialGradient>
         </defs>
 
-        {/* 지형 결 — 등고선 흉내. 밤 지도가 비어 보이지 않게만, 읽기를 방해하지 않게 아주 옅게 */}
-        <g stroke="var(--color-lapis-veil)" strokeOpacity="0.55" fill="none">
-          {[0.24, 0.52, 0.79].map((r, i) => (
-            <path
-              key={i}
-              d={`M-10,${H * r} Q ${W * 0.3},${H * (r - 0.09)} ${W * 0.56},${H * (r + 0.03)} T ${W + 10},${H * (r - 0.04)}`}
-              strokeWidth="0.9"
-              strokeDasharray={i === 1 ? '3 6' : undefined}
-            />
-          ))}
-        </g>
+        {/* 이 땅의 결 — 여정마다 다르다.
+            아브라함은 별(창 15:5), 출애굽은 시내산 능선, 예수는 갈릴리 물결,
+            바울은 지중해, 베드로는 성벽. 다섯 길이 색만 다른 같은 화면이 아니게. */}
+        <MapTexture texture={skin.texture} ink={skin.textureInk} w={W} h={H} />
 
         {/* 봉인된 자리마다 안개 한 겹 — 서로 겹치면서 "아직 열리지 않은 구역"이 된다.
             크고 옅게 깔아야 안개가 되고, 작고 진하면 얼룩으로 읽힌다(처음엔 얼룩이었다). */}
@@ -321,7 +323,23 @@ export default function QuestMap({
             // 다음 자리 — 화면에서 가장 밝은 한 점. 봉인돼 있고, 남은 거리가 붙는다
             return (
               <motion.g key={s.ep.id} {...common}>
-                <circle cx={p[0]} cy={p[1]} r="13" fill="#0d1130" fillOpacity="0.9" />
+                <circle cx={p[0]} cy={p[1]} r="13" fill={skin.fog} fillOpacity="0.86" />
+                {/* 봉인 위를 빛이 돈다 — "잠겨 있다"와 "열릴 수 있다"를 동시에 말한다.
+                    점선 링을 아주 느리게 돌린다(9초). 빠르면 로딩 스피너로 읽힌다. */}
+                {!reduce && (
+                  <circle
+                    cx={p[0]}
+                    cy={p[1]}
+                    r="17.5"
+                    fill="none"
+                    stroke="var(--color-seal-bright)"
+                    strokeOpacity="0.45"
+                    strokeWidth="1"
+                    strokeLinecap="round"
+                    strokeDasharray="3 7"
+                    style={{ transformOrigin: `${p[0]}px ${p[1]}px`, animation: 'seal-orbit 9s linear infinite' }}
+                  />
+                )}
                 <circle cx={p[0]} cy={p[1]} r="13" fill="none" stroke="var(--color-seal-bright)" strokeWidth="1.8" />
                 <g transform={`translate(${p[0] - 7},${p[1] - 7})`} color="var(--color-seal-bright)">
                   <IconLocked size={14} />
@@ -399,8 +417,9 @@ export default function QuestMap({
                 <span
                   className="block font-serif text-[13px] leading-tight"
                   style={{
-                    color: isNext ? '#fdf6e6' : 'rgba(253,246,230,.72)',
-                    textShadow: '0 1px 4px rgba(5,6,15,.85), 0 0 10px rgba(5,6,15,.6)',
+                    color: isNext ? '#fffaf0' : skin.label,
+                    // 글자 뒤에 그 땅의 어둠을 깔아, 별·물결 위에서도 이름이 읽히게
+                    textShadow: `0 1px 4px ${skin.fog}, 0 0 10px ${skin.fog}`,
                   }}
                 >
                   {s.ep.place}
@@ -429,7 +448,7 @@ export default function QuestMap({
           양옆이 비게 된다. 그 여백을 지도다운 것으로 채워야 "빈 카드"로 안 읽힌다. */}
       <span
         className="pointer-events-none absolute left-4 top-3.5 flex items-center gap-1.5 font-display text-[10px] uppercase tracking-[0.2em]"
-        style={{ color: 'rgba(253,246,230,.6)' }}
+        style={{ color: skin.label }}
       >
         <IconSeal size={11} style={{ color: 'var(--color-seal-bright)' }} />
         {stops[0]?.ep.region}
