@@ -5,6 +5,7 @@ import { journeyById } from '../data/geo/journeys'
 import { fmtDistance, fmtDuration, fmtPace, unitLabel } from '../lib/format'
 import { StatTile, SectionLabel, ProgressBar, SettingSwitch, WeeklyBars } from '../components/ui'
 import TabBar from '../components/TabBar'
+import { figureArt } from '../assets/art'
 import { IconPilgrim, IconHeld, IconEmber, IconReached, IconSettings, IconLamp } from '../components/icons'
 import { validateAlias } from '../data/prayer'
 
@@ -29,8 +30,9 @@ export default function Profile() {
   return (
     <div className="relative flex flex-1 flex-col">
       <header className="flex items-center gap-4 px-7" style={{ paddingTop: 'max(3rem, env(safe-area-inset-top))' }}>
-        <span className="flex h-14 w-14 items-center justify-center rounded-full border border-line-strong bg-sand-raised text-clay-deep">
-          <IconPilgrim size={28} />
+        {/* 내 말 — 보드 위에 서 있는 바로 그 토큰. 눌러서 고른다 */}
+        <span className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-line-strong bg-sand-raised text-clay-deep">
+          {figureArt(pilgrim.avatar) ? <img src={figureArt(pilgrim.avatar)} alt="" className="h-full w-full scale-[1.15] object-cover" /> : <IconPilgrim size={28} />}
         </span>
         <div>
           <h1 className="font-serif text-[24px] font-bold leading-tight">순례자</h1>
@@ -49,6 +51,29 @@ export default function Profile() {
           )}
         </div>
       </header>
+
+      {/* 내 말 고르기 — 보드 위를 걷는 순례자 토큰. 얼굴 없는 실루엣 넷 */}
+      <div className="mt-5 px-6">
+        <div className="flex items-center gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          <span className="shrink-0 text-[12px] text-muted">내 말</span>
+          {(['pilgrim', 'pilgrim-2', 'pilgrim-3', 'pilgrim-4'] as const).map((k) => {
+            const src = figureArt(k)
+            const on = pilgrim.avatar === k
+            return (
+              <button
+                key={k}
+                onClick={() => pilgrim.setAvatar(k)}
+                aria-pressed={on}
+                aria-label={`순례자 ${k.replace('pilgrim', '').replace('-', '') || '1'}`}
+                className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full transition active:scale-95"
+                style={{ background: 'var(--color-sand-raised)', boxShadow: on ? '0 0 0 2.5px var(--color-seal), 0 0 0 4px var(--color-sand)' : '0 0 0 1px var(--color-line-strong)' }}
+              >
+                {src && <img src={src} alt="" className="h-full w-full scale-[1.15] object-cover" />}
+              </button>
+            )
+          })}
+        </div>
+      </div>
 
       {/* 누적 통계 */}
       {/* 4칸을 360px에 넣으면 칸당 72px이라 1,000km부터 옆 칸을 침범한다.
@@ -261,28 +286,29 @@ export default function Profile() {
           onChange={pilgrim.setTraceRoute}
         />
 
-        <SettingSwitch
-          label="호흡 기도"
-          hint="발걸음에 맞춰 짧은 기도를 띄웁니다. 반복 자체에 효력이 있지는 않습니다."
-          checked={pilgrim.breathPrayer}
-          onChange={pilgrim.setBreathPrayer}
-        />
+        <button onClick={() => { if (confirm('모든 순례 기록을 지울까요?')) resetAll() }} className="mt-4 w-full rounded-xl border border-line py-3.5 text-center text-[13px] text-muted transition active:scale-[0.99]">
+          기록 초기화
+        </button>
 
-        <SettingSwitch
-          label="전체 해금"
-          hint="모든 자리를 도달한 것으로 봅니다(개발·시연용)."
-          checked={pilgrim.admin}
-          onChange={pilgrim.setAdmin}
-        />
-
-        <div className="mt-4 flex gap-3">
-          <button onClick={() => { if (confirm('지금까지의 기록이 데모 데이터로 바뀝니다. 되돌릴 수 없어요. 계속할까요?')) pilgrim.loadDemo() }} className="flex-1 rounded-xl border border-line py-3.5 text-center text-[13px] text-muted transition active:scale-[0.99]">
-            데모 데이터 넣기
-          </button>
-          <button onClick={() => { if (confirm('모든 순례 기록을 지울까요?')) resetAll() }} className="flex-1 rounded-xl border border-line py-3.5 text-center text-[13px] text-muted transition active:scale-[0.99]">
-            기록 초기화
-          </button>
-        </div>
+        {/* 시연·개발 도구 — 접어 둔다. 일반 사용자의 설정 목록에 "전체 해금"이 나란히 있으면
+            진행의 의미가 스스로 무너진다(전문가 검토 지적). 필요할 때만 펼친다. */}
+        <details className="mt-6 rounded-xl border border-dashed border-line px-4 py-2">
+          <summary className="cursor-pointer py-1.5 text-[12px] text-muted">시연·개발 도구</summary>
+          <div className="pb-2">
+            <SettingSwitch
+              label="전체 해금"
+              hint="모든 자리를 도달한 것으로 봅니다(개발·시연용)."
+              checked={pilgrim.admin}
+              onChange={pilgrim.setAdmin}
+            />
+            <button onClick={() => { if (confirm('다섯 여정과 예수 사역의 모든 자리를 완주한 상태로 채웁니다(시연용). 실제 러닝 기록은 만들지 않아요. 계속할까요?')) pilgrim.completeAll() }} className="mt-3 w-full rounded-xl border border-line-strong bg-sand-raised/50 py-3 text-center text-[13px] text-ink-soft transition active:scale-[0.99]">
+              모든 여정 완주 처리 (시연)
+            </button>
+            <button onClick={() => { if (confirm('지금까지의 기록이 데모 데이터로 바뀝니다. 되돌릴 수 없어요. 계속할까요?')) pilgrim.loadDemo() }} className="mt-2 w-full rounded-xl border border-line py-3 text-center text-[13px] text-muted transition active:scale-[0.99]">
+              데모 데이터 넣기
+            </button>
+          </div>
+        </details>
       </div>
 
       <TabBar active="profile" />

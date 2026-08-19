@@ -1,193 +1,239 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNav } from '../store'
 import { usePilgrim, journeyKmOf } from '../state/pilgrim'
-import { journeyById, JOURNEYS, toJourneyKm, toRealKm, journeyProgress } from '../data/geo/journeys'
-import { questChapterStops, questAll, currentTierIndex, questNow, stopStateAt } from '../lib/quest'
-import QuestMap from '../components/QuestMap'
-import { IconArrow, IconSeal, IconLocked, IconCompass } from '../components/icons'
+import { useRun } from '../state/run'
+import { journeyById, JOURNEYS, toJourneyKm, toRealKm, JOURNEY_CHROME } from '../data/geo/journeys'
+import { questNow } from '../lib/quest'
+import { BOARD_W, ROMAN, type Board, type BoardNode } from '../lib/board'
+import QuestBoard from '../components/QuestBoard'
+import NodeSheet from '../components/NodeSheet'
+import { IconArrow, IconSeal, IconLocked, IconPilgrim } from '../components/icons'
+import { journeyFigure } from '../assets/art'
 
-/* ── 지도 화면 ─────────────────────────────────────────────────────────────
+/* ── 지도 화면 = 월드 ───────────────────────────────────────────────────────
  *
- * 펼친 지도는 **두 가지 축척**으로 본다. 게임의 지도가 그렇다 — 월드맵과 지역맵.
+ * 화면 전체가 보드다. 위에서 아래로 내려가며 장이 바뀌고 땅이 바뀐다.
+ * 열면 **내가 선 자리**로 스크롤돼 있다 — 이 앱을 여는 이유가 "내가 어디쯤 왔나"이므로.
  *
- *   전체 지도(월드맵) — 이 길이 어디서 어디까지인지 한 장에. 자리는 점이고,
- *     장이 시작되는 자리에만 번호 표식이 선다. 표식을 누르면 그 장으로 들어간다.
- *   장 지도          — 자리가 크고 하나하나가 퀘스트 입구다. 누르면 그 자리의 말씀이 열린다.
- *
- * 전체를 장과 같은 규칙으로 그려 봤고, 안 됐다: 예수님의 사역 길은 자리 33개가 갈릴리·유대의
- * 좁은 지역에서 수십 번 겹쳐 지나가서, 종횡비를 지키는 한(지켜야 한다 — 그게 이 제품의
- * 근거다) 메달리온을 아무리 줄여도 금 동전 한 덩어리가 됐다. 그래서 월드맵은 **자리의
- * 지도가 아니라 구역의 지도**로 그린다. 자세한 것은 QuestMap의 world 모드.
- *
- * 열자마자 보이는 것은 **내가 선 장**이다 — 이 앱을 여는 이유가 "내가 어디쯤 왔나"이므로,
- * 첫 화면이 대답해야 할 것은 전체 조망이 아니라 지금 서 있는 자리다.
- *
- * 홈의 지도와도 이렇게 갈린다:
- *   홈   — 지금 구간 여섯 자리. 지도 전체가 버튼 하나(작은 창에 버튼을 겹치면 오탭만 는다)
- */
+ *   · 위 고정 머리: 여정 이름 · 지금 걷는 장 · 자리 n/N
+ *   · 그 아래 장 칩: 누르면 그 장으로 스크롤한다(보기를 바꾸는 게 아니라 **이동**한다 —
+ *     전체와 장이 따로 놀던 예전 구조는 장과 장이 이어지지 않았다)
+ *   · 자리 탭 → 시트(그림·상태·말씀·읽기·달리기)
+ *   · 현재 자리가 화면 밖이면 "지금 자리로" 버튼이 뜬다 */
 export default function JourneyMap() {
   const go = useNav((s) => s.go)
   const journeyId = useNav((s) => s.journeyId)
-  const openJourney = useNav((s) => s.openJourney)
   const openEpisode = useNav((s) => s.openEpisode)
+  const openJourney = useNav((s) => s.openJourney)
+  const configure = useRun((s) => s.configure)
   const pilgrim = usePilgrim()
 
-  const journey =
-    (journeyId ? journeyById(journeyId) : undefined) ?? journeyById(pilgrim.activeJourneyId) ?? JOURNEYS[0]
+  const journey = (journeyId ? journeyById(journeyId) : undefined) ?? journeyById(pilgrim.activeJourneyId) ?? JOURNEYS[0]
   const km = toJourneyKm(journey.id, journeyKmOf(pilgrim, journey.id))
   const q = questNow(journey, km)
-  const prog = journeyProgress(journey, km)
+  const chrome = JOURNEY_CHROME[journey.id]
+  const figure = journeyFigure(journey.id)
 
-  /* 보기는 둘이다.
-   *   'all' — 여정 전체(월드맵). 이 길이 어디서 어디까지인지 한눈에.
-   *   숫자   — 그 장 하나. 자리가 크고 하나씩 누를 수 있다.
-   * 열자마자 내가 선 장에서 시작한다 — 처음 보이는 것은 "지금 내가 선 자리"여야 한다.
-   * 전체는 한 번 눌러서 본다(예수님의 사역 길처럼 자리가 서른셋인 여정에서는 전체가
-   * 빽빽해질 수밖에 없다 — 지리가 그렇기 때문이다. 그래서 기본값이 아니라 선택지다). */
-  const [tab, setTab] = useState<number | 'all'>(() => currentTierIndex(journey, km))
-  const showAll = tab === 'all'
-  const tierIndex = showAll ? -1 : (tab as number)
-  const tier = showAll ? undefined : journey.tiers[tierIndex]
-  const stops = showAll ? questAll(journey, km) : questChapterStops(journey, km, tierIndex)
+  const boardRef = useRef<HTMLDivElement>(null)
+  const [layout, setLayout] = useState<{ board: Board; scale: number } | null>(null)
+  const [selected, setSelected] = useState<BoardNode | null>(null)
+  const [activeTier, setActiveTier] = useState(0)
+  const [showJump, setShowJump] = useState(false)
+  const didCenter = useRef(false)
 
+  const onBoard = useCallback((board: Board, scale: number) => setLayout({ board, scale }), [])
 
-  /* 그 장이 통째로 봉인됐는가 — 첫 자리에도 아직 못 닿았으면 미리보기다.
-     본문은 언제나 열리므로(신학 요구사항) 자리를 누르는 것은 막지 않는다. */
-  const chapterLocked = stops.length ? stopStateAt(stops[0].index, prog.reachedCount) === 'sealed' : true
-  const chapterDone = stops.length ? stops[stops.length - 1].index < prog.reachedCount - 1 : false
+  /** 보드 좌표(논리 px) → 문서 y */
+  const docY = (boardY: number) => {
+    const el = boardRef.current
+    if (!el || !layout) return 0
+    return el.getBoundingClientRect().top + window.scrollY + boardY * layout.scale
+  }
+  const HEADER = 116
+
+  const scrollToBoardY = (y: number, behavior: ScrollBehavior = 'smooth') => {
+    window.scrollTo({ top: Math.max(0, docY(y) - HEADER), behavior })
+  }
+  const centerOn = (y: number, behavior: ScrollBehavior = 'smooth') => {
+    window.scrollTo({ top: Math.max(0, docY(y) - window.innerHeight * 0.46), behavior })
+  }
+
+  /* 열자마자 내가 선 자리로 */
+  useEffect(() => {
+    if (!layout || didCenter.current) return
+    const anchor = layout.board.next ?? layout.board.current ?? layout.board.nodes[0]
+    if (!anchor) return
+    didCenter.current = true
+    // 레이아웃이 자리 잡은 다음 프레임에 — 첫 프레임엔 getBoundingClientRect가 0일 수 있다
+    requestAnimationFrame(() => centerOn(anchor.y, 'auto'))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layout])
+
+  /* 스크롤에 따라 — 지금 보이는 장, 현재 자리가 화면 안에 있는지 */
+  useEffect(() => {
+    if (!layout) return
+    const onScroll = () => {
+      const el = boardRef.current
+      if (!el) return
+      const top = el.getBoundingClientRect().top
+      const probe = (window.innerHeight * 0.42 - top) / layout.scale
+      const p = layout.board.panels.find((pp) => probe >= pp.y && probe < pp.y + pp.height)
+      if (p) setActiveTier(p.tierIndex)
+      const anchor = layout.board.next ?? layout.board.current
+      if (anchor) {
+        const ay = top + anchor.y * layout.scale
+        setShowJump(ay < HEADER + 20 || ay > window.innerHeight - 40)
+      }
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [layout])
+
+  /* 지금 보는 장의 칩이 보이게 칩 줄만 가로로 민다.
+     scrollIntoView를 썼더니 조상 요소(문서 자체)까지 옆으로 밀어서 폰에서 화면이 오른쪽으로
+     튀었다. 칩 컨테이너의 scrollLeft만 직접 움직인다. */
+  const chipsRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const host = chipsRef.current
+    const el = host?.querySelector<HTMLElement>(`[data-tier="${activeTier}"]`)
+    if (!host || !el) return
+    const target = el.offsetLeft - (host.clientWidth - el.offsetWidth) / 2
+    host.scrollTo({ left: Math.max(0, target), behavior: 'smooth' })
+  }, [activeTier])
+
+  const back = () => {
+    if (window.history.length > 1) window.history.back()
+    else go('home')
+  }
+
+  const runToward = () => {
+    pilgrim.setActiveJourney(journey.id)
+    configure({ mode: 'guided', courseId: pilgrim.activeCourseId, journeyId: journey.id })
+    go('run')
+  }
 
   return (
-    <div className="relative flex flex-1 flex-col">
-      <header className="flex items-center gap-3 px-5" style={{ paddingTop: 'max(2.4rem, env(safe-area-inset-top))' }}>
-        <button
-          onClick={() => go('home')}
-          aria-label="뒤로"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted transition active:scale-90"
-        >
-          <IconArrow size={17} className="rotate-180" />
-        </button>
-        <p className="min-w-0 flex-1 truncate font-serif text-[18px] font-bold leading-tight text-ink">{journey.name}</p>
+    <div className="relative flex flex-1 flex-col" style={{ background: '#efe2c4' }}>
+      {/* ── 머리(고정) ─────────────────────────────────────────────── */}
+      <header
+        className="sticky top-0 z-30"
+        style={{
+          paddingTop: 'max(0.6rem, env(safe-area-inset-top))',
+          background: 'linear-gradient(to bottom, rgba(251,241,220,.97) 0%, rgba(251,241,220,.92) 70%, rgba(251,241,220,0) 100%)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+        }}
+      >
+        <div className="flex items-center gap-2 px-3">
+          <button onClick={back} aria-label="뒤로" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-soft transition active:scale-90">
+            <IconArrow size={17} className="rotate-180" />
+          </button>
+          {figure && (
+            <span className="flex h-10 w-10 shrink-0 overflow-hidden rounded-full" style={{ boxShadow: '0 0 0 2px var(--color-line-strong)' }}>
+              <img src={figure} alt="" className="h-full w-full scale-[1.1] object-cover" />
+            </span>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-serif text-[17px] font-bold leading-tight text-ink">{journey.name}</p>
+            <p className="truncate text-[11.5px] text-muted">
+              {q.chapter ? `${ROMAN[q.chapter.index - 1] ?? q.chapter.index} · ${q.chapter.name}` : journey.who}
+              {' · '}자리 <span className="font-display" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>{q.reachedCount}/{q.total}</span>
+            </p>
+          </div>
+          {q.next && (
+            <div className="shrink-0 pr-2 text-right">
+              <p className="font-display text-[16px] leading-none text-clay-deep" style={{ fontFeatureSettings: "'lnum' 1" }}>
+                {q.toRealKm < 10 ? q.toRealKm.toFixed(1) : Math.round(q.toRealKm)}
+                <span className="text-[10.5px]">{pilgrim.units}</span>
+              </p>
+              <p className="mt-0.5 text-[10px] text-muted">{q.next.place}까지</p>
+            </div>
+          )}
+        </div>
+
+        {/* 장 칩 — 누르면 그 장으로 **이동** */}
+        <div ref={chipsRef} className="mt-1.5 flex gap-1.5 overflow-x-auto px-4 pb-2.5" style={{ scrollbarWidth: 'none' }}>
+          {layout?.board.panels.map((p) => {
+            const on = p.tierIndex === activeTier
+            return (
+              <button
+                key={p.tier.id}
+                data-tier={p.tierIndex}
+                onClick={() => scrollToBoardY(p.y)}
+                aria-current={on ? 'true' : undefined}
+                className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-[7px] text-[12px] transition active:scale-95"
+                style={{
+                  background: on ? 'var(--color-clay-deep)' : 'rgba(255,250,238,.8)',
+                  color: on ? 'var(--color-sand-raised)' : p.status === 'sealed' ? 'var(--color-muted)' : 'var(--color-ink-soft)',
+                  boxShadow: on ? 'none' : 'inset 0 0 0 1px var(--color-line-strong)',
+                }}
+              >
+                <span className="font-display">{ROMAN[p.tierIndex] ?? p.tierIndex + 1}</span>
+                {p.tier.name}
+                {p.status === 'done' && <IconSeal size={11} />}
+                {p.status === 'sealed' && <IconLocked size={10} />}
+              </button>
+            )
+          })}
+        </div>
       </header>
 
-      {/* 보기 고르기 — 전체 월드맵 하나 + 장 하나씩.
-          걸어온 장에는 인장이, 아직 못 간 장에는 자물쇠가 붙는다 */}
-      <div className="mt-3 flex gap-2 overflow-x-auto px-5 pb-1" style={{ scrollbarWidth: 'none' }}>
-        <button
-          onClick={() => setTab('all')}
-          aria-current={showAll ? 'true' : undefined}
-          className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-[12.5px] transition active:scale-95 ${
-            showAll ? 'border-clay-deep bg-clay-deep text-sand-raised' : 'border-line text-ink-soft'
-          }`}
-        >
-          <IconCompass size={13} />
-          전체 지도
-        </button>
-        {journey.tiers.map((t, i) => {
-          const on = i === tab
-          const first = questChapterStops(journey, km, i)[0]
-          const locked = first ? stopStateAt(first.index, prog.reachedCount) === 'sealed' : true
-          return (
-            <button
-              key={t.id}
-              onClick={() => setTab(i)}
-              aria-current={on ? 'true' : undefined}
-              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-[12.5px] transition active:scale-95 ${
-                on ? 'border-clay-deep bg-clay-deep text-sand-raised' : 'border-line text-ink-soft'
-              }`}
-            >
-              {locked ? <IconLocked size={12} /> : <IconSeal size={12} />}
-              {i + 1}장 · {t.name}
-            </button>
-          )
-        })}
+      {/* ── 보드 ─────────────────────────────────────────────────────── */}
+      <div ref={boardRef} className="-mt-3">
+        <QuestBoard journey={journey} journeyKm={km} onSelectNode={setSelected} selectedId={selected?.ep.id} onBoard={onBoard} />
       </div>
 
-      <div className="flex flex-1 flex-col px-4 pb-6 pt-3">
-        {/* 장을 바꾸면 지도가 새로 그려져야 한다 — key로 다시 마운트해 경로 드로우를 재생한다 */}
-        <QuestMap
-          key={`${journey.id}-${String(tab)}`}
-          stops={stops}
-          segProgress={q.segProgress}
-          atStart={prog.reachedCount === 0}
-          units={pilgrim.units}
-          journeyId={journey.id}
-          height={340}
-          world={showAll}
-          onSelectStop={showAll ? undefined : (id) => openEpisode(journey.id, id)}
-        />
-
-        {/* 전체 보기일 때는 여정 전체를 요약한다 */}
-        {showAll && (
-          <div className="stagger mt-4 px-1.5">
-            <div className="flex items-baseline justify-between gap-3">
-              <p className="font-serif text-[16px] font-bold leading-tight text-ink">{journey.name} 전체</p>
-              <span className="shrink-0 text-[11.5px] text-muted">
-                자리 {prog.reachedCount}/{prog.total}
-              </span>
-            </div>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
-              {journey.who} · {journey.era} · 장 {journey.tiers.length}개
-            </p>
-            {/* 어디서 어디까지인가 — 지도 위에 이름표를 얹으면 인장을 덮으므로 글로 말한다 */}
-            <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">
-              <span className="font-serif text-ink">{journey.episodes[0]?.place}</span>
-              {'에서 '}
-              <span className="font-serif text-ink">{journey.episodes[journey.episodes.length - 1]?.place}</span>
-              {'까지'}
-            </p>
-            {q.next && (
-              <p className="mt-2 text-[12.5px] leading-relaxed text-ink-soft">
-                지금 <span className="font-serif text-ink">{q.current?.place ?? '길의 첫머리'}</span>
-                {' · 다음은 '}
-                <span className="font-serif text-ink">{q.next.place}</span>
-                {'까지 '}
-                <span className="font-display text-clay-deep" style={{ fontFeatureSettings: "'lnum' 1" }}>
-                  {q.toRealKm < 10 ? q.toRealKm.toFixed(1) : Math.round(q.toRealKm)}
-                </span>
-                {pilgrim.units}
-              </p>
-            )}
-            <p className="mt-2 text-[12px] text-muted">
-              끝까지 내가 달릴 거리{' '}
-              <span className="font-display text-clay-deep" style={{ fontFeatureSettings: "'lnum' 1" }}>
-                {Math.round(toRealKm(journey.id, journey.totalKm)).toLocaleString()}
-              </span>
-              {pilgrim.units}
-            </p>
-
-          </div>
-        )}
-
-        {/* 이 장이 무엇인가 — 지도 아래 한 문단. 장마다 다른 이야기가 붙는다 */}
-        {tier && (
-          <div className="stagger mt-4 px-1.5">
-            <div className="flex items-baseline justify-between gap-3">
-              <p className="font-serif text-[16px] font-bold leading-tight text-ink">
-                {tierIndex + 1}장 · {tier.name}
-              </p>
-              <span className="shrink-0 text-[11.5px] text-muted">
-                {chapterDone ? '다 걸었습니다' : chapterLocked ? '아직 봉인' : '걷는 중'}
-              </span>
-            </div>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{tier.note}</p>
-            <p className="mt-2 text-[12px] text-muted">
-              자리 {stops.length}곳 · 이 장에 내가 달릴 거리{' '}
-              <span className="font-display text-clay-deep" style={{ fontFeatureSettings: "'lnum' 1" }}>
-                {toRealKm(journey.id, tier.km).toFixed(1)}
-              </span>
-              {pilgrim.units}
-            </p>
-
-          </div>
-        )}
-
+      {/* 길의 끝 — 보드 아래 한 문단 */}
+      <div className="px-7 pb-10 pt-6 text-center" style={{ paddingBottom: 'max(3.5rem, env(safe-area-inset-bottom))' }}>
+        <p className="font-display text-[11px] uppercase tracking-[0.22em]" style={{ color: chrome.accent }}>{journey.nameLatin}</p>
+        <p className="mt-1.5 font-serif text-[15px] text-ink">
+          {journey.episodes[0]?.place}에서 {journey.episodes[journey.episodes.length - 1]?.place}까지
+        </p>
+        <p className="mt-1 text-[12px] text-muted">
+          {journey.who} · {journey.era} · 자리 {journey.episodes.length}곳 · 내가 달릴 {Math.round(toRealKm(journey.id, journey.totalKm)).toLocaleString()}
+          {pilgrim.units}
+        </p>
+        {q.done && <p className="mt-3 font-serif text-[14px] text-clay-deep">이 길을 끝까지 걸었습니다.</p>}
         <button
           onClick={() => openJourney(journey.id)}
-          className="mx-auto mt-5 rounded-full border border-line px-4 py-2 text-[12.5px] text-ink-soft transition active:scale-95"
+          className="mx-auto mt-5 flex items-center gap-1.5 rounded-full border border-line-strong px-4 py-2 text-[12.5px] text-ink-soft transition active:scale-95"
         >
-          자리 목록으로 보기
+          자리 목록으로 보기 <IconArrow size={12} />
         </button>
       </div>
+
+      {/* 지금 자리로 */}
+      {showJump && layout && (
+        <button
+          onClick={() => {
+            const a = layout.board.next ?? layout.board.current
+            if (a) centerOn(a.y)
+          }}
+          className="fixed z-30 flex items-center gap-2 rounded-full px-4 py-2.5 text-[12.5px] text-ink shadow-[0_8px_24px_rgba(40,25,10,.35)] transition active:scale-95"
+          style={{
+            left: '50%',
+            transform: 'translateX(-50%)',
+            bottom: 'max(1.25rem, env(safe-area-inset-bottom))',
+            background: 'var(--color-seal-bright)',
+            maxWidth: BOARD_W - 40,
+          }}
+        >
+          <IconPilgrim size={15} /> 지금 자리로
+        </button>
+      )}
+
+      {selected && (
+        <NodeSheet
+          journey={journey}
+          node={selected}
+          units={pilgrim.units}
+          reachedAt={pilgrim.lifetime?.episodeReachedAt?.[journey.id]?.[selected.ep.id]}
+          onClose={() => setSelected(null)}
+          onRead={() => openEpisode(journey.id, selected.ep.id)}
+          onRun={runToward}
+        />
+      )}
     </div>
   )
 }

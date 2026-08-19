@@ -10,7 +10,7 @@ import { toneOf } from '../lib/mood'
 import { arcIcon, IconArrow, IconHeld, IconStep } from '../components/icons'
 import { SectionLabel } from '../components/ui'
 import { PRAYER_NOTE } from '../data/prayer'
-import { getCurrentPositionOnce, type TracePoint } from '../lib/geo'
+import { getCurrentPositionOnce, geoBlockedReason, type TracePoint } from '../lib/geo'
 import LiveMap from '../components/LiveMap'
 
 export default function Setup() {
@@ -38,14 +38,27 @@ export default function Setup() {
   /* 달리기 전 GPS 미리보기 — 여기서 내 위치가 뜨면 "GPS 준비됨"을 눈으로 확인한다.
    * 달리는 중에야 위치가 안 잡히는 걸 아는 일을 막는다. 이 좌표는 화면 표시에만 쓰고 저장하지 않는다. */
   const [here, setHere] = useState<TracePoint | null>(null)
-  const [gpsState, setGpsState] = useState<'checking' | 'ready' | 'failed'>('checking')
-  useEffect(() => {
-    let alive = true
+  /* 권한 팝업은 사용자가 **누른 뒤**에 뜬다. 예전엔 화면이 열리자마자 위치를 물어서,
+     "왜 묻는지" 문구보다 OS 팝업이 먼저 떴다(전문가 검토 지적). 이미 허용된 상태면
+     조용히 미리 확인한다 — 팝업이 안 뜨니까. */
+  const [gpsState, setGpsState] = useState<'idle' | 'checking' | 'ready' | 'failed'>('idle')
+  const checkGps = () => {
+    setGpsState('checking')
     getCurrentPositionOnce().then((pos) => {
-      if (!alive) return
       if (pos) { setHere({ lat: pos.lat, lng: pos.lng }); setGpsState('ready') }
       else setGpsState('failed')
     })
+  }
+  useEffect(() => {
+    let alive = true
+    const perms = typeof navigator !== 'undefined' ? navigator.permissions : undefined
+    if (!perms?.query) return
+    perms
+      .query({ name: 'geolocation' as PermissionName })
+      .then((st) => {
+        if (alive && st.state === 'granted') checkGps()
+      })
+      .catch(() => {})
     return () => { alive = false }
   }, [])
 
@@ -166,8 +179,13 @@ export default function Setup() {
             style={{ background: gpsState === 'ready' ? 'var(--color-olive)' : gpsState === 'failed' ? 'var(--color-rubric)' : 'var(--color-sun)', animation: gpsState === 'checking' ? 'glow 1.6s ease-in-out infinite' : 'none' }}
           />
           <span className="text-[12.5px]">
-            {gpsState === 'ready' ? 'GPS 준비됨 · 지금 여기 있어요' : gpsState === 'failed' ? '위치를 못 잡았어요' : '위치 확인 중…'}
+            {gpsState === 'ready' ? 'GPS 준비됨 · 지금 여기 있어요' : gpsState === 'failed' ? '위치를 못 잡았어요' : gpsState === 'checking' ? '위치 확인 중…' : '달리기 전에 위치가 잡히는지 볼 수 있어요'}
           </span>
+          {gpsState === 'idle' && (
+            <button onClick={checkGps} className="ml-auto rounded-full border border-line-strong px-3 py-1.5 text-[12px] text-ink-soft transition active:scale-95">
+              내 위치 확인
+            </button>
+          )}
         </div>
         {gpsState === 'ready' && here ? (
           <div className="mt-2.5">
@@ -175,7 +193,9 @@ export default function Setup() {
           </div>
         ) : gpsState === 'failed' ? (
           <p className="mt-2 px-1 text-[11.5px] leading-relaxed text-muted">
-            아이폰 설정 → 개인정보 보호 → 위치 서비스에서 Safari를 허용해 주세요. 그래도 달릴 수는 있지만 지도와 정확한 거리는 안 나옵니다.
+            {geoBlockedReason() === 'insecure'
+              ? '지금 주소(http)에서는 브라우저가 위치를 열어 주지 않아요. 홈 화면에 설치한 앱이나 https 주소로 열면 잡힙니다.'
+              : '권한을 허용했는지 확인해 주세요 — 아이폰: 설정 → 개인정보 보호 → 위치 서비스 → Safari · 안드로이드: 사이트 설정 → 위치. 실내라면 창가나 밖으로 나가면 잡힙니다. 그래도 달릴 수는 있지만 지도와 정확한 거리는 안 나옵니다.'}
           </p>
         ) : null}
       </div>

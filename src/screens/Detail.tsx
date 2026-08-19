@@ -5,7 +5,7 @@ import { STATIONS, courseById } from '../data/journey'
 import { passageOf, SCRIPTURE_ATTRIBUTION } from '../data/scripture'
 import { peopleOf } from '../data/people'
 import { toneOf } from '../lib/mood'
-import { arcIcon, IconArrow, IconHeld } from '../components/icons'
+import { arcIcon, IconArrow, IconHeld, IconPilgrim } from '../components/icons'
 import { heroArt, stationArt } from '../assets/art'
 
 export default function Detail() {
@@ -94,8 +94,8 @@ export default function Detail() {
             <div className="mt-3 flex flex-col gap-2.5">
               {people.map((f) => (
                 <div key={f.name} className="flex gap-3 rounded-xl border border-line bg-sand-raised/30 px-4 py-3">
-                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[13px] font-serif" style={{ background: 'var(--color-sand-sunk)', color: tone.accent }}>
-                    {f.name.slice(0, 1)}
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-sand-sunk)', color: tone.accent }}>
+                    <IconPilgrim size={17} />
                   </span>
                   <div className="min-w-0">
                     <p className="font-serif text-[15px] text-ink">{f.name}</p>

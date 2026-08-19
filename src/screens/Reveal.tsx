@@ -18,6 +18,7 @@ import { IconShare, IconReached, IconCairn, IconSeal } from '../components/icons
 import { heroArt, sceneArt, episodeArt, stationArt, sealArt } from '../assets/art'
 import { sceneForEpisode } from '../lib/scene'
 import Celebration from '../components/Celebration'
+import BoardWindow from '../components/BoardWindow'
 
 /* 리빌의 한 '순간' — 여정 자리든 예수 코스 자리든 같은 형태로 렌더한다. */
 interface Moment {
@@ -42,6 +43,7 @@ export default function Reveal() {
   const go = useNav((s) => s.go)
   const openEpisode = useNav((s) => s.openEpisode)
   const openDetail = useNav((s) => s.openDetail)
+  const openMap = useNav((s) => s.openMap)
   const units = usePilgrim((s) => s.units)
   const run = useRun()
   const { courseId, distanceKm, elapsedSec, splits, reachedThisRun, prayerFor } = run
@@ -368,6 +370,28 @@ export default function Reveal() {
           <p className="mt-5 rounded-xl bg-sand-raised/60 px-4 py-3 text-[13px] text-ink-soft">오늘 <span className="text-rubric">{prayerFor}</span>를 품고 {fmtDistance(distanceKm, units)}{units}를 걸었습니다.</p>
         )}
 
+        {/* 길 위에서 오늘 — 보드 위의 말이 오늘 달린 만큼 앞으로 걸어간다.
+            자리에 닿지 못한 날(열 번 중 여덟아홉 번)에도 **무언가 움직였다**는 것이 눈에 보여야
+            다음 한 번을 기다릴 이유가 생긴다. 거리는 말씀으로 가는 길이다. */}
+        {journey && distanceKm > 0.05 && (
+          <section className="mt-7">
+            <div className="mb-2.5 flex items-baseline justify-between">
+              <SectionLabel>길 위에서 오늘</SectionLabel>
+              <span className="text-[11.5px] text-muted">
+                여정 <span className="font-display text-ink-soft" style={{ fontFeatureSettings: "'lnum' 1" }}>{Math.round(toJourneyKm(journeyId, distanceKm)).toLocaleString()}</span>km 만큼
+              </span>
+            </div>
+            <BoardWindow
+              journey={journey}
+              journeyKm={jKm}
+              fromKm={Math.max(0, jKm - toJourneyKm(journeyId, distanceKm))}
+              height={250}
+              onOpen={() => openMap(journeyId)}
+              caption={jNext ? `${jNext.place}까지 ${fmtDistance(jToNextRealKm, units)}${units}` : '이 길을 끝까지 걸었습니다'}
+            />
+          </section>
+        )}
+
         {/* 런 요약 — 항상 보여준다.
             예전엔 celebrate(=mood가 wilderness·lament가 아닐 때)일 때만 렌더해서,
             겟세마네 같은 자리에 닿은 날에는 사용자가 자기 거리·시간·페이스·지도를 통째로 볼 수 없었다.
@@ -426,7 +450,7 @@ export default function Reveal() {
                   </div>
                 )}
               </div>
-            {(reachedThisRun.length > 0 || journeyPlaces.length > 0 || miles.length > 0) && (
+            {(reachedThisRun.length > 0 || journeyPlaces.length > 0 || miles.length > 0 || (!moment && jNext && distanceKm > 0.05)) && (
               <div className="mt-5 border-t border-line pt-4">
                 <div className="flex flex-wrap gap-2">
                   {journeyPlaces.map((place) => (
@@ -452,6 +476,19 @@ export default function Reveal() {
                       <span className="font-display text-ink" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>{miles.length}</span>개의 이정표를 지났습니다.
                     </p>
                   </div>
+                )}
+                {/* 차오르는 한 절 — 자리에 못 닿은 날의 보상.
+                    다음 자리의 말씀이 이정표를 지날 때마다 한 조각씩 드러난다. 본문은 원래 늘 열려
+                    있으므로(아래 "미리 읽기") 거리가 여는 열쇠가 아니라 **미리 읽는 것**이다 —
+                    열 번 중 여덟아홉 번이던 빈손의 날이, 이제 다음 말씀이 조금 더 가까워진 날이 된다. */}
+                {!moment && jNext && jProg && (
+                  <FillingVerse
+                    place={jNext.place}
+                    text={jNext.verseKrShort}
+                    ref_={jNext.passageRef}
+                    progress={jProg.segProgress}
+                    onOpen={() => openEpisode(journeyId, jNext.id)}
+                  />
                 )}
               </div>
             )}
@@ -489,5 +526,28 @@ export default function Reveal() {
         </div>
       </div>
     </div>
+  )
+}
+
+
+/* 다음 자리의 말씀이 차오른다 — 구간 진행률만큼 글자가 드러나고, 나머지는 점으로 남는다.
+   단어 경계에서 자르고, 최소 한 어절은 늘 보인다. */
+function FillingVerse({ place, text, ref_, progress, onOpen }: { place: string; text: string; ref_: string; progress: number; onOpen: () => void }) {
+  const words = text.split(' ')
+  const shown = Math.max(1, Math.min(words.length, Math.round(words.length * progress)))
+  const head = words.slice(0, shown).join(' ')
+  const full = shown >= words.length
+  return (
+    <button onClick={onOpen} className="mt-3 w-full rounded-xl px-4 py-3.5 text-left transition active:scale-[0.99]" style={{ background: 'var(--color-sand-raised)', boxShadow: 'inset 0 0 0 1px var(--color-line)' }}>
+      <p className="flex items-center justify-between font-display text-[10.5px] uppercase tracking-[0.2em] text-muted">
+        <span>다음 자리 {place} · 차오르는 한 절</span>
+        <span style={{ fontFeatureSettings: "'lnum' 1" }}>{Math.round(progress * 100)}%</span>
+      </p>
+      <p className="mt-2 font-serif text-[15px] leading-[1.75] text-ink">
+        {head}
+        {!full && <span className="text-muted"> ···</span>}
+      </p>
+      <p className="mt-2 text-[11.5px] text-muted">{ref_} · 미리 읽기 →</p>
+    </button>
   )
 }

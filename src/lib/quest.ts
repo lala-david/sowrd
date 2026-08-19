@@ -86,74 +86,8 @@ export function stopStateAt(index: number, reachedCount: number): StopState {
   return 'sealed'
 }
 
-/* 지도에 그릴 구간을 잘라낸다.
- *
- * 여정 전체를 한 화면에 그리면(바울 28자리) 자리 하나가 6px짜리 점이 되어 "어디까지 왔나"도
- * "다음이 어디냐"도 안 읽힌다. 게임의 월드맵이 늘 **현재 위치 주변**을 크게 보여주고
- * 전체는 미니맵으로 따로 두는 이유가 이것이다.
- *
- * 여기서는 지금 자리 앞뒤로 창을 잡되, 여정 시작·끝에서는 창이 짧아지지 않게 반대편으로 민다. */
-export function questWindow(journey: Journey, journeyKm: number, span = 6): QuestStop[] {
-  const eps = journey.episodes
-  if (eps.length === 0) return []
-
-  const p = journeyProgress(journey, journeyKm)
-  const focus = Math.min(eps.length - 1, Math.max(0, p.reachedCount)) // 다음 자리에 초점
-  const size = Math.min(span, eps.length)
-
-  // 다음 자리가 창의 가운데보다 살짝 앞쪽에 오게 — 앞으로 갈 길이 더 보여야 한다
-  let start = focus - Math.floor((size - 1) / 2)
-  start = Math.max(0, Math.min(start, eps.length - size))
-
-  return eps.slice(start, start + size).map((ep, i) => {
-    const index = start + i
-    return {
-      ep,
-      index,
-      state: stopStateAt(index, p.reachedCount),
-      realKmAway: index < p.reachedCount ? 0 : toRealKm(journey.id, Math.max(0, ep.cumulativeKm - journeyKm)),
-    }
-  })
-}
-
-/** 여정 전체를 한 장에 — 지도만 보는 화면용. 창을 자르지 않는다. */
-export function questAll(journey: Journey, journeyKm: number): QuestStop[] {
-  const p = journeyProgress(journey, journeyKm)
-  return journey.episodes.map((ep, index) => ({
-    ep,
-    index,
-    state: stopStateAt(index, p.reachedCount),
-    realKmAway: index < p.reachedCount ? 0 : toRealKm(journey.id, Math.max(0, ep.cumulativeKm - journeyKm)),
-  }))
-}
-
-/* 한 **장(tier)**의 자리들.
- *
- * 전체 지도를 한 장에 그리는 것은 여정에 따라 불가능하다: 예수님의 사역 길은 자리 33개가
- * 갈릴리·유대의 좁은 지역에서 수십 번 서로 겹쳐 지나간다. 종횡비를 지키는 한(지켜야 한다 —
- * 그게 이 제품의 근거다) 어떤 노드 크기로도 낙서가 된다.
- *
- * 그래서 펼친 지도는 **장 단위**로 본다. 한 장은 자리 두셋에서 아홉 정도이고 지리적으로도
- * 한 덩어리라 지도가 읽힌다. 게임으로 치면 장이 곧 월드다 — 월드맵을 한 장에 다 그리는
- * 게임은 없다. */
-export function questChapterStops(journey: Journey, journeyKm: number, tierIndex: number): QuestStop[] {
-  const p = journeyProgress(journey, journeyKm)
-  const tier = journey.tiers[tierIndex]
-  if (!tier) return questAll(journey, journeyKm)
-  const at = (key: string) => journey.episodes.findIndex((e) => e.id === key || e.place === key)
-  const from = at(tier.fromEpisode)
-  const to = at(tier.toEpisode)
-  if (from < 0 || to < 0) return questAll(journey, journeyKm)
-  return journey.episodes.slice(from, to + 1).map((ep, i) => {
-    const index = from + i
-    return {
-      ep,
-      index,
-      state: stopStateAt(index, p.reachedCount),
-      realKmAway: index < p.reachedCount ? 0 : toRealKm(journey.id, Math.max(0, ep.cumulativeKm - journeyKm)),
-    }
-  })
-}
+/* 보드 레이아웃(자리 좌표·패널)은 lib/board.ts가 맡는다. 예전의 questWindow/questAll/
+ * questChapterStops(실좌표 창 자르기)는 보드가 여정 전체를 한 장으로 그리면서 필요 없어졌다. */
 
 /** 지금 걷고 있는 장의 번호(0-based) */
 export function currentTierIndex(journey: Journey, journeyKm: number): number {
@@ -168,13 +102,17 @@ export function currentTierIndex(journey: Journey, journeyKm: number): number {
 /* ── 오늘 한 걸음 ───────────────────────────────────────────────────────────
  * "아직 없음" 대신 **지금 할 수 있는 다음 것**을 말한다. 빈 상태를 장부가 아니라
  * 초대로 바꾸는 문장들이다. 과장하지 않는다 — 유쾌하되 호들갑스럽지 않게. */
-export function questCall(q: QuestNow, units: string, firstRun: boolean): string {
+export function questCall(q: QuestNow, units: string, firstRun: boolean, nextMilestoneRealKm?: number): string {
   if (q.done) return '이 길을 끝까지 걸었습니다'
   if (!q.next) return '길이 이어집니다'
   const km = q.toRealKm
   const d = km < 10 ? km.toFixed(1) : Math.round(km).toString()
   if (firstRun) return `${d}${units}면 첫 자리 ${q.next.place}에 닿습니다`
   if (km <= 1) return `${d}${units} 남았습니다 — ${q.next.place}가 코앞입니다`
+  /* 자리가 멀면 이정표를 먼저 말한다 — "37km"가 홈에 뜨면 오늘 달릴 이유가 안 된다 */
+  if (km > 8 && nextMilestoneRealKm != null && nextMilestoneRealKm > 0.2 && nextMilestoneRealKm < km) {
+    return `다음 이정표까지 ${nextMilestoneRealKm.toFixed(1)}${units} · ${q.next.place}까지 ${d}${units}`
+  }
   if (q.segProgress >= 0.5) return `${q.next.place}까지 ${d}${units} — 절반을 넘었습니다`
   return `${q.next.place}까지 ${d}${units}`
 }

@@ -9,6 +9,7 @@ import peter from './peter.json'
 import type { Mood } from '../../journey'
 import { moodOfEpisode } from './moods'
 import { JESUS_JOURNEY } from './jesus'
+import { paceJourney } from './pace'
 
 export interface JourneyEpisode {
   id: string
@@ -18,8 +19,12 @@ export interface JourneyEpisode {
   region: string
   lat: number
   lng: number
+  /** 진행에 쓰는 누적 거리(여정km) — 걸음을 고른 값(pace.ts). 실측은 measured*에 */
   cumulativeKm: number
   segmentKm: number
+  /** 실측(좌표 리서치) 거리 — 화면에 "실측 n km"로만 쓴다 */
+  measuredCumulativeKm?: number
+  measuredSegmentKm?: number
   event: string
   passageRef: string
   verseKrShort: string
@@ -48,7 +53,9 @@ export interface Journey {
   nameLatin: string
   who: string
   era: string
+  /** 진행 기준 총 거리(여정km, 걸음을 고른 값). 실측은 measuredTotalKm */
   totalKm: number
+  measuredTotalKm?: number
   theologyNote: string
   tiers: JourneyTier[]
   episodes: JourneyEpisode[]
@@ -114,12 +121,14 @@ function withMoods(raw: unknown): Journey {
  * DECISIONS.md가 출시 범위를 "예수 단일 여정"으로 정했는데도 목록에 예수가 아예 없어서
  * 홈은 베드로를, Setup은 갈릴리 코스를 말하고 있었다. jesus.ts가 좌표(jesus-journey.json)와
  * 서사(journey.ts STATIONS)를 조인해 Journey를 만든다. mood를 이미 들고 오므로 withMoods를 안 탄다. */
+/* 걸음을 고른다(pace.ts) — 실측 그대로면 아브라함의 첫 구간이 실제 142km다. */
+const paced = (j: Journey) => paceJourney(j, JOURNEY_SCALE[j.id] ?? 1)
 export const JOURNEYS: Journey[] = [
-  JESUS_JOURNEY,
-  withMoods(abraham),
-  withMoods(exodus),
-  withMoods(paul),
-  withMoods(peter),
+  paced(JESUS_JOURNEY),
+  paced(withMoods(abraham)),
+  paced(withMoods(exodus)),
+  paced(withMoods(paul)),
+  paced(withMoods(peter)),
 ]
 
 export const journeyById = (id: string): Journey | undefined => JOURNEYS.find((j) => j.id === id)

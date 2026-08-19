@@ -13,7 +13,7 @@ export type Haptic =
   | 'pause'
   | 'resume'
   | 'prayer' // 중보 시작
-  | 'breath' // 호흡 기도 한 박
+  | 'tap' // 보드의 자리를 누름 — 아주 짧게
   | 'offRoute' // 유일한 에러 진동
   | 'episodeComplete'
 
@@ -24,7 +24,7 @@ const PATTERNS: Record<Haptic, number[]> = {
   pause: [200, 100, 60],
   resume: [60, 100, 200],
   prayer: [500],
-  breath: [30],
+  tap: [14],
   offRoute: [80, 80, 80, 80, 80, 80],
   episodeComplete: [200, 80, 200, 80, 200, 80, 600],
 }

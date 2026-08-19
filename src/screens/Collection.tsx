@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useNav } from '../store'
 import { JOURNEYS, JOURNEY_CHROME, toJourneyKm, journeyById, journeyProgress } from '../data/geo/journeys'
-import { usePilgrim, journeyKmOf } from '../state/pilgrim'
+import { usePilgrim, journeyKmOf, pilgrimTotals } from '../state/pilgrim'
 import { STATIONS, JESUS_ORDER, type PassageSlug } from '../data/journey'
 import { featuredVerseById, GRACE_NOTE } from '../data/scripture'
 import { toneOf } from '../lib/mood'
 import { sceneArt, stationArt, crestArt, episodeArt } from '../assets/art'
 import { sceneForStation } from '../lib/scene'
 import { SectionLabel } from '../components/ui'
+import { fmtDistance } from '../lib/format'
 import TabBar from '../components/TabBar'
 import { arcIcon, IconScroll, IconSeal } from '../components/icons'
 
@@ -71,8 +72,14 @@ export default function Collection() {
   return (
     <div className="relative flex flex-1 flex-col">
       <header className="px-7" style={{ paddingTop: 'max(3rem, env(safe-area-inset-top))' }}>
-        <SectionLabel>예수님의 사역 길</SectionLabel>
+        <SectionLabel>여권</SectionLabel>
         <h1 className="mt-2 font-serif text-[30px] font-bold leading-tight">닿은 자리</h1>
+        {/* 내가 달린 거리가 무엇이 되었나 — 한 줄. 숫자는 여기 셋뿐이다 */}
+        <p className="mt-2 text-[13px] text-muted">
+          지금까지 <span className="font-display text-ink-soft" style={{ fontFeatureSettings: "'lnum' 1" }}>{fmtDistance(pilgrimTotals(pilgrim).totalKm, pilgrim.units, 1)}</span>
+          {pilgrim.units} 달려 인장 <span className="font-display text-ink-soft" style={{ fontFeatureSettings: "'lnum' 1" }}>{epDone}</span>개,
+          말씀 <span className="font-display text-ink-soft" style={{ fontFeatureSettings: "'lnum' 1" }}>{epDone + collected.length}</span>편을 받았습니다.
+        </p>
 
         {/* 총계는 **여정 기준 하나**로 센다.
             예수님의 사역 길이 정식 여정이 되면서 예전 식(reached.size + epDone)은 예수 자리를
@@ -85,7 +92,7 @@ export default function Collection() {
               style={{ width: `${epTotal ? (epDone / epTotal) * 100 : 0}%`, background: 'var(--color-lapis)' }}
             />
           </div>
-          <span className="font-display text-[12px] text-ink-soft" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>
+          <span className="font-display text-[12px] leading-none text-ink-soft [font-variant-numeric:lining-nums_tabular-nums]">
             {epDone}/{epTotal}
           </span>
         </div>

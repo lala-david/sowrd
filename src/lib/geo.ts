@@ -158,7 +158,11 @@ export function haversine(aLat: number, aLng: number, bLat: number, bLng: number
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)))
 }
 
-const MAX_ACCURACY_M = 30
+/* 이 오차(m)보다 나쁜 표본은 버린다.
+ * 30으로 두었더니 고층 건물 사이(오차 30~60m 상시)에서 채택이 0이 되어 30분을 달려도 거리 0이었다.
+ * 칼만 필터는 측정 잡음을 accuracy²로 받으므로 나쁜 표본은 스스로 덜 믿는다 — 문턱을 조금
+ * 열어도 유령 거리는 속도 문턱(MIN_SPEED_MS)이 막는다. */
+const MAX_ACCURACY_M = 45
 const MAX_SPEED_MS = 7
 const M_PER_DEG_LAT = 110574
 /** 러너의 가속도 잡음(m/s²) — 등속 모델이 얼마나 빨리 속도 변화를 따라갈지 정한다 */
@@ -168,8 +172,19 @@ const ACCEL_NOISE_MS2 = 0.5
  * 거리가 삭제되지 않는다(그게 −65.8% 오차의 원인이었다). */
 const MIN_SPEED_MS = 0.35
 
-export const geoSupported = (): boolean =>
-  typeof navigator !== 'undefined' && 'geolocation' in navigator
+/* 위치를 못 쓰는 이유.
+ *   'insecure'     — http 주소(LAN IP로 연 개발 서버 등). 브라우저는 보안 연결(https·localhost)에서만
+ *                    geolocation을 노출한다. 폰에서 http://192.168.x.x로 열면 navigator.geolocation 자체가
+ *                    없어서 "이 기기는 위치를 못 재요"가 떴다 — 기기 탓이 아니라 주소 탓이다.
+ *   'unsupported'  — 정말로 API가 없는 환경.
+ *   null           — 쓸 수 있다. */
+export function geoBlockedReason(): 'insecure' | 'unsupported' | null {
+  if (typeof navigator === 'undefined') return 'unsupported'
+  if (typeof window !== 'undefined' && window.isSecureContext === false) return 'insecure'
+  return 'geolocation' in navigator ? null : 'unsupported'
+}
+
+export const geoSupported = (): boolean => geoBlockedReason() === null
 
 /** 지금 위치 한 번만 — Setup의 '여기 내 위치' 미리보기용.
  * 달리기 전에 GPS가 잡히는지 눈으로 확인하게 해서, 달리는 중에야 안 되는 걸 알게 되는 일을 막는다. */

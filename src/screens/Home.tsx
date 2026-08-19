@@ -5,11 +5,13 @@ import { STATIONS, JESUS_ORDER, type PassageSlug } from '../data/journey'
 import { featuredVerse } from '../data/scripture'
 import TabBar from '../components/TabBar'
 import InstallPrompt from '../components/InstallPrompt'
-import QuestMap from '../components/QuestMap'
+import BoardWindow from '../components/BoardWindow'
 import { IconHeld, IconChevron, IconStep, IconScroll, IconSeal } from '../components/icons'
 import { crestArt, stationArt } from '../assets/art'
 import { JOURNEYS, journeyById, journeyProgress, toJourneyKm } from '../data/geo/journeys'
-import { questNow, questWindow } from '../lib/quest'
+import { questNow, questCall } from '../lib/quest'
+import { MILESTONES } from '../data/geo/journeys/milestones'
+import { toRealKm } from '../data/geo/journeys'
 
 /* 홈 — 화면 하나, 질문 하나: **오늘 어디로 달릴까?**
  *
@@ -57,7 +59,8 @@ export default function Home() {
   const journey = journeyById(activeJourneyId) ?? JOURNEYS[0]
   const jKm = toJourneyKm(journey.id, journeyKmOf(pilgrim, journey.id))
   const q = questNow(journey, jKm)
-  const stops = questWindow(journey, jKm)
+  const nextMile = (MILESTONES[journey.id] ?? []).find((m) => m.cumulativeKm > jKm)
+  const nextMileRealKm = nextMile ? toRealKm(journey.id, nextMile.cumulativeKm - jKm) : undefined
 
   const today = verseOfToday(totals.totalRuns === 0)
   const week = daysThisWeek(pilgrim)
@@ -102,13 +105,13 @@ export default function Home() {
 
           {/* 지도를 누르면 지도가 나온다 — 예전엔 자리 목록으로 갔다.
               목록이 나쁜 게 아니라, 지도를 눌렀는데 목록이 나오면 그건 지도가 아니라 버튼이다. */}
-          <button
-            onClick={() => openMap(journey.id)}
-            aria-label={`${journey.name} 지도 열기`}
-            className="block w-full text-left transition active:scale-[0.995]"
-          >
-            <QuestMap stops={stops} segProgress={q.segProgress} atStart={q.reachedCount === 0} units={units} journeyId={journey.id} />
-          </button>
+          <BoardWindow
+            journey={journey}
+            journeyKm={jKm}
+            height={312}
+            onOpen={() => openMap(journey.id)}
+            caption={questCall(q, units, totals.totalRuns === 0, nextMileRealKm)}
+          />
         </section>
 
         {/* ② 바로 달리기 — 오늘의 부름을 버튼 안에 넣는다. 왜 달리는지가 버튼에 적혀 있어야 한다. */}

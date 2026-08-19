@@ -8,7 +8,7 @@ import { toneOf } from '../lib/mood'
 import { LAMP_VERSE } from '../data/scripture'
 import { journeyById, journeyProgress, toJourneyKm, toRealKm } from '../data/geo/journeys'
 import { haptic } from '../lib/haptics'
-import { watchDistance, geoSupported, type GeoStatus } from '../lib/geo'
+import { watchDistance, geoSupported, geoBlockedReason, type GeoStatus } from '../lib/geo'
 import { IconCairn, IconLocked, IconHeld, IconPause, IconPlay } from '../components/icons'
 import LiveMap from '../components/LiveMap'
 
@@ -31,8 +31,6 @@ const BASE_PACE = 335 // 초/km (약 5'35")
 export default function Run() {
   const go = useNav((s) => s.go)
   const units = usePilgrim((s) => s.units)
-  const breathPrayer = usePilgrim((s) => s.breathPrayer)
-  const setBreathPrayer = usePilgrim((s) => s.setBreathPrayer)
   const admin = usePilgrim((s) => s.admin)
   const run = useRun()
   const { status, courseId, startKm, distanceKm, elapsedSec, flashAt, lastReached } = run
@@ -52,7 +50,6 @@ export default function Run() {
   )
 
   const [locked, setLocked] = useState(false)
-  const [breathIn, setBreathIn] = useState(true)
   const tRef = useRef<number | null>(null)
 
   // 시작
@@ -177,14 +174,6 @@ export default function Run() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status])
 
-  /* 호흡 기도 사이클 — 사용자가 켰을 때만 돈다.
-   * 자동 무한 반복은 기도를 기술로 만든다(마 6:7). 기본 꺼짐이 신학적 요구사항이다. */
-  useEffect(() => {
-    if (!breathPrayer) return
-    const id = window.setInterval(() => setBreathIn((b) => !b), 4500)
-    return () => window.clearInterval(id)
-  }, [breathPrayer])
-
   /* 햅틱 — 러닝 중엔 화면을 못 보므로 진동이 인터페이스다(BUILD-SPECS C).
    * 자리 도달이 시그니처 패턴. */
   useEffect(() => {
@@ -255,6 +244,32 @@ export default function Run() {
     go('reveal')
   }
 
+  /* 길게 눌러 마친다 — 한 번 스친 손가락에 30분 러닝이 끝나면 안 된다.
+     0.9초 동안 링이 차오르고, 다 차면 마친다. 중간에 떼면 아무 일도 없다. */
+  const HOLD_MS = 900
+  const [holding, setHolding] = useState(false)
+  const [holdHint, setHoldHint] = useState(false)
+  const holdTimer = useRef<number | null>(null)
+  const holdStart = () => {
+    if (locked) return
+    setHolding(true)
+    holdTimer.current = window.setTimeout(() => {
+      holdTimer.current = null
+      setHolding(false)
+      stop()
+    }, HOLD_MS)
+  }
+  const holdEnd = () => {
+    if (holdTimer.current != null) {
+      window.clearTimeout(holdTimer.current)
+      holdTimer.current = null
+      // 짧게 눌렀다 — 어떻게 하는지 한 번 알려 준다
+      setHoldHint(true)
+      window.setTimeout(() => setHoldHint(false), 1600)
+    }
+    setHolding(false)
+  }
+
   const mileCount = run.reachedMilestones.length
 
   return (
@@ -307,7 +322,10 @@ export default function Run() {
         <p className="relative z-10 mt-2 px-7 text-[12px] leading-relaxed text-muted">
           {geo === 'prompting' && '위치 신호를 찾는 중이에요'}
           {geo === 'denied' && '위치 권한이 꺼져 있어요 · 거리는 어림으로 잽니다'}
-          {geo === 'unavailable' && '이 기기는 위치를 못 재요 · 거리는 어림으로 잽니다'}
+          {geo === 'unavailable' &&
+            (geoBlockedReason() === 'insecure'
+              ? 'http 주소에선 위치를 못 써요 · 설치한 앱이나 https 주소로 열어 주세요'
+              : '이 기기는 위치를 못 재요 · 거리는 어림으로 잽니다')}
           {geo === 'lost' && '위치 신호가 약해요 · 잠깐 어림으로 잇습니다'}
           {geo === 'idle' && '연습 모드 · 실제 거리가 아닙니다'}
         </p>
@@ -362,7 +380,13 @@ export default function Run() {
             <div className="flex h-[190px] flex-col items-center justify-center gap-2 rounded-2xl bg-sand-raised/10 ring-1 ring-line-strong/50">
               <span className="h-2.5 w-2.5 rounded-full bg-sun" style={{ animation: 'glow 1.6s ease-in-out infinite' }} />
               <p className="text-[12.5px] text-muted">
-                {geo === 'denied' ? '위치 권한이 꺼져 있어요' : geo === 'unavailable' ? '이 기기는 위치를 못 재요' : '내 위치를 찾는 중…'}
+                {geo === 'denied'
+                  ? '위치 권한이 꺼져 있어요'
+                  : geo === 'unavailable'
+                    ? geoBlockedReason() === 'insecure'
+                      ? 'http 주소에선 위치를 못 써요'
+                      : '이 기기는 위치를 못 재요'
+                    : '내 위치를 찾는 중…'}
               </p>
               {geo === 'denied' && <p className="max-w-[26ch] px-6 text-center text-[11px] leading-relaxed text-muted">설정 → Safari → 위치에서 허용하면 지도에 내 위치가 떠요</p>}
             </div>
@@ -430,21 +454,6 @@ export default function Run() {
           )}
         </div>
 
-        {/* 호흡 기도 — 기본 꺼짐. 켜야 돈다(자동 반복은 기도를 기술로 만든다) */}
-        <div className="mt-8 flex h-9 flex-col items-center justify-center">
-          {breathPrayer ? (
-            <button onClick={() => setBreathPrayer(false)} className="flex flex-col items-center">
-              <p className="text-[12.5px] tracking-[0.06em] text-muted transition-opacity duration-700">
-                {breathIn ? '들숨 · 주 예수 그리스도여' : '날숨 · 저를 불쌍히 여기소서'}
-              </p>
-              <span className="mt-1 text-[10px] text-muted">눌러서 끄기 · 반복 자체에 효력이 있지 않습니다</span>
-            </button>
-          ) : (
-            <button onClick={() => setBreathPrayer(true)} className="rounded-full border border-line-strong px-3.5 py-1.5 text-[11.5px] text-muted transition active:scale-95">
-              호흡 기도 켜기
-            </button>
-          )}
-        </div>
       </div>
 
       {/* 컨트롤: 잠금 · 멈춤 · (일시정지) */}
@@ -458,11 +467,32 @@ export default function Run() {
         </button>
 
         <button
-          onClick={stop}
+          onPointerDown={holdStart}
+          onPointerUp={holdEnd}
+          onPointerLeave={holdEnd}
+          onPointerCancel={holdEnd}
+          onContextMenu={(e) => e.preventDefault()}
           disabled={locked}
-          className={`flex h-[80px] w-[80px] shrink-0 items-center justify-center rounded-full border-2 border-sun text-sun transition active:scale-95 ${locked ? 'opacity-30' : ''}`}
-          aria-label="멈추기"
+          className={`relative flex h-[80px] w-[80px] shrink-0 select-none items-center justify-center rounded-full border-2 border-sun text-sun transition active:scale-95 ${locked ? 'opacity-30' : ''}`}
+          style={{ touchAction: 'none', WebkitTouchCallout: 'none' }}
+          aria-label="길게 눌러 마치기"
         >
+          {/* 차오르는 링 */}
+          <svg className="pointer-events-none absolute inset-[-3px]" viewBox="0 0 86 86" aria-hidden>
+            <circle
+              cx="43"
+              cy="43"
+              r="41"
+              fill="none"
+              stroke="var(--color-sun)"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeDasharray={2 * Math.PI * 41}
+              strokeDashoffset={holding ? 0 : 2 * Math.PI * 41}
+              transform="rotate(-90 43 43)"
+              style={{ transition: holding ? `stroke-dashoffset ${HOLD_MS}ms linear` : 'none' }}
+            />
+          </svg>
           <IconCairn size={30} />
         </button>
 
@@ -480,7 +510,7 @@ export default function Run() {
         </button>
       </div>
       <p className="relative z-10 mt-2.5 px-7 text-center text-[12px] text-muted">
-        {locked ? '잠김 — 왼쪽 자물쇠로 해제' : '멈추면 이 자리의 말씀을 함께 읽습니다'}
+        {locked ? '잠김 — 왼쪽 자물쇠로 해제' : holdHint ? '가운데를 길게 누르면 마칩니다' : '길게 눌러 마치면 이 자리의 말씀을 함께 읽습니다'}
       </p>
     </div>
   )

@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { PassageSlug, Mood } from '../data/journey'
-import { journeyById, toJourneyKm, journeyProgress, JOURNEYS } from '../data/geo/journeys'
+import { COURSES, STATIONS } from '../data/journey'
+import { journeyById, toJourneyKm, toRealKm, journeyProgress, JOURNEYS } from '../data/geo/journeys'
 import { type Units, dayKey } from '../lib/format'
 import { validateAlias, type Intercession } from '../data/prayer'
 import type { TracePoint } from '../lib/geo'
@@ -120,6 +121,8 @@ interface PilgrimState {
    * 실제로 켜지는 곳이 러닝 화면 한 군데뿐이었다(Run.tsx의 data-theme="dark").
    * 새벽 5시에 앱을 열어도 크림색이었다는 뜻이다. 'system'이 기본 — OS 설정을 따른다. */
   theme: 'system' | 'light' | 'dark'
+  /** 보드 위의 내 말(순례자 토큰) — figures/pilgrim*.svg 키 */
+  avatar: 'pilgrim' | 'pilgrim-2' | 'pilgrim-3' | 'pilgrim-4'
   /* 첫 실행 안내를 봤는가.
    * 예전엔 처음 켠 사람이 보는 화면이 "오늘의 말씀 + 0.0km + 달리기 시작"뿐이라,
    * 이게 GPS로 달린 거리를 재는 앱이라는 사실을 알려주는 문장이 한 줄도 없었다. */
@@ -131,9 +134,12 @@ interface PilgrimState {
   setBreathPrayer: (v: boolean) => void
   setHomeCompact: (v: boolean) => void
   loadDemo: () => void
+  /** 모든 여정·자리를 완주한 상태로 채운다(시연·개발용). 실제 러닝 기록(lifetime.runs 등)은 만들지 않는다. */
+  completeAll: () => void
   setTraceRoute: (v: boolean) => void
   setTextScale: (v: 'normal' | 'large' | 'xlarge') => void
   setTheme: (v: 'system' | 'light' | 'dark') => void
+  setAvatar: (v: PilgrimState['avatar']) => void
   setSeenIntro: (v: boolean) => void
   setActiveJourney: (id: string) => void
   addIntercession: (alias: string, note?: string) => void
@@ -288,6 +294,7 @@ export const usePilgrim = create<PilgrimState>()(
       traceRoute: false,
       textScale: 'normal',
       theme: 'system',
+      avatar: 'pilgrim',
       seenIntro: false,
       /* 기본 여정 = 예수님의 사역 길.
        * DECISIONS.md의 출시 범위가 "예수 단일 여정"인데도 기본값이 'peter'였다 —
@@ -321,9 +328,39 @@ export const usePilgrim = create<PilgrimState>()(
       setBreathPrayer: (breathPrayer) => set({ breathPrayer }),
       setHomeCompact: (homeCompact) => set({ homeCompact }),
       loadDemo: () => set({ ...demo() }),
+      /* "다 깬걸로" — 다섯 여정과 예수 사역 자리를 전부 완주 상태로 만든다.
+       * journeyKm를 각 여정 realKm까지 채우면 toJourneyKm로 되곱해져 진행 100%가 된다.
+       * 개인 최고기록·총 러닝 수(lifetime.runs/km/sec)는 건드리지 않는다 — 그건 실제로 달린 것이라야 한다. */
+      completeAll: () =>
+        set((s) => {
+          const journeyKm = { ...s.journeyKm }
+          const lt = s.lifetime ?? emptyLifetime()
+          const episodeReachedAt: Record<string, Record<string, number>> = { ...lt.episodeReachedAt }
+          const collectedEpisodes = new Set(s.collectedEpisodes ?? [])
+          for (const j of JOURNEYS) {
+            journeyKm[j.id] = toRealKm(j.id, j.totalKm)
+            episodeReachedAt[j.id] = { ...(episodeReachedAt[j.id] ?? {}) }
+            for (const e of j.episodes) {
+              collectedEpisodes.add(`${j.id}:${e.id}`)
+              if (!episodeReachedAt[j.id][e.id]) episodeReachedAt[j.id][e.id] = now
+            }
+          }
+          const progress: Record<string, CourseProgress> = { ...s.progress }
+          for (const c of COURSES) {
+            progress[c.id] = {
+              cumulativeKm: c.distanceKm,
+              reached: c.stations.map((cs) => cs.id),
+              playCount: s.progress[c.id]?.playCount ?? 0,
+              completedAt: s.progress[c.id]?.completedAt ?? now,
+            }
+          }
+          const collectedVerses = Array.from(new Set([...s.collectedVerses, ...(Object.keys(STATIONS) as PassageSlug[])]))
+          return { journeyKm, progress, collectedVerses, collectedEpisodes: Array.from(collectedEpisodes), lifetime: { ...lt, episodeReachedAt } }
+        }),
       setTraceRoute: (traceRoute) => set({ traceRoute }),
       setTextScale: (textScale) => set({ textScale }),
       setTheme: (theme) => set({ theme }),
+      setAvatar: (avatar) => set({ avatar }),
       setSeenIntro: (seenIntro) => set({ seenIntro }),
 
       commitRun: (r) => {
@@ -452,6 +489,7 @@ export const usePilgrim = create<PilgrimState>()(
         traceRoute: s.traceRoute,
         textScale: s.textScale,
         theme: s.theme,
+        avatar: s.avatar,
         seenIntro: s.seenIntro,
       }) as PilgrimState,
       /* 용량 초과에 대한 방어층.

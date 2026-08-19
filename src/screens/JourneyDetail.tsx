@@ -2,14 +2,14 @@ import { useMemo } from 'react'
 import { useNav } from '../store'
 import { usePilgrim, journeyKmOf } from '../state/pilgrim'
 import { journeyById, journeyProgress, JOURNEY_CHROME, toJourneyKm, toRealKm, type JourneyEpisode } from '../data/geo/journeys'
-import { sceneArt, crestArt, terrainArt } from '../assets/art'
+import { sceneArt, crestArt, worldArt } from '../assets/art'
+import { currentTierIndex } from '../lib/quest'
 import { SectionLabel } from '../components/ui'
 import { episodeArt } from '../assets/art'
 import { MILESTONES, milestonesPassed } from '../data/geo/journeys/milestones'
 import { IconArrow, IconSeal, IconCairn } from '../components/icons'
 import { sceneFocus } from '../lib/scene'
-import QuestMap from '../components/QuestMap'
-import { questWindow } from '../lib/quest'
+import BoardWindow from '../components/BoardWindow'
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII']
 
@@ -23,6 +23,7 @@ export default function JourneyDetail() {
   const go = useNav((s) => s.go)
   const journeyId = useNav((s) => s.journeyId)
   const openEpisode = useNav((s) => s.openEpisode)
+  const openMap = useNav((s) => s.openMap)
   const pilgrim = usePilgrim()
 
   const journey = journeyId ? journeyById(journeyId) : undefined
@@ -81,10 +82,10 @@ export default function JourneyDetail() {
             지형 그림은 가장자리까지 지형이라 어떤 비율로 잘라도 성립하고,
             카드·지도·상세가 같은 땅을 보여 준다. */}
         <img
-          src={terrainArt(journey.id) ?? sceneArt(chrome.scene)}
+          src={worldArt(journey.id, currentTierIndex(journey, km)) ?? sceneArt(chrome.scene)}
           alt=""
           className="h-full w-full object-cover"
-          style={{ objectPosition: terrainArt(journey.id) ? 'center 40%' : sceneFocus(chrome.scene, 'hero') }}
+          style={{ objectPosition: worldArt(journey.id, 0) ? 'center 35%' : sceneFocus(chrome.scene, 'hero') }}
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28" style={{ background: 'linear-gradient(to top, var(--color-sand), transparent)' }} />
         <button onClick={() => go('journeys')} className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))] flex h-11 w-11 items-center justify-center rounded-full bg-[#201C15]/85 text-sand-raised transition active:scale-90" aria-label="뒤로">
@@ -101,15 +102,7 @@ export default function JourneyDetail() {
         {/* 이 여정의 지금 구간 — 홈과 같은 지도를 여기서도 본다.
             여정 상세는 자리 **목록**만 있어서 "어디에서 어디로 가는 길인가"가 안 보였다.
             목록은 순서를 말하고 지도는 지리를 말한다. 둘 다 있어야 이 길이 실재한다. */}
-        <QuestMap
-          className="mt-4"
-          stops={questWindow(journey, km)}
-          segProgress={prog.segProgress}
-          atStart={prog.reachedCount === 0}
-          units={pilgrim.units}
-          journeyId={journey.id}
-          height={200}
-        />
+        <BoardWindow className="mt-4" journey={journey} journeyKm={km} height={230} onOpen={() => openMap(journey.id)} />
 
         <div className="mt-4 flex items-center gap-3">
           <div className="h-[4px] flex-1 overflow-hidden rounded-full bg-line">

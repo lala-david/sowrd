@@ -97,6 +97,14 @@ body,
 #root {
   height: 100%;
 }
+/* 가로 스크롤은 어디서도 생기면 안 된다 — 보드·칩 줄·시트가 넓어도 문서는 세로로만 움직인다.
+   (overflow-x: hidden은 iOS에서 무시되는 경우가 있어 clip을 함께 건다) */
+html,
+body {
+  overflow-x: hidden;
+  overflow-x: clip;
+  overscroll-behavior-x: none;
+}
 body {
   margin: 0;
   background: var(--color-sand);
@@ -492,4 +500,125 @@ body::after {
 }
 @media (prefers-reduced-motion: reduce) {
   .road-flow { animation: none !important; }
+}
+
+/* ── 퀘스트 보드 ──────────────────────────────────────────────────────────
+   보드 위에서 움직이는 것들. 전부 transform/opacity만 건드린다(레이아웃 비용 0). */
+/* 다음 자리의 봉인이 숨 쉰다 — 화면에서 가장 중요한 한 점 */
+@keyframes board-pulse {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.045); }
+}
+.board-pulse { animation: board-pulse 2.6s ease-in-out infinite; }
+/* 등불의 숨 */
+@keyframes board-breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.18); opacity: .8; }
+}
+.board-breathe { animation: board-breathe 3.2s ease-in-out infinite; }
+/* 순례자 말이 제자리에서 살짝 들썩인다 */
+@keyframes board-bob {
+  0%, 100% { transform: translate(-50%, -92%); }
+  50% { transform: translate(-50%, -102%); }
+}
+.board-bob { animation: board-bob 2.2s ease-in-out infinite; }
+/* 구름 그림자·모래 안개가 왼쪽에서 오른쪽으로 지나간다 */
+@keyframes board-drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(440px + 100%)); }
+}
+.board-drift { animation: board-drift 90s linear infinite; }
+/* 새 — 가로질러 날며 조금 오르내린다 */
+@keyframes board-fly {
+  0% { translate: 0 0; }
+  25% { translate: 140px -10px; }
+  50% { translate: 280px 4px; }
+  75% { translate: 420px -8px; }
+  100% { translate: 560px 0; }
+}
+.board-fly { animation: board-fly 30s linear infinite; }
+/* 빛 조각이 떠오르며 사라진다 */
+@keyframes board-rise {
+  0% { transform: translateY(0); opacity: 0; }
+  20% { opacity: .95; }
+  80% { opacity: .6; }
+  100% { transform: translateY(-70px); opacity: 0; }
+}
+.board-rise { animation: board-rise 7s ease-out infinite; }
+/* 별 */
+@keyframes board-twinkle {
+  0%, 100% { opacity: .25; transform: scale(.8); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+.board-twinkle { animation: board-twinkle 3s ease-in-out infinite; }
+/* 선택된 자리 — 흰 링 한 겹 더 */
+.board-selected { outline: 3px solid rgba(255,250,236,.95); outline-offset: 7px; border-radius: 9999px; }
+/* 자리 시트가 올라온다 */
+@keyframes sheet-up {
+  from { transform: translateY(28px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.sheet-up { animation: sheet-up .34s cubic-bezier(.22,1,.36,1) both; }
+/* 물빛 반짝임 */
+@keyframes board-glint {
+  0%, 100% { opacity: 0; transform: scaleX(.4); }
+  50% { opacity: .9; transform: scaleX(1); }
+}
+.board-glint { animation: board-glint 3s ease-in-out infinite; }
+/* 배 — 물 위를 천천히 오간다 */
+@keyframes board-sail {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(var(--travel, 80px)); }
+}
+.board-sail { animation: board-sail 40s ease-in-out infinite; }
+@keyframes board-bob-soft {
+  0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+  50% { transform: translateY(-2px) rotate(1.5deg); }
+}
+.board-bob-soft { animation: board-bob-soft 3s ease-in-out infinite; }
+/* 모래 안개 — 제자리에서 좌우로 흐른다 */
+@keyframes board-haze {
+  0%, 100% { transform: translateX(-12%); opacity: .5; }
+  50% { transform: translateX(12%); opacity: .9; }
+}
+.board-haze { animation: board-haze 40s ease-in-out infinite; }
+/* 연기 — 피어오르며 퍼지고 사라진다 */
+@keyframes board-smoke {
+  0% { transform: translateY(0) scale(.6); opacity: 0; }
+  20% { opacity: .7; }
+  100% { transform: translateY(-70px) scale(1.8); opacity: 0; }
+}
+.board-smoke { animation: board-smoke 6s ease-out infinite; }
+/* 모닥불 */
+@keyframes board-ember {
+  0%, 100% { transform: scale(1); opacity: .75; }
+  50% { transform: scale(1.18); opacity: 1; }
+}
+.board-ember { animation: board-ember 2s ease-in-out infinite; }
+/* 번개 — 아주 가끔 */
+@keyframes board-lightning {
+  0%, 94%, 97%, 100% { opacity: 0; }
+  95% { opacity: .9; }
+  96% { opacity: .2; }
+  96.5% { opacity: .7; }
+}
+.board-lightning { animation: board-lightning 14s linear infinite; }
+/* 탭 파문 — 보드를 누르면 그 자리에서 한 겹 퍼진다 */
+@keyframes board-ripple {
+  from { transform: translate(-50%, -50%) scale(.2); opacity: .7; }
+  to { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+.board-ripple { animation: board-ripple .7s ease-out forwards; }
+/* 닿은 자리의 금이 가끔 빛을 받는다 — 인장이 살아 있다는 아주 작은 신호 */
+@keyframes board-gleam {
+  0%, 86% { transform: translateX(-130%) rotate(18deg); opacity: 0; }
+  90% { opacity: .85; }
+  100% { transform: translateX(130%) rotate(18deg); opacity: 0; }
+}
+.board-gleam {
+  position: absolute;
+  inset: -25%;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 42%, rgba(255,255,255,.8) 50%, transparent 58%);
+  animation: board-gleam 9s linear infinite;
 }

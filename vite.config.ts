@@ -38,7 +38,7 @@ export default defineConfig(({ command }) => ({
            한 번 본 자리는 그 뒤로 오프라인에서도 열린다. 셸·히어로·씬·문장은 그대로 프리캐시. */
       workbox: {
         globPatterns: ['**/*.{js,css,html,webp,svg,woff2}'],
-        globIgnores: ['**/assets/st/**'],
+        globIgnores: ['**/assets/st/**', '**/assets/world/**'],
         /* 세 폰트가 전부 외부 CDN에서 온다. 프리캐시는 빌드 산출물만 담으므로 그대로 두면
            오프라인에서 글꼴이 시스템 폰트로 떨어진다 — 세리프 목소리가 이 앱의 정체성인데.
            한 번 받은 뒤에는 캐시에서 쓴다(러너는 신호가 끊기는 곳에서 달린다). */
@@ -48,6 +48,17 @@ export default defineConfig(({ command }) => ({
               url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://cdn.jsdelivr.net',
             handler: 'StaleWhileRevalidate',
             options: { cacheName: 'font-css', expiration: { maxEntries: 12, maxAgeSeconds: 60 * 60 * 24 * 365 } },
+          },
+          {
+            /* 월드 패널(장마다 한 장, 23장 ≈ 5MB) — 프리캐시에서 빼고 처음 볼 때 받아 보관한다.
+               한 번 본 여정의 땅은 그 뒤로 오프라인에서도 열린다. */
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.includes('/assets/world/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'world-art',
+              expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 180 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
           },
           {
             // 자리 그림 — 처음 볼 때 받아서 보관한다(프리캐시에서 뺀 몫)
@@ -116,6 +127,7 @@ export default defineConfig(({ command }) => ({
           // 파일명(arrest.webp)에는 경로가 없다 — 원본 경로로 판별해야 한다
           const src = (info.originalFileNames ?? []).join('|').replace(/\\/g, '/')
           if (src.includes('/art/stations/') || src.includes('/art/episodes/')) return 'assets/st/[name]-[hash][extname]'
+          if (src.includes('/art/world/')) return 'assets/world/[name]-[hash][extname]'
           return 'assets/[name]-[hash][extname]'
         },
       },
