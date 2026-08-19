@@ -17,10 +17,11 @@ export default function Intro() {
   const setSeenIntro = usePilgrim((s) => s.setSeenIntro)
 
   const steps = [
+    /* 첫 문장은 "실제 길을 달린다"다. 성경 인물 이름으로 시작하면 비크리스천이 첫 화면에서
+       끊긴다(전문가 검토). 무엇을 하는 앱인지 → 어디를 가는지 → 닿으면 무엇을 받는지 순서로. */
     { Icon: IconPath, text: '달립니다. 실제 GPS로 거리를 잽니다.' },
-    // 예수님의 사역 길이 기본 여정이 됐는데 목록에서 빠져 있었다(geo/journeys/jesus.ts).
-    { Icon: IconCairn, text: '그만큼 예수님이 걸으신 실제 길이 전진합니다. 아브라함·모세·바울·베드로의 길도 함께 있습니다.' },
-    { Icon: IconScroll, text: '자리에 닿으면 그곳의 말씀을 함께 읽습니다.' },
+    { Icon: IconCairn, text: '그만큼 지도 위의 내가 앞으로 갑니다 — 갈릴리 호숫가에서 예루살렘까지, 우르에서 가나안까지, 안디옥에서 로마까지. 실제 있었던 길입니다.' },
+    { Icon: IconScroll, text: '자리에 닿으면 인장이 찍히고, 그곳에서 있었던 이야기와 말씀을 받습니다.' },
   ]
 
   return (
@@ -33,9 +34,9 @@ export default function Intro() {
     >
       <span className="font-display text-[17px] tracking-[0.34em] text-clay-deep">THE&nbsp;WAY</span>
       <h1 className="mt-6 font-serif text-[30px] font-bold leading-[1.28] text-ink">
-        오늘 달린 만큼
+        오늘 달린 만큼,
         <br />
-        성경의 길이 이어집니다
+        오래된 길이 열립니다
       </h1>
 
       <ul className="mt-8 flex flex-col gap-5">
