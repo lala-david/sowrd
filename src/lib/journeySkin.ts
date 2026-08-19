@@ -42,49 +42,44 @@ export interface JourneySkin {
 
 export const JOURNEY_SKINS: Record<string, JourneySkin> = {
   jesus: {
-    // 갈릴리 호수 — 물색
-    from: '#e6f6f4',
-    to: '#c7e6e6',
+    from: '#fbf0d8',
+    to: '#efdcb8',
     texture: 'waves',
-    textureInk: '#1f8b86',
-    fog: '#4e7d80',
-    label: '#1e3b3d',
+    textureInk: '#b08a4e',
+    fog: '#8a6a3c',
+    label: '#4a3826',
   },
   abraham: {
-    // 우르의 새벽 — 연보라. 별을 그린 장이지만 밤으로 가지 않는다
-    from: '#f4ecfa',
-    to: '#e2d4ee',
+    from: '#fdf1de',
+    to: '#f2ddba',
     texture: 'stars',
-    textureInk: '#8a4a9c',
-    fog: '#6f5a86',
-    label: '#3a2b45',
+    textureInk: '#b5854f',
+    fog: '#8a6238',
+    label: '#4a3524',
   },
   exodus: {
-    // 시내산의 아침 — 살구빛
-    from: '#fdeee0',
-    to: '#f6d9bd',
+    from: '#fbeedb',
+    to: '#eed6b2',
     texture: 'ridges',
-    textureInk: '#3f56b8',
-    fog: '#9a7150',
-    label: '#43301f',
+    textureInk: '#a97f4c',
+    fog: '#8a6238',
+    label: '#46331f',
   },
   paul: {
-    // 지중해 — 더 깊은 물색
-    from: '#e2f1fa',
-    to: '#c2dced',
+    from: '#f9f0dd',
+    to: '#ecdcbb',
     texture: 'deep-waves',
-    textureInk: '#1c6f96',
-    fog: '#4d7590',
-    label: '#1d3242',
+    textureInk: '#a8834e',
+    fog: '#87673a',
+    label: '#453425',
   },
   peter: {
-    // 성벽의 도시 — 연둣빛
-    from: '#eff7dd',
-    to: '#d8e8b6',
+    from: '#f8f1d6',
+    to: '#e9dfb2',
     texture: 'walls',
-    textureInk: '#4e7a2c',
-    fog: '#6b7d43',
-    label: '#2c3a19',
+    textureInk: '#9d8a45',
+    fog: '#7c6a33',
+    label: '#413a1f',
   },
 }
 
@@ -109,4 +104,8 @@ export const MAP_INK = {
   token: '#ff6a30',
   /** 지금 자리의 등불 번짐 */
   lamp: '#f0a81f',
+  /** 길바닥 — 말을 올릴 수 있을 만큼 폭이 있는 흙길 */
+  roadBed: '#fff6e2',
+  /** 길 가장자리·발자국 */
+  roadEdge: '#a98a56',
 } as const

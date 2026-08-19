@@ -186,3 +186,18 @@ const EPISODE_MAP: Record<string, string> = Object.fromEntries(
  * 폴백을 안 걸면 예수 여정만 리빌·수집에서 씬 배경으로 떨어져, 있는 그림 37장을 놀린다. */
 export const episodeArt = (journeyId: string, episodeId: string): string | undefined =>
   EPISODE_MAP[`${journeyId}-${episodeId}`] ?? (journeyId === 'jesus' ? stationArt(episodeId as never) : undefined)
+
+/* ── 지도의 지형 그림 ──────────────────────────────────────────────────────
+ * recraft로 뽑은 컷페이퍼 벡터(SVG). 여정마다 그 땅의 상징 하나.
+ * 지도의 **빈 사분면**에 옅게 깔아 여백을 지형으로 채운다 — 길을 가리지 않는 자리에만 놓는다.
+ * (베드로의 길은 아직 없다. 없으면 안 그린다.) */
+const PROP_URLS = import.meta.glob('./props/*.svg', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+const PROP_MAP: Record<string, string> = Object.fromEntries(
+  Object.entries(PROP_URLS).map(([file, url]) => [file.replace(/^\.\/props\//, '').replace(/\.svg$/, ''), url]),
+)
+export const propArt = (journeyId: string): string | undefined => PROP_MAP[journeyId]
+
+/** 지도 바탕에 까는 지형 한 장(모든 여정 공용). 언더바로 시작해 여정 prop과 안 섞인다. */
+export const mapGroundArt = (): string | undefined => PROP_MAP['_ground']
+/** 도달 인장 — 리빌처럼 **큰 자리**에서만 쓴다. 20px 노드로 줄이면 문양이 뭉갠다. */
+export const sealArt = (): string | undefined => PROP_MAP['_seal']

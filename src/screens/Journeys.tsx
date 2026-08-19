@@ -67,7 +67,7 @@ export default function Journeys() {
                       카드 위에 절대배치했더니 제목을 덮어서, 라틴명 옆 칩으로 내렸다. */}
                   {active && (
                     <span
-                      className="rounded-full px-1.5 py-[2px] text-[9.5px] leading-none"
+                      className="rounded-full px-2 py-[3px] text-[11px] leading-none"
                       style={{ background: 'var(--color-clay-deep)', color: 'var(--color-sand-raised)' }}
                     >
                       지금 걷는 길

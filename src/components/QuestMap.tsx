@@ -1,8 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import type { QuestStop } from '../lib/quest'
-import { IconLocked } from './icons'
 import MapTexture from './MapTexture'
+import MapNode from './MapNode'
 import { skinOf, MAP_INK } from '../lib/journeySkin'
 
 /* ── 살아있는 여정 지도 ─────────────────────────────────────────────────────
@@ -154,20 +154,28 @@ export default function QuestMap({
   const reduce = useReducedMotion()
   const roadRef = useRef<SVGPathElement>(null)
   const walkedRef = useRef<SVGPathElement>(null)
+  const shadowRef = useRef<SVGPathElement>(null)
   const [me, setMe] = useState<[number, number] | null>(null)
 
   const H = height
-  const pad = 38
   /* 자리가 빽빽할수록 마커와 안개를 줄인다 — 창(자리 여섯)과 전체(자리 서른셋)가
      같은 크기를 쓰면 전체 지도는 점과 안개로 가득 찬 얼룩이 된다. */
   const dense = stops.length > 10
+  /* 여백. 자리 이름표가 지도 밖으로 안 나가려면 위아래로 자리가 필요하다. */
+  const pad = dense ? 30 : 42
   const fogR = Math.max(24, Math.min(78, 460 / stops.length))
-  const dotR = dense ? 3 : 4
-  const sealR = dense ? 4.5 : 6
+  /* 길 폭과 자리 크기 — 자리가 많을수록 줄인다.
+     자리 서른셋에 폭 13짜리 길을 깔면 지도가 길로만 가득 찬다. */
+  const road = dense ? 7 : 12
+  const nodeScale = dense ? 0.62 : 1
   const projected = stops.length ? project(stops, H, pad) : { pts: [], northDeg: 0 }
   const pts = projected.pts
   const d = smoothPath(pts)
 
+  /* 지형 그림을 **길이 없는 사분면**에 놓는다.
+     실좌표는 종횡비를 지켜 그리므로 길이 대각선으로 누우면 두 귀퉁이가 반드시 빈다.
+     그 여백을 그냥 두면 "덜 만든 카드"로 보이고, 길 위에 그림을 얹으면 길을 가린다.
+     점이 가장 적은 사분면을 골라 거기에만 깐다. */
   /* 내가 서 있는 지점.
    *
    * 처음엔 폴리라인(직선) 누적 길이로 비율을 구해 곡선에 적용했는데, 베지어는 직선보다 길고
@@ -201,6 +209,10 @@ export default function QuestMap({
 
     // 걸어온 길이 앞에서부터 차오른다 — 거리가 곧 이야기라는 걸 눈으로 보여주는 유일한 장면
     walked.style.strokeDasharray = `${done} ${L}`
+    if (shadowRef.current) {
+      shadowRef.current.style.strokeDasharray = `${done} ${L}`
+      shadowRef.current.style.strokeDashoffset = '0'
+    }
     if (reduce) {
       walked.style.strokeDashoffset = '0'
       return
@@ -257,11 +269,37 @@ export default function QuestMap({
             <stop offset="0%" stopColor={MAP_INK.lamp} stopOpacity="0.4" />
             <stop offset="100%" stopColor={MAP_INK.lamp} stopOpacity="0" />
           </radialGradient>
+
+          {/* 자리 메달리온의 면.
+              MapNode가 이 셋을 참조한다. 없으면 url(#...)이 아무 데도 안 걸려서
+              **면이 투명으로 빠지고 테두리만 남는다** — 실제로 그래서 지도가
+              작고 검은 링 몇 개짜리 낙서로 보였다. 정의를 빠뜨린 것이 원인이었다. */}
+          <radialGradient id={`face-gold-${uid}`} cx="35%" cy="28%" r="80%">
+            <stop offset="0%" stopColor="#ffe9a8" />
+            <stop offset="52%" stopColor={MAP_INK.seal} />
+            <stop offset="100%" stopColor="#b47d15" />
+          </radialGradient>
+          <radialGradient id={`face-lock-${uid}`} cx="35%" cy="28%" r="82%">
+            <stop offset="0%" stopColor="#4a5cc4" />
+            <stop offset="55%" stopColor={MAP_INK.sealedFill} />
+            <stop offset="100%" stopColor="#141d4e" />
+          </radialGradient>
+          <radialGradient id={`halo-${uid}`}>
+            <stop offset="0%" stopColor={MAP_INK.lamp} stopOpacity="0.42" />
+            <stop offset="60%" stopColor={MAP_INK.lamp} stopOpacity="0.14" />
+            <stop offset="100%" stopColor={MAP_INK.lamp} stopOpacity="0" />
+          </radialGradient>
         </defs>
 
         {/* 이 땅의 결 — 여정마다 다르다.
             아브라함은 별(창 15:5), 출애굽은 시내산 능선, 예수는 갈릴리 물결,
             바울은 지중해, 베드로는 성벽. 다섯 길이 색만 다른 같은 화면이 아니게. */}
+        /* 생성 아트(바탕 지형·여정 상징)를 지도에 얹었다가 걷어냈다.
+           둘 다 정사각 이미지라 하드 엣지가 그대로 보였고, 두 장이 겹치면서 길과 자리가
+           그림 속에 묻혔다 — 더 화려해진 게 아니라 더 복잡해졌다. 지도의 주인공은
+           길과 자리이지 배경 그림이 아니다. 결은 코드로 그린 MapTexture만 남긴다
+           (여정마다 다르고, 크기에 맞춰 줄고, 길을 절대 안 가린다).
+           생성 아트는 큰 자리에서 쓴다 — 여정 카드와 리빌. */
         <MapTexture texture={skin.texture} ink={skin.textureInk} w={W} h={H} />
 
         {/* 봉인된 자리마다 안개 한 겹 — 서로 겹치면서 "아직 열리지 않은 구역"이 된다.
@@ -277,18 +315,48 @@ export default function QuestMap({
             ) : null,
           )}
 
-        {/* 아직 가지 않은 길 — 흐린 점선 */}
-        <path d={d} fill="none" stroke={MAP_INK.path} strokeOpacity={dense ? 0.3 : 0.42} strokeWidth={dense ? 1.5 : 2} strokeLinecap="round" strokeDasharray="1 7" />
-        {/* 걸어온 길 — 밤 지도 위의 금선. 이 한 줄이 "내가 여기까지 왔다"이다 */}
+        {/* ── 길 ────────────────────────────────────────────────────────────
+            처음엔 2px 실선 하나였다. 그건 그래프의 선이지 걸어갈 길이 아니다.
+            말판의 길처럼 **세 겹**으로 깐다:
+              ① 바닥 그림자 — 길이 땅에 눌려 있게
+              ② 길바닥 — 밝은 흙길. 폭이 있어야 위에 말을 올릴 수 있다
+              ③ 발자국 점선 — 아직 안 간 구간
+            그 위에 걸어온 만큼만 라피스 실선이 차오른다. */}
+        {/* 아직 가지 않은 길 — **파선**.
+            처음엔 dasharray="0.1 8" + round cap으로 점을 찍었는데, 그건 선이 아니라 흩뿌린 점이었다.
+            길이 스스로 교차하는 여정(출애굽·바울)에서는 점들이 뒤엉켜 먼지처럼 보였다.
+            길이 있는 파선이라야 "길"로 읽힌다. */}
+        <path
+          d={d}
+          fill="none"
+          stroke={MAP_INK.roadEdge}
+          strokeOpacity="0.55"
+          strokeWidth={dense ? 2 : 2.8}
+          strokeLinecap="butt"
+          strokeDasharray={dense ? '5 6' : '7 8'}
+        />
+        {/* 걸어온 길 — 여기만 실체가 있다. 밟은 자리가 길이 된다.
+            그림자를 따로 깔았더니 선이 둘로 보여 지저분했다. 한 겹으로 두고
+            아래쪽에만 아주 옅은 테두리를 둬 종이에서 살짝 뜨게 한다. */}
         <path ref={roadRef} d={d} fill="none" stroke="none" />
+        <path
+          ref={shadowRef}
+          d={d}
+          fill="none"
+          stroke="#3b2a12"
+          strokeOpacity="0.16"
+          strokeWidth={road * 0.62 + 2.4}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
         <path
           ref={walkedRef}
           d={d}
           fill="none"
           stroke={MAP_INK.path}
-          strokeWidth={dense ? 2.4 : 3.4}
+          strokeWidth={road * 0.62}
           strokeLinecap="round"
-          style={{ filter: 'drop-shadow(0 1px 2px rgba(43,62,168,.35))' }}
+          strokeLinejoin="round"
         />
         {/* 길이 측정용 — 그리지 않는다. display:none으로 감추면 브라우저에 따라 길이가 0이 되므로
             stroke/fill만 없앤다(레이아웃에는 있고 화면에는 안 보인다). */}
@@ -307,95 +375,47 @@ export default function QuestMap({
         {/* 등불 — 지금 서 있는 자리에 켜 둔다 */}
         {me && <circle cx={me[0]} cy={me[1]} r="30" fill={`url(#lamp${uid})`} />}
 
+        {/* ── 자리 ──────────────────────────────────────────────────────────
+            납작한 원 대신 **말판의 칸**을 놓는다. 상태마다 형태가 다르다:
+            닿은 자리는 번호 새긴 금 인장, 지금 자리는 순례자가 서 있고,
+            다음 자리는 사슬과 자물쇠가 걸린 채 가장 크다(오늘의 목표는 하나다).
+            자세한 것은 MapNode.tsx. */}
         {pts.map((p, i) => {
-          const s = stops[i]
-          const delay = reduce ? 0 : 0.16 + i * 0.07
-          const common = {
-            initial: reduce ? false : { opacity: 0, scale: 0.5 },
-            animate: { opacity: 1, scale: 1 },
-            transition: { delay, type: 'spring' as const, stiffness: 420, damping: 24 },
-            style: { transformOrigin: `${p[0]}px ${p[1]}px` },
-          }
-
-          if (s.state === 'reached' || s.state === 'current') {
-            // 닿은 자리 — 인장이 찍혀 있다
-            return (
-              <motion.g key={s.ep.id} {...common}>
-                <circle cx={p[0]} cy={p[1]} r={s.state === 'current' ? 9 : sealR} fill={MAP_INK.seal} />
-                <circle cx={p[0]} cy={p[1]} r={s.state === 'current' ? 9 : sealR} fill="none" stroke={MAP_INK.sealRing} strokeWidth="1.5" />
-                {s.state === 'current' && (
-                  <circle
-                    cx={p[0]}
-                    cy={p[1]}
-                    r="14"
-                    fill="none"
-                    stroke={MAP_INK.sealRing}
-                    strokeWidth="1.2"
-                    style={reduce ? undefined : { animation: 'glow 4.5s ease-in-out infinite' }}
-                  />
-                )}
-              </motion.g>
-            )
-          }
-
-          if (s.state === 'next') {
-            // 다음 자리 — 화면에서 가장 밝은 한 점. 봉인돼 있고, 남은 거리가 붙는다
-            return (
-              <motion.g key={s.ep.id} {...common}>
-                <circle cx={p[0]} cy={p[1]} r="13" fill={MAP_INK.sealedFill} fillOpacity="0.95" />
-                {/* 봉인 위를 빛이 돈다 — "잠겨 있다"와 "열릴 수 있다"를 동시에 말한다.
-                    점선 링을 아주 느리게 돌린다(9초). 빠르면 로딩 스피너로 읽힌다. */}
-                {!reduce && (
-                  <circle
-                    cx={p[0]}
-                    cy={p[1]}
-                    r="17.5"
-                    fill="none"
-                    stroke={MAP_INK.path}
-                    strokeOpacity="0.55"
-                    strokeWidth="1"
-                    strokeLinecap="round"
-                    strokeDasharray="3 7"
-                    style={{ transformOrigin: `${p[0]}px ${p[1]}px`, animation: 'seal-orbit 9s linear infinite' }}
-                  />
-                )}
-                <circle cx={p[0]} cy={p[1]} r="13" fill="none" stroke={MAP_INK.seal} strokeWidth="2" />
-                <g transform={`translate(${p[0] - 7},${p[1] - 7})`} color="#ffd868">
-                  <IconLocked size={14} />
-                </g>
-              </motion.g>
-            )
-          }
-
-          // 봉인된 자리 — 있다는 것만 알린다
+          const st = stops[i]
+          const delay = reduce ? 0 : 0.18 + i * 0.06
           return (
-            <motion.circle
-              key={s.ep.id}
-              {...common}
-              cx={p[0]}
-              cy={p[1]}
-              r={dotR}
-              fill="none"
-              stroke={MAP_INK.path}
-              strokeOpacity="0.5"
-              strokeWidth="1.4"
-            />
+            <motion.g
+              key={st.ep.id}
+              initial={reduce ? false : { opacity: 0, scale: 0.4 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay, type: 'spring', stiffness: 380, damping: 20 }}
+              style={{ transformOrigin: `${p[0]}px ${p[1]}px` }}
+            >
+              {/* 다음 자리의 봉인 둘레를 빛이 돈다 — 9초에 한 바퀴.
+                  빠르면 로딩 스피너로 읽혀 "기다리는 중"이 된다. 여기서는 "열릴 수 있다"여야 한다. */}
+              {st.state === 'next' && !reduce && (
+                <circle
+                  cx={p[0]}
+                  cy={p[1]}
+                  r={22 * nodeScale}
+                  fill="none"
+                  stroke={MAP_INK.seal}
+                  strokeOpacity="0.6"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                  strokeDasharray="3 8"
+                  style={{ transformOrigin: `${p[0]}px ${p[1]}px`, animation: 'seal-orbit 9s linear infinite' }}
+                />
+              )}
+              <MapNode x={p[0]} y={p[1]} state={st.state} scale={nodeScale} order={st.index + 1} uid={uid} />
+            </motion.g>
           )
         })}
 
-        {/* 내 토큰 — 길 위에 떠 있다. 정지한 점이면 "살아있는 지도"가 아니다 */}
-        {me && (
-          <motion.g
-            initial={reduce ? false : { opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: reduce ? 0 : 1.05, type: 'spring', stiffness: 300, damping: 18 }}
-          >
-            <g className={reduce ? undefined : 'anim-bob'} style={{ transformOrigin: `${me[0]}px ${me[1]}px` }}>
-              <circle cx={me[0]} cy={me[1]} r="7.5" fill={MAP_INK.token} />
-              <circle cx={me[0]} cy={me[1]} r="7.5" fill="none" stroke={skin.from} strokeWidth="2" />
-            </g>
-          </motion.g>
-        )}
+        {/* 내 토큰은 없앴다.
+            길 위에 떠 있는 주황 점 하나는 게임의 말이 아니라 산점도의 마커다 — 지적받은 그대로였다.
+            지금 서 있는 자리는 **자리 메달리온 위에 순례자가 올라서** 표시한다(MapNode의 current).
+            사람이 서 있는 칸이 곧 내 위치다. 점을 따로 찍을 이유가 없다. */}
       </svg>
 
       {/* 종이 결 — 지도를 인쇄된 면이 아니라 **칠해진 종이**로 만든다.
@@ -424,10 +444,14 @@ export default function QuestMap({
           /* 다음 자리는 위로, 지금 자리는 아래로 — 항상 서로 반대편에 붙는다.
              단 카드 밖으로 나가면 안 된다: 위쪽에 붙은 자리의 라벨이 카드 상단에 잘려
              "4.0km 남음"이 반만 보이는 일이 실제로 있었다. 가장자리에서는 방향을 뒤집는다. */
-          const above = isNext ? p[1] > 58 : p[1] > H - 52
+          /* 지금 자리는 항상 위, 다음 자리는 항상 아래.
+             예전엔 둘 다 "가장자리면 뒤집기" 규칙을 따로 적용해서, 두 자리가 가까우면
+             같은 쪽에 붙어 글자가 서로를 먹었다(실제로 "비하히롯 · 홍해 도하"가 배지에 잘렸다).
+             방향을 고정하면 둘이 아무리 가까워도 절대 겹치지 않는다. */
+          const above = !isNext
           /* 마커의 등불 링이 반지름 14다. 라벨을 그보다 가까이 붙이면, 가장자리 보정으로
              라벨이 옆으로 밀렸을 때 글자 앞부분이 마커에 걸려 "광야"가 "…야"로 보인다. */
-          const y = above ? p[1] - 26 : p[1] + 25
+          const y = above ? p[1] - 34 : p[1] + 26
           /* 폭 0짜리 상자를 좌표에 놓고 flex로 가운데 정렬한다.
              translateX(-50%)는 **상자 폭**의 절반만큼 미는 것이라, 내용이 상자보다 넓거나
              좁으면 라벨이 마커에서 어긋난다(실측 약 38px 왼쪽으로 밀렸다).
@@ -449,8 +473,9 @@ export default function QuestMap({
               <span className="whitespace-nowrap text-center">
                 {/* 패널이 항상 어두우므로 글자도 테마와 무관하게 밝은 쪽으로 고정한다 */}
                 <span
-                  className="block font-serif text-[13px] leading-tight"
+                  className="block rounded-full px-1.5 font-serif text-[13px] leading-tight"
                   style={{
+                    background: `${skin.from}d9`,
                     color: skin.label,
                     // 글자 뒤에 그 땅의 어둠을 깔아, 별·물결 위에서도 이름이 읽히게
                     textShadow: `0 1px 3px ${skin.from}, 0 0 8px ${skin.from}`,

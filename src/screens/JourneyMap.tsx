@@ -23,6 +23,31 @@ export default function JourneyMap() {
   const km = toJourneyKm(journey.id, journeyKmOf(pilgrim, journey.id))
   const q = questNow(journey, km)
 
+  /* 카드 높이를 길의 모양에서 구한다.
+     실좌표를 회전시켜도 종횡비는 안 바꾸므로(그래야 진짜 지도다), 길이 가로로 누우면
+     세로 여백이 남는다. 430 고정이었을 때 카드 절반이 빈 종이였다. */
+  const mapHeight = (() => {
+    const eps = journey.episodes
+    if (eps.length < 2) return 300
+    const lats = eps.map((e) => e.lat)
+    const lngs = eps.map((e) => e.lng)
+    const midLat = (Math.min(...lats) + Math.max(...lats)) / 2
+    const k = Math.cos((midLat * Math.PI) / 180)
+    const raw = lngs.map((lng, i) => [lng * k, -lats[i]] as [number, number])
+    const n = raw.length
+    const mx = raw.reduce((a, p) => a + p[0], 0) / n
+    const my = raw.reduce((a, p) => a + p[1], 0) / n
+    let sxx = 0, syy = 0, sxy = 0
+    for (const [x, y] of raw) { sxx += (x - mx) ** 2; syy += (y - my) ** 2; sxy += (x - mx) * (y - my) }
+    const th = 0.5 * Math.atan2(2 * sxy, sxx - syy)
+    const c = Math.cos(-th), sn = Math.sin(-th)
+    const rot = raw.map(([x, y]) => [(x - mx) * c - (y - my) * sn, (x - mx) * sn + (y - my) * c])
+    const spanX = Math.max(...rot.map((p) => p[0])) - Math.min(...rot.map((p) => p[0]))
+    const spanY = Math.max(...rot.map((p) => p[1])) - Math.min(...rot.map((p) => p[1]))
+    const ratio = spanX > 1e-9 ? spanY / spanX : 1
+    return Math.round(Math.min(440, Math.max(230, 60 + (340 - 60) * ratio + 90)))
+  })()
+
   return (
     <div className="relative flex flex-1 flex-col">
       <header
@@ -48,13 +73,16 @@ export default function JourneyMap() {
           aria-label={`${journey.name} 자리 목록 열기`}
           className="block w-full text-left transition active:scale-[0.995]"
         >
+          {/* 카드 높이를 **길의 모양**에 맞춘다.
+              430으로 고정했더니 길이 가로로 누운 여정에서 위아래가 통째로 비었다(카드 절반이 여백).
+              종횡비를 왜곡하지 않는 것이 원칙이므로, 늘릴 수 없으면 카드를 줄이는 쪽이 맞다. */}
           <QuestMap
             stops={questAll(journey, km)}
             segProgress={q.segProgress}
             atStart={q.reachedCount === 0}
             units={pilgrim.units}
             journeyId={journey.id}
-            height={430}
+            height={mapHeight}
           />
         </button>
         <p className="mt-3 px-2 text-center text-[12px] text-muted">

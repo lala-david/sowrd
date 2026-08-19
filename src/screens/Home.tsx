@@ -191,7 +191,12 @@ export default function Home() {
                 전체 <IconChevron size={13} />
               </button>
             </div>
-            <div className="mt-3.5 flex gap-3 overflow-x-auto px-7 pb-1" style={{ scrollbarWidth: 'none' }}>
+            {/* 가로 스크롤을 없애고 다섯 칸 그리드로 바꿨다.
+                스크롤 컨테이너였을 때 마지막 문장("사도 베드로")이 오른쪽에서 잘려 보였다 —
+                flex 스크롤 컨테이너에서는 컨테이너의 padding-right가 무시되는 고전적인 문제라
+                마지막 항목이 끝까지 스크롤되지 않는다(360px·큰 글자에서 108px 잘렸다).
+                다섯 개는 어차피 한 화면에 들어간다. 스크롤 자체를 없애는 쪽이 간단하다. */}
+            <div className="mt-3.5 grid grid-cols-5 gap-1 px-5 pb-1">
               {JOURNEYS.map((j) => {
                 const p = journeyProgress(j, toJourneyKm(j.id, journeyKmOf(pilgrim, j.id)))
                 const crest = crestArt(j.id)
@@ -207,19 +212,19 @@ export default function Home() {
                       openMap(j.id)
                     }}
                     aria-current={on ? 'true' : undefined}
-                    className="flex w-[76px] shrink-0 flex-col items-center gap-1.5 transition active:scale-95"
+                    className="flex min-w-0 flex-col items-center gap-1.5 transition active:scale-95"
                   >
-                    <span className="relative flex h-[54px] w-[54px] items-center justify-center">
-                      <svg viewBox="0 0 54 54" className="absolute inset-0 -rotate-90" aria-hidden>
-                        <circle cx="27" cy="27" r="25" fill="none" stroke="var(--color-line)" strokeWidth="2" />
+                    <span className="relative flex h-[48px] w-[48px] items-center justify-center">
+                      <svg viewBox="0 0 48 48" className="absolute inset-0 -rotate-90" aria-hidden>
+                        <circle cx="24" cy="24" r="22" fill="none" stroke="var(--color-line)" strokeWidth="2" />
                         <circle
-                          cx="27" cy="27" r="25" fill="none" stroke="var(--color-lapis)" strokeWidth="2" strokeLinecap="round"
-                          strokeDasharray={`${(p.pct / 100) * 157} 157`}
+                          cx="24" cy="24" r="22" fill="none" stroke="var(--color-lapis)" strokeWidth="2" strokeLinecap="round"
+                          strokeDasharray={`${(p.pct / 100) * 138} 138`}
                         />
                       </svg>
                       {crest && (
                         <span
-                          className="flex h-[42px] w-[42px] overflow-hidden rounded-full"
+                          className="flex h-[38px] w-[38px] overflow-hidden rounded-full"
                           style={{ boxShadow: on ? '0 0 0 2px var(--color-clay)' : 'none' }}
                         >
                           <img src={crest} alt="" className="h-full w-full scale-[1.06] object-cover" loading="lazy" decoding="async" />
@@ -230,16 +235,16 @@ export default function Home() {
                           한 걸음도 안 뛴 사람도 1이 된다. 표가 전부에게 붙으면 표가 아니다. */}
                       {journeyKmOf(pilgrim, j.id) > 0 && (
                         <span
-                          className="absolute -right-0.5 -top-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full"
+                          className="absolute -right-0.5 -top-0.5 flex h-[16px] w-[16px] items-center justify-center rounded-full"
                           style={{ background: 'var(--color-seal)', color: 'var(--color-sand-raised)' }}
                         >
-                          <IconSeal size={11} strokeWidth={2} />
+                          <IconSeal size={10} strokeWidth={2} />
                         </span>
                       )}
                     </span>
                     {/* n/N 숫자는 뺐다 — 문장 둘레의 링이 이미 같은 진행을 그리고 있다.
                         다섯 개가 나란히 있으면 숫자 열 개가 한 줄에 서는 셈이었다. */}
-                    <span className={`text-center text-[11px] leading-tight ${on ? 'text-clay-deep' : 'text-ink-soft'}`}>
+                    <span className={`w-full break-keep text-center text-[10.5px] leading-[1.25] ${on ? 'text-clay-deep' : 'text-ink-soft'}`}>
                       {j.who}
                       {on && <span className="sr-only"> (지금 걷는 길)</span>}
                     </span>
