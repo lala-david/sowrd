@@ -55,10 +55,10 @@ const CHECKS = [
   ['rubric', 'sand', 4.5, '기도 강조'],
   ['line-strong', 'sand', 1.9, '경계선(장식)'],
   ['lapis', 'line', 3, '진행 게이지'],
-  // 라피스 야경 패널(QuestMap) — 테마와 무관하게 항상 어둡다
-  ['seal-bright', 'lapis-surface', 4.5, '지도 위 금선·라벨'],
-  ['lapis-bright', 'lapis-surface', 3, '지도 위 점선'],
-  ['joy', 'lapis-surface', 3, '지도 위 내 토큰'],
+  /* 지도는 양피지다(lib/journeySkin.ts). 종이색은 여정마다 다르지만 가장 밝은 장과
+     가장 어두운 장 사이에 있으므로, 여기서는 앱의 종이(sand)를 대표값으로 본다. */
+  ['lapis', 'sand-raised', 4.5, '지도 여정선'],
+
 ]
 
 let fail = 0
@@ -86,6 +86,28 @@ for (let i = 0; i < JOURNEY_ACCENTS.length; i++) {
     const ok = dist >= 60
     if (!ok) fail++
     console.log(`  ${ok ? '✔' : '✘'} ${JOURNEY_ACCENTS[i]} ↔ ${JOURNEY_ACCENTS[k]}  RGB거리 ${dist.toFixed(0)}`)
+  }
+}
+
+/* 지도의 잉크가 **다섯 종이 전부**에서 읽히는가.
+ *
+ * 지도(lib/journeySkin.ts)는 테마를 따라가지 않는 고정 팔레트다. 그래서 CSS 토큰 검사만으로는
+ * 못 잡는 구멍이 생긴다 — 실제로 잉크에 CSS 변수를 썼다가 다크 테마에서 봉인 마커가
+ * 밝은 하늘색이 되어 대비 1.41:1로 사라졌다. 종이가 고정이면 잉크도 고정이어야 하고,
+ * 그 조합은 여기서 검사해야 한다. */
+const skinSrc = fs.readFileSync('src/lib/journeySkin.ts', 'utf8')
+const papers = [...skinSrc.matchAll(/(\w+):\s*\{\s*\/\/[^\n]*\n\s*from:\s*'(#[0-9a-fA-F]{6})'/g)].map((m) => [m[1], m[2]])
+const ink = Object.fromEntries(
+  [...skinSrc.matchAll(/^\s{2}(\w+):\s*'(#[0-9a-fA-F]{6})',/gm)].map((m) => [m[1], m[2]]),
+)
+console.log('\n── 지도 잉크 × 종이 다섯 장 ──')
+for (const [journey, paper] of papers) {
+  for (const [name, min] of [['path', 3], ['seal', 1.6], ['token', 2.4]]) {
+    if (!ink[name]) continue
+    const r = ratio(ink[name], paper)
+    const ok = r >= min
+    if (!ok) fail++
+    console.log(`  ${ok ? '✔' : '✘'} ${journey.padEnd(9)} ${name.padEnd(6)} ${r.toFixed(2)}:1 (필요 ${min})`)
   }
 }
 

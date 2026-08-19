@@ -116,6 +116,17 @@ export function questWindow(journey: Journey, journeyKm: number, span = 6): Ques
   })
 }
 
+/** 여정 전체를 한 장에 — 지도만 보는 화면용. 창을 자르지 않는다. */
+export function questAll(journey: Journey, journeyKm: number): QuestStop[] {
+  const p = journeyProgress(journey, journeyKm)
+  return journey.episodes.map((ep, index) => ({
+    ep,
+    index,
+    state: stopStateAt(index, p.reachedCount),
+    realKmAway: index < p.reachedCount ? 0 : toRealKm(journey.id, Math.max(0, ep.cumulativeKm - journeyKm)),
+  }))
+}
+
 /* ── 오늘 한 걸음 ───────────────────────────────────────────────────────────
  * "아직 없음" 대신 **지금 할 수 있는 다음 것**을 말한다. 빈 상태를 장부가 아니라
  * 초대로 바꾸는 문장들이다. 과장하지 않는다 — 유쾌하되 호들갑스럽지 않게. */

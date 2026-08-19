@@ -6,11 +6,10 @@ import { featuredVerse } from '../data/scripture'
 import TabBar from '../components/TabBar'
 import InstallPrompt from '../components/InstallPrompt'
 import QuestMap from '../components/QuestMap'
-import { IconHeld, IconChevron, IconStep, IconCairn, IconScroll, IconSeal } from '../components/icons'
+import { IconHeld, IconChevron, IconStep, IconScroll, IconSeal } from '../components/icons'
 import { crestArt, stationArt } from '../assets/art'
-import { JOURNEYS, JOURNEY_CHROME, journeyById, journeyProgress, toJourneyKm } from '../data/geo/journeys'
-import { MILESTONES, milestonesPassed } from '../data/geo/journeys/milestones'
-import { questNow, questWindow, questCall } from '../lib/quest'
+import { JOURNEYS, journeyById, journeyProgress, toJourneyKm } from '../data/geo/journeys'
+import { questNow, questWindow } from '../lib/quest'
 
 /* 홈 — 화면 하나, 질문 하나: **오늘 어디로 달릴까?**
  *
@@ -49,23 +48,19 @@ function verseOfToday(firstDays: boolean) {
 export default function Home() {
   const go = useNav((s) => s.go)
   const openDetail = useNav((s) => s.openDetail)
-  const openJourney = useNav((s) => s.openJourney)
+  const openMap = useNav((s) => s.openMap)
   const configure = useRun((s) => s.configure)
   const pilgrim = usePilgrim()
   const { units, intercessions, activeJourneyId, activeCourseId, homeCompact, setHomeCompact } = pilgrim
 
   const totals = pilgrimTotals(pilgrim)
   const journey = journeyById(activeJourneyId) ?? JOURNEYS[0]
-  const chrome = JOURNEY_CHROME[journey.id]
   const jKm = toJourneyKm(journey.id, journeyKmOf(pilgrim, journey.id))
   const q = questNow(journey, jKm)
   const stops = questWindow(journey, jKm)
-  const mileNow = milestonesPassed(journey.id, jKm)
-  const mileTotal = (MILESTONES[journey.id] ?? []).length
 
   const today = verseOfToday(totals.totalRuns === 0)
   const week = daysThisWeek(pilgrim)
-  const firstRun = totals.totalRuns === 0
 
   /* 한 번의 탭으로 출발한다.
    * 예전에는 홈 → Setup(모드 4종 + GPS 확인 + 품은 사람) → 다시 "달리기 시작"이었다.
@@ -97,41 +92,23 @@ export default function Home() {
         <section className="px-5 pt-4">
           <h1 className="sr-only">오늘의 길</h1>
 
-          <div className="mb-2.5 flex items-baseline justify-between px-1.5">
-            <span
-              className="font-display text-[10.5px] uppercase tracking-[0.2em]"
-              style={{ color: chrome?.accent ?? 'var(--color-clay-deep)' }}
-            >
-              {journey.nameLatin}
-            </span>
-            {q.chapter && (
-              <span className="text-[11.5px] text-muted">
-                {q.chapter.index}장 · {q.chapter.name}
-              </span>
-            )}
+          {/* 지도 위에 한 줄. 예전엔 여기가 세 줄이었다 —
+              라틴명(THE JOURNEY OF PETER) · 장 · 그리고 지도 아래 다시 여정 이름 + 자리 8/14 + 진행바.
+              같은 말을 네 번 한 셈이다. 이름과 지금 걷는 장, 그 둘만 남긴다. */}
+          <div className="mb-2.5 flex items-baseline justify-between gap-3 px-1.5">
+            <p className="font-serif text-[19px] font-bold leading-tight text-ink">{journey.name}</p>
+            {q.chapter && <span className="shrink-0 text-[12px] text-muted">{q.chapter.name}</span>}
           </div>
 
-          <button onClick={() => openJourney(journey.id)} className="block w-full text-left transition active:scale-[0.995]">
+          {/* 지도를 누르면 지도가 나온다 — 예전엔 자리 목록으로 갔다.
+              목록이 나쁜 게 아니라, 지도를 눌렀는데 목록이 나오면 그건 지도가 아니라 버튼이다. */}
+          <button
+            onClick={() => openMap(journey.id)}
+            aria-label={`${journey.name} 지도 열기`}
+            className="block w-full text-left transition active:scale-[0.995]"
+          >
             <QuestMap stops={stops} segProgress={q.segProgress} atStart={q.reachedCount === 0} units={units} journeyId={journey.id} />
           </button>
-
-          {/* 여정 이름 + 진행 — 지도 아래 한 줄로 정리한다. 지도가 이미 대부분을 말했다. */}
-          <div className="mt-3 flex items-center justify-between gap-3 px-1.5">
-            <p className="font-serif text-[19px] font-bold leading-tight text-ink">{journey.name}</p>
-            <span
-              className="shrink-0 font-display text-[12px] text-muted"
-              style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}
-            >
-              자리 {q.reachedCount}/{q.total}
-            </span>
-          </div>
-
-          <div className="mt-2 h-[4px] w-full overflow-hidden rounded-full bg-line">
-            <div
-              className="anim-gauge h-full rounded-full"
-              style={{ width: `${q.pct}%`, background: 'var(--color-lapis)' }}
-            />
-          </div>
         </section>
 
         {/* ② 바로 달리기 — 오늘의 부름을 버튼 안에 넣는다. 왜 달리는지가 버튼에 적혀 있어야 한다. */}
@@ -141,9 +118,10 @@ export default function Home() {
             className="flex w-full items-center justify-between rounded-[22px] py-4 pl-6 pr-4 text-left shadow-[0_1px_2px_rgba(192,90,48,.25),0_18px_40px_-18px_rgba(156,69,34,.6)] transition active:scale-[0.99]"
             style={{ background: 'var(--color-clay-deep)', color: 'var(--color-sand-raised)' }}
           >
+            {/* 부제를 뺐다. "예루살렘 공회까지 4.1km"는 바로 위 지도의 배지가 이미
+                그 자리에 붙여서 말하고 있다 — 같은 숫자를 두 번 말하면 둘 다 약해진다. */}
             <span className="min-w-0">
-              <span className="block font-serif text-[19px] leading-tight">바로 달리기</span>
-              <span className="mt-0.5 block truncate text-[12.5px] opacity-80">{questCall(q, units, firstRun)}</span>
+              <span className="block font-serif text-[20px] leading-tight">바로 달리기</span>
             </span>
             <span
               className="ml-3 flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-ink shadow-[0_0_18px_rgba(240,195,104,.55)]"
@@ -153,19 +131,9 @@ export default function Home() {
             </span>
           </button>
 
-          <div className="mt-2.5 flex items-center justify-between px-1.5">
-            {mileTotal > 0 ? (
-              <span className="flex items-center gap-1.5 text-[11.5px] text-muted">
-                <IconCairn size={13} style={{ color: 'var(--color-lapis)' }} />
-                이정표{' '}
-                <span className="font-display text-ink-soft" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>
-                  {mileNow}
-                </span>
-                <span className="text-muted">/ {mileTotal}</span>
-              </span>
-            ) : (
-              <span />
-            )}
+          {/* 이정표 카운터(14 / 142)는 뺐다. 홈에 숫자가 스물한 개였다.
+              이정표는 여정 상세에 그대로 있고, 거기가 그것을 볼 자리다. */}
+          <div className="mt-2.5 flex justify-end px-1.5">
             <button
               onClick={() => go('setup')}
               className="tap text-[12px] text-muted underline-offset-4 transition active:scale-95 hover:underline"
@@ -231,7 +199,13 @@ export default function Home() {
                 return (
                   <button
                     key={j.id}
-                    onClick={() => openJourney(j.id)}
+                    /* 라벨이 "길 바꾸기"인데 실제로는 길을 안 바꾸고 있었다 —
+                       상세 화면만 열고 activeJourneyId는 그대로였다. 라벨과 동작이 어긋나면
+                       라벨이 거짓말이 된다. 이제 정말 그 길로 갈아타고, 그 길의 지도를 보여준다. */
+                    onClick={() => {
+                      pilgrim.setActiveJourney(j.id)
+                      openMap(j.id)
+                    }}
                     aria-current={on ? 'true' : undefined}
                     className="flex w-[76px] shrink-0 flex-col items-center gap-1.5 transition active:scale-95"
                   >
@@ -263,12 +237,11 @@ export default function Home() {
                         </span>
                       )}
                     </span>
+                    {/* n/N 숫자는 뺐다 — 문장 둘레의 링이 이미 같은 진행을 그리고 있다.
+                        다섯 개가 나란히 있으면 숫자 열 개가 한 줄에 서는 셈이었다. */}
                     <span className={`text-center text-[11px] leading-tight ${on ? 'text-clay-deep' : 'text-ink-soft'}`}>
                       {j.who}
                       {on && <span className="sr-only"> (지금 걷는 길)</span>}
-                    </span>
-                    <span className="font-display text-[10.5px] text-muted" style={{ fontFeatureSettings: "'lnum' 1" }}>
-                      {p.reachedCount}/{p.total}
                     </span>
                   </button>
                 )

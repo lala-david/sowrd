@@ -1,9 +1,9 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import type { QuestStop } from '../lib/quest'
-import { IconLocked, IconSeal } from './icons'
+import { IconLocked } from './icons'
 import MapTexture from './MapTexture'
-import { skinOf } from '../lib/journeySkin'
+import { skinOf, MAP_INK } from '../lib/journeySkin'
 
 /* ── 살아있는 여정 지도 ─────────────────────────────────────────────────────
  *
@@ -158,6 +158,12 @@ export default function QuestMap({
 
   const H = height
   const pad = 38
+  /* 자리가 빽빽할수록 마커와 안개를 줄인다 — 창(자리 여섯)과 전체(자리 서른셋)가
+     같은 크기를 쓰면 전체 지도는 점과 안개로 가득 찬 얼룩이 된다. */
+  const dense = stops.length > 10
+  const fogR = Math.max(24, Math.min(78, 460 / stops.length))
+  const dotR = dense ? 3 : 4
+  const sealR = dense ? 4.5 : 6
   const projected = stops.length ? project(stops, H, pad) : { pts: [], northDeg: 0 }
   const pts = projected.pts
   const d = smoothPath(pts)
@@ -220,10 +226,14 @@ export default function QuestMap({
      * 이게 DESIGN-DETAILS의 "The Illuminated Path" 시그니처이고, 07-27에 재작업한 랜딩이
      * 이미 그 모습이다(라피스 여정선 + 금 이정표). 앱이 랜딩과 같은 얼굴을 갖게 된다. */
     <div
-      className={`relative overflow-hidden rounded-[26px] ring-1 ${className}`}
+      className={`relative overflow-hidden rounded-[28px] ${className}`}
       style={{
         background: `linear-gradient(165deg, ${skin.from} 0%, ${skin.to} 100%)`,
-        boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.06)',
+        /* 테두리(ring)를 뺐다. 선으로 가두면 유리 카드가 되고, 그게 "딱딱하다"의 정체다.
+           대신 안쪽으로 스며드는 그림자와 아래로 떨어지는 부드러운 그림자로 경계를 만든다 —
+           책에 붙인 채색 삽화 한 장처럼. */
+        boxShadow:
+          'inset 0 1px 0 rgba(255,255,255,.5), 0 1px 2px rgba(80,60,30,.10), 0 16px 32px -22px rgba(80,60,30,.45)',
       }}
     >
       <svg viewBox={`0 0 ${W} ${H}`} className="block w-full" role="img" aria-label="여정 지도">
@@ -234,14 +244,18 @@ export default function QuestMap({
               왼쪽일 수도 위일 수도 있다 — 베드로의 길에서 안개가 이미 걸어온 구간을 덮었다.
               그래서 방향을 가정하지 않고 **봉인된 자리마다** 안개를 깐다. */}
           {/* 어두운 패널 위에서 안개는 '더 어두워지는 것'이다 — 밝게 덮으면 빛으로 읽힌다 */}
+          {/* 아직 열리지 않은 구역.
+              어두운 패널일 때는 그늘로 덮었는데, 밝은 종이 위에서는 그게 **얼룩**으로 읽혔다.
+              종이색으로 바래게 한다 — 아직 그려 넣지 않은 면. 필사본에서 미완성 구역이
+              그렇게 보인다. 덮는 게 아니라 아직 안 채운 것이다. */}
           <radialGradient id={`fog${uid}`}>
-            <stop offset="0%" stopColor={skin.fog} stopOpacity="0.62" />
-            <stop offset="55%" stopColor={skin.fog} stopOpacity="0.3" />
-            <stop offset="100%" stopColor={skin.fog} stopOpacity="0" />
+            <stop offset="0%" stopColor={skin.from} stopOpacity="0.9" />
+            <stop offset="55%" stopColor={skin.from} stopOpacity="0.5" />
+            <stop offset="100%" stopColor={skin.from} stopOpacity="0" />
           </radialGradient>
           <radialGradient id={`lamp${uid}`}>
-            <stop offset="0%" stopColor="var(--color-seal-bright)" stopOpacity="0.55" />
-            <stop offset="100%" stopColor="var(--color-seal-bright)" stopOpacity="0" />
+            <stop offset="0%" stopColor={MAP_INK.lamp} stopOpacity="0.4" />
+            <stop offset="100%" stopColor={MAP_INK.lamp} stopOpacity="0" />
           </radialGradient>
         </defs>
 
@@ -251,25 +265,30 @@ export default function QuestMap({
         <MapTexture texture={skin.texture} ink={skin.textureInk} w={W} h={H} />
 
         {/* 봉인된 자리마다 안개 한 겹 — 서로 겹치면서 "아직 열리지 않은 구역"이 된다.
-            크고 옅게 깔아야 안개가 되고, 작고 진하면 얼룩으로 읽힌다(처음엔 얼룩이었다). */}
-        {pts.map((p, i) =>
-          stops[i].state === 'sealed' ? (
-            <circle key={`fog-${stops[i].ep.id}`} cx={p[0]} cy={p[1]} r={78} fill={`url(#fog${uid})`} />
-          ) : null,
-        )}
+            크고 옅게 깔아야 안개가 되고, 작고 진하면 얼룩으로 읽힌다(처음엔 얼룩이었다).
+            다만 반경을 고정하면 안 된다: 길 전체를 한 장에 펼치면(자리 서른셋) 반경 78이
+            서로 겹쳐 지도를 통째로 덮는다 — 실제로 베드로의 길 전체 지도가 그렇게 뭉갰다.
+            자리 수에 반비례로 줄여, 창을 볼 때나 전체를 볼 때나 같은 밀도의 안개가 되게 한다. */}
+        {/* 길보다 위에 그린다 — 아래에 깔면 점선이 그대로 비쳐 바랜 느낌이 안 난다 */}
+        {!dense &&
+          pts.map((p, i) =>
+            stops[i].state === 'sealed' ? (
+              <circle key={`fog-${stops[i].ep.id}`} cx={p[0]} cy={p[1]} r={fogR} fill={`url(#fog${uid})`} />
+            ) : null,
+          )}
 
         {/* 아직 가지 않은 길 — 흐린 점선 */}
-        <path d={d} fill="none" stroke="var(--color-lapis-bright)" strokeOpacity="0.7" strokeWidth="2" strokeLinecap="round" strokeDasharray="1 7" />
+        <path d={d} fill="none" stroke={MAP_INK.path} strokeOpacity={dense ? 0.3 : 0.42} strokeWidth={dense ? 1.5 : 2} strokeLinecap="round" strokeDasharray="1 7" />
         {/* 걸어온 길 — 밤 지도 위의 금선. 이 한 줄이 "내가 여기까지 왔다"이다 */}
         <path ref={roadRef} d={d} fill="none" stroke="none" />
         <path
           ref={walkedRef}
           d={d}
           fill="none"
-          stroke="var(--color-seal-bright)"
-          strokeWidth="3.4"
+          stroke={MAP_INK.path}
+          strokeWidth={dense ? 2.4 : 3.4}
           strokeLinecap="round"
-          style={{ filter: 'drop-shadow(0 0 6px rgba(247,208,116,.45))' }}
+          style={{ filter: 'drop-shadow(0 1px 2px rgba(43,62,168,.35))' }}
         />
         {/* 길이 측정용 — 그리지 않는다. display:none으로 감추면 브라우저에 따라 길이가 0이 되므로
             stroke/fill만 없앤다(레이아웃에는 있고 화면에는 안 보인다). */}
@@ -302,15 +321,15 @@ export default function QuestMap({
             // 닿은 자리 — 인장이 찍혀 있다
             return (
               <motion.g key={s.ep.id} {...common}>
-                <circle cx={p[0]} cy={p[1]} r={s.state === 'current' ? 9 : 6} fill="var(--color-seal-bright)" />
-                <circle cx={p[0]} cy={p[1]} r={s.state === 'current' ? 9 : 6} fill="none" stroke="var(--color-lapis-surface)" strokeWidth="1.6" />
+                <circle cx={p[0]} cy={p[1]} r={s.state === 'current' ? 9 : sealR} fill={MAP_INK.seal} />
+                <circle cx={p[0]} cy={p[1]} r={s.state === 'current' ? 9 : sealR} fill="none" stroke={MAP_INK.sealRing} strokeWidth="1.5" />
                 {s.state === 'current' && (
                   <circle
                     cx={p[0]}
                     cy={p[1]}
                     r="14"
                     fill="none"
-                    stroke="var(--color-seal-bright)"
+                    stroke={MAP_INK.sealRing}
                     strokeWidth="1.2"
                     style={reduce ? undefined : { animation: 'glow 4.5s ease-in-out infinite' }}
                   />
@@ -323,7 +342,7 @@ export default function QuestMap({
             // 다음 자리 — 화면에서 가장 밝은 한 점. 봉인돼 있고, 남은 거리가 붙는다
             return (
               <motion.g key={s.ep.id} {...common}>
-                <circle cx={p[0]} cy={p[1]} r="13" fill={skin.fog} fillOpacity="0.86" />
+                <circle cx={p[0]} cy={p[1]} r="13" fill={MAP_INK.sealedFill} fillOpacity="0.95" />
                 {/* 봉인 위를 빛이 돈다 — "잠겨 있다"와 "열릴 수 있다"를 동시에 말한다.
                     점선 링을 아주 느리게 돌린다(9초). 빠르면 로딩 스피너로 읽힌다. */}
                 {!reduce && (
@@ -332,16 +351,16 @@ export default function QuestMap({
                     cy={p[1]}
                     r="17.5"
                     fill="none"
-                    stroke="var(--color-seal-bright)"
-                    strokeOpacity="0.45"
+                    stroke={MAP_INK.path}
+                    strokeOpacity="0.55"
                     strokeWidth="1"
                     strokeLinecap="round"
                     strokeDasharray="3 7"
                     style={{ transformOrigin: `${p[0]}px ${p[1]}px`, animation: 'seal-orbit 9s linear infinite' }}
                   />
                 )}
-                <circle cx={p[0]} cy={p[1]} r="13" fill="none" stroke="var(--color-seal-bright)" strokeWidth="1.8" />
-                <g transform={`translate(${p[0] - 7},${p[1] - 7})`} color="var(--color-seal-bright)">
+                <circle cx={p[0]} cy={p[1]} r="13" fill="none" stroke={MAP_INK.seal} strokeWidth="2" />
+                <g transform={`translate(${p[0] - 7},${p[1] - 7})`} color="#ffd868">
                   <IconLocked size={14} />
                 </g>
               </motion.g>
@@ -355,10 +374,10 @@ export default function QuestMap({
               {...common}
               cx={p[0]}
               cy={p[1]}
-              r="4"
+              r={dotR}
               fill="none"
-              stroke="var(--color-lapis-veil)"
-              strokeOpacity="0.7"
+              stroke={MAP_INK.path}
+              strokeOpacity="0.5"
               strokeWidth="1.4"
             />
           )
@@ -372,12 +391,27 @@ export default function QuestMap({
             transition={{ delay: reduce ? 0 : 1.05, type: 'spring', stiffness: 300, damping: 18 }}
           >
             <g className={reduce ? undefined : 'anim-bob'} style={{ transformOrigin: `${me[0]}px ${me[1]}px` }}>
-              <circle cx={me[0]} cy={me[1]} r="7.5" fill="var(--color-joy)" />
-              <circle cx={me[0]} cy={me[1]} r="7.5" fill="none" stroke="#fdf6e6" strokeWidth="2" />
+              <circle cx={me[0]} cy={me[1]} r="7.5" fill={MAP_INK.token} />
+              <circle cx={me[0]} cy={me[1]} r="7.5" fill="none" stroke={skin.from} strokeWidth="2" />
             </g>
           </motion.g>
         )}
       </svg>
+
+      {/* 종이 결 — 지도를 인쇄된 면이 아니라 **칠해진 종이**로 만든다.
+          가장자리로 갈수록 그 땅의 어둠이 스며들어(비네트) 자른 자국이 안 보인다.
+          라벨보다 아래에 둔다 — 위에 얹으면 자리 이름이 흐려진다. */}
+      <span
+        className="pointer-events-none absolute inset-0"
+        style={{ background: `radial-gradient(120% 85% at 50% 42%, transparent 60%, ${skin.fog}66 100%)` }}
+      />
+      <span
+        className="pointer-events-none absolute inset-0 opacity-[0.14] mix-blend-overlay"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+        }}
+      />
 
       {/* 자리 이름은 SVG 밖에 둔다 — SVG 안의 텍스트는 글자 크기 설정(zoom)을 안 따라온다.
           라벨은 마커 위/아래로 갈라 붙인다. 둘 다 아래에 두면 지도 위쪽 자리에서
@@ -417,9 +451,9 @@ export default function QuestMap({
                 <span
                   className="block font-serif text-[13px] leading-tight"
                   style={{
-                    color: isNext ? '#fffaf0' : skin.label,
+                    color: skin.label,
                     // 글자 뒤에 그 땅의 어둠을 깔아, 별·물결 위에서도 이름이 읽히게
-                    textShadow: `0 1px 4px ${skin.fog}, 0 0 10px ${skin.fog}`,
+                    textShadow: `0 1px 3px ${skin.from}, 0 0 8px ${skin.from}`,
                   }}
                 >
                   {s.ep.place}
@@ -429,8 +463,8 @@ export default function QuestMap({
                     className="mt-1 inline-block rounded-full px-2 py-[3px] font-display text-[11.5px] leading-none"
                     style={{
                       fontFeatureSettings: "'lnum' 1, 'tnum' 1",
-                      background: 'var(--color-seal)',
-                      color: 'var(--color-lapis-surface)',
+                      background: MAP_INK.seal,
+                      color: MAP_INK.sealedFill,
                     }}
                   >
                     {s.realKmAway < 10 ? s.realKmAway.toFixed(1) : Math.round(s.realKmAway)}
@@ -443,30 +477,22 @@ export default function QuestMap({
         })}
       </div>
 
-      {/* 지도의 살림살이 — 지역 이름과 나침반.
-          실좌표는 종횡비를 지켜 그리므로(안 그러면 거짓 지도가 된다) 남북으로 긴 구간에서는
-          양옆이 비게 된다. 그 여백을 지도다운 것으로 채워야 "빈 카드"로 안 읽힌다. */}
-      <span
-        className="pointer-events-none absolute left-4 top-3.5 flex items-center gap-1.5 font-display text-[10px] uppercase tracking-[0.2em]"
-        style={{ color: skin.label }}
-      >
-        <IconSeal size={11} style={{ color: 'var(--color-seal-bright)' }} />
-        {stops[0]?.ep.region}
-      </span>
-      {/* 나침반 — 지도를 주축으로 눕혔으므로 바늘도 같은 각도로 돈다.
-          이게 없으면 회전이 "예쁘게 배치한 그림"이 되고, 있으면 방위가 표시된 진짜 지도가 된다. */}
+      {/* 나침반만 남긴다. 지역 이름표(갈대아·욥바…)는 뺐다 — 지도 안의 자리 이름이
+          이미 어디인지 말하고 있었고, 모서리의 작은 대문자 라벨은 지도가 아니라 계기판의 문법이다.
+          나침반은 없앨 수 없다: 지도를 주축으로 눕혔으므로 이게 없으면 회전이 거짓말이 된다.
+          대신 더 작고 조용하게. */}
       <svg
-        className="pointer-events-none absolute bottom-3 right-3.5 opacity-55"
-        width="28"
-        height="28"
+        className="pointer-events-none absolute bottom-3 right-3.5 opacity-40"
+        width="24"
+        height="24"
         viewBox="0 0 28 28"
         fill="none"
         aria-hidden
       >
-        <circle cx="14" cy="14" r="10" stroke="rgba(253,246,230,.4)" strokeWidth="1" />
+        <circle cx="14" cy="14" r="10" stroke={skin.label} strokeOpacity="0.35" strokeWidth="1" />
         <g transform={`rotate(${projected.northDeg.toFixed(1)} 14 14)`}>
-          <path d="M14 3.6 L16.2 12 L14 10.4 L11.8 12 Z" fill="var(--color-seal-bright)" />
-          <path d="M14 24.4 L11.8 16 L14 17.6 L16.2 16 Z" fill="rgba(253,246,230,.45)" />
+          <path d="M14 3.6 L16.2 12 L14 10.4 L11.8 12 Z" fill={MAP_INK.sealRing} />
+          <path d="M14 24.4 L11.8 16 L14 17.6 L16.2 16 Z" fill={skin.label} fillOpacity="0.4" />
         </g>
       </svg>
     </div>

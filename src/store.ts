@@ -6,10 +6,11 @@ export type Screen =
   | 'journeys' // 여정 선택(5종 카드)
   | 'journey' // 여정 상세(등급별 에피소드)
   | 'episode' // 에피소드 상세(말씀 읽기)
+  | 'map' // 지도만 보는 화면 — 길 전체
 
 const SCREENS: Screen[] = [
   'home', 'courses', 'setup', 'run', 'reveal', 'collection', 'profile', 'detail',
-  'journeys', 'journey', 'episode',
+  'journeys', 'journey', 'episode', 'map',
 ]
 
 /* 화면과 인자를 전부 해시에 담는다.
@@ -55,6 +56,8 @@ interface NavState extends Route {
   go: (s: Screen) => void
   openDetail: (id: PassageSlug, from?: Screen) => void
   openJourney: (journeyId: string) => void
+  /** 지도만 보는 화면 — 그 길 전체를 한 장에 */
+  openMap: (journeyId: string) => void
   openEpisode: (journeyId: string, episodeId: string) => void
   /** 뒤로가기(popstate)로 들어온 상태 반영 — 히스토리를 다시 밀지 않는다 */
   applyRoute: (r: Route) => void
@@ -91,6 +94,12 @@ export const useNav = create<NavState>((set) => ({
   },
   openJourney: (journeyId) => {
     const r: Route = { screen: 'journey', journeyId }
+    push(r)
+    set(r)
+  },
+  /* 지도를 누르면 지도가 나온다 — 그 길 전체를 한 장에, 다른 것 없이. */
+  openMap: (journeyId) => {
+    const r: Route = { screen: 'map', journeyId }
     push(r)
     set(r)
   },

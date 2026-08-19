@@ -12,6 +12,7 @@ import Detail from './screens/Detail'
 import Journeys from './screens/Journeys'
 import JourneyDetail from './screens/JourneyDetail'
 import EpisodeDetail from './screens/EpisodeDetail'
+import JourneyMap from './screens/JourneyMap'
 import Intro from './screens/Intro'
 
 const SCREENS = {
@@ -26,6 +27,7 @@ const SCREENS = {
   journeys: Journeys,
   journey: JourneyDetail,
   episode: EpisodeDetail,
+  map: JourneyMap,
 } as const
 
 export default function App() {
