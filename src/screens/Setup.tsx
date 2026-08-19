@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNav } from '../store'
-import { usePilgrim, progressFor } from '../state/pilgrim'
+import { usePilgrim, journeyKmOf } from '../state/pilgrim'
 import { useRun, RUN_MODES, type RunMode } from '../state/run'
-import { courseById, progressOf } from '../data/journey'
+
+import { journeyById, JOURNEYS, toJourneyKm } from '../data/geo/journeys'
+import { questNow } from '../lib/quest'
 import { fmtDistance, fmtDuration } from '../lib/format'
 import { toneOf } from '../lib/mood'
 import { arcIcon, IconArrow, IconHeld, IconStep } from '../components/icons'
@@ -16,9 +18,15 @@ export default function Setup() {
   const { activeCourseId, units, intercessions } = usePilgrim()
   const pilgrim = usePilgrim()
   const configure = useRun((s) => s.configure)
-  const course = courseById(activeCourseId)!
-  const startKm = progressFor(pilgrim, activeCourseId).cumulativeKm
-  const prog = progressOf(course, startKm)
+  /* 이 화면은 이제 **여정**을 말한다.
+   *
+   * 예전엔 예수 코스(courseById(activeCourseId))를 헤드라인으로 썼다. 그래서 홈이
+   * "베드로의 길"이라 말한 직후 이 화면이 "갈릴리의 기적"이라 말했다 — 같은 앱의 두 화면이
+   * 서로 다른 길을 걷고 있다고 한 셈이다. 진행을 여정 하나로 통일했으니 표시도 여정으로 맞춘다.
+   * 코스는 아래 '오늘 목표 거리' 한 줄로만 남는다(세션의 거리 프리셋). */
+  const journey = journeyById(pilgrim.activeJourneyId) ?? JOURNEYS[0]
+  const jKm = toJourneyKm(journey.id, journeyKmOf(pilgrim, journey.id))
+  const q = questNow(journey, jKm)
 
   const [mode, setMode] = useState<RunMode>('guided')
   const [goalKm, setGoalKm] = useState(5)
@@ -41,8 +49,16 @@ export default function Setup() {
     return () => { alive = false }
   }, [])
 
-  const next = prog.nextStation
-  const NextIcon = next ? arcIcon(next.mood === 'lament' ? 'passion' : next.arc) : IconStep
+  const next = q.next
+  /* 여정 자리에는 arc(사건의 성격)가 없고 mood만 있다. mood에서 아이콘을 고른다 —
+   * 수난은 반드시 십자가여야 하고(축하 아이콘이 붙으면 안 된다), 나머지는 결에 맞춰 고른다. */
+  const NextIcon = next
+    ? arcIcon(
+        { lament: 'passion', wonder: 'miracle', compassion: 'miracle', joy: 'rise', wilderness: 'call', everyday: 'teach' }[
+          next.mood
+        ] ?? 'teach',
+      )
+    : IconStep
   const tone = next ? toneOf(next.mood) : toneOf('everyday')
 
   const begin = () => {
@@ -63,8 +79,10 @@ export default function Setup() {
       </button>
 
       <SectionLabel>오늘 걸을 길</SectionLabel>
-      <h1 className="mt-2 font-serif text-[30px] font-bold leading-tight">{course.name}</h1>
-      <p className="mt-1 text-[13px] text-muted">{course.arcLabel} · 전체 {fmtDistance(course.distanceKm, units, course.distanceKm % 1 === 0 ? 0 : 1)}{units}</p>
+      <h1 className="mt-2 font-serif text-[30px] font-bold leading-tight">{journey.name}</h1>
+      <p className="mt-1 text-[13px] text-muted">
+        {q.chapter ? `${q.chapter.index}장 · ${q.chapter.name}` : journey.who} · 자리 {q.reachedCount}/{q.total}
+      </p>
 
       {/* 모드 세그먼트 */}
       <div className="mt-6 grid grid-cols-2 gap-2">
@@ -95,8 +113,8 @@ export default function Setup() {
               </span>
               <div className="min-w-0">
                 <p className="text-[11.5px] tracking-[0.1em] text-muted">이번 길에서 닿을 자리</p>
-                <p className="mt-0.5 font-serif text-[17px] leading-tight text-ink">{next.place} · {next.title}</p>
-                <p className="mt-0.5 text-[12px] text-clay-deep" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>{fmtDistance(prog.toNextKm, units)}{units} 앞</p>
+                <p className="mt-0.5 font-serif text-[17px] leading-tight text-ink">{next.place} · {next.event}</p>
+                <p className="mt-0.5 text-[12px] text-clay-deep" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>{fmtDistance(q.toRealKm, units)}{units} 앞</p>
               </div>
             </div>
           ) : (

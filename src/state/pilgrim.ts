@@ -1,8 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { PassageSlug, Mood } from '../data/journey'
-import { COURSES, courseById } from '../data/journey'
-import { journeyById, toJourneyKm } from '../data/geo/journeys'
+import { journeyById, toJourneyKm, journeyProgress, JOURNEYS } from '../data/geo/journeys'
 import { type Units, dayKey } from '../lib/format'
 import { validateAlias, type Intercession } from '../data/prayer'
 import type { TracePoint } from '../lib/geo'
@@ -329,18 +328,15 @@ export const usePilgrim = create<PilgrimState>()(
 
       commitRun: (r) => {
         const s = get()
-        const course = courseById(r.courseId)
+        /* 코스는 이제 **오늘 달릴 거리 프리셋**이다 — 누적 진행도를 따로 쌓지 않는다.
+         *
+         * 예전엔 한 번의 러닝이 두 진행도를 동시에 밀었다: progress[courseId]와 journeyKm[journeyId].
+         * 서로를 모르는 두 좌표계라 홈과 Setup이 다른 길을 말했고, 같은 3km가 두 곳에서 각각
+         * 카운트됐다. 예수님의 사역 길이 정식 여정이 되면서(geo/journeys/jesus.ts) 코스 자리는
+         * 내용상 완전히 중복이 됐다 — 자리 id도 묵상·기도·성구도 같은 데이터다.
+         * 그래서 진행은 여정 하나로 통일한다. playCount만 "이 거리를 몇 번 달렸나"로 남긴다. */
         const prev = s.progress[r.courseId] ?? emptyProgress()
-        const cumulativeKm = prev.cumulativeKm + r.distanceKm
-        const reached = Array.from(new Set([...prev.reached, ...r.reached]))
-        const completed = course && cumulativeKm >= course.distanceKm
-        const nextProgress: CourseProgress = {
-          cumulativeKm,
-          reached,
-          playCount: prev.playCount + 1,
-          completedAt: completed ? (prev.completedAt ?? r.endedAt) : prev.completedAt,
-        }
-        const collectedVerses = Array.from(new Set([...s.collectedVerses, ...r.reached]))
+        const nextProgress: CourseProgress = { ...prev, playCount: prev.playCount + 1 }
 
         // 오늘 첫 러닝인지 — lastRunDay는 "오늘 이미 달렸나" 판정에만 남긴다.
         // 스트릭(streakDays)은 지웠다: 화면은 "이번 주 N일"만 쓰고, 스트릭은 월·수·금
@@ -362,6 +358,14 @@ export const usePilgrim = create<PilgrimState>()(
         const collectedEpisodes = Array.from(
           new Set([...(s.collectedEpisodes ?? []), ...(r.reachedEpisodes ?? []).map((id) => `${ranJourney}:${id}`)]),
         )
+
+        /* 구절 수집.
+         * 예전엔 예수 **코스**의 r.reached에서 채웠다. 코스 진행을 없앴으니 이제 예수 **여정**의
+         * 자리에서 채운다 — 예수 여정은 자리 id가 곧 PassageSlug라 그대로 맞물린다
+         * (geo/journeys/jesus.ts가 STATIONS와 같은 id로 조인하기 때문이다).
+         * 다른 여정의 자리는 PassageSlug가 아니므로 여기 들어오지 않는다(collectedEpisodes가 받는다). */
+        const newVerses = ranJourney === 'jesus' ? ((r.reachedEpisodes ?? []) as PassageSlug[]) : []
+        const collectedVerses = Array.from(new Set([...s.collectedVerses, ...r.reached, ...newVerses]))
 
         /* 누적치는 runs[] 상한과 무관하게 여기서 따로 센다.
          * 시뮬레이션 런은 개인 최고기록에 넣지 않는다 — 26배속으로 만든 3'00"/km가
@@ -511,7 +515,22 @@ export const isUnlocked = (s: PilgrimState, id: PassageSlug): boolean =>
   s.admin || reachedStations(s).has(id)
 
 export function pilgrimTotals(s: PilgrimState) {
-  const totalStations = new Set(Object.values(s.progress).flatMap((p) => p.reached)).size
+  /* 닿은 자리 수 — 진행을 여정 하나로 통일했으므로 여정에서 센다.
+   *
+   * collectedEpisodes(런 중에 밟은 순간의 기록)만 세면 다른 화면과 어긋난다: 수집·여정 화면은
+   * **누적 거리**로 도달을 계산하는데, 이 값은 "그 순간 앱이 켜져 있었나"에 달려 있다.
+   * 실제로 프로필이 "닿은 자리 1"인데 수집은 2/33을 말하는 상태가 나왔다.
+   * 기준을 거리 하나로 맞춘다. 예전 코스 기록은 예수 자리이므로 jesus 키로 정규화해 합친다
+   * (그냥 합치면 같은 자리가 'temptation'과 'jesus:temptation'으로 두 번 세어진다). */
+  const stationKeys = new Set<string>()
+  for (const id of Object.values(s.progress).flatMap((p) => p.reached)) stationKeys.add(`jesus:${id}`)
+  for (const k of s.collectedEpisodes ?? []) stationKeys.add(k)
+  for (const j of JOURNEYS) {
+    const km = toJourneyKm(j.id, journeyKmOf(s, j.id))
+    if (km <= 0) continue
+    for (const e of j.episodes.slice(0, journeyProgress(j, km).reachedCount)) stationKeys.add(`${j.id}:${e.id}`)
+  }
+  const totalStations = stationKeys.size
   const coursesCompleted = Object.values(s.progress).filter((p) => p.completedAt).length
   /* 총 거리·총 러닝 수·개인 기록은 전부 lifetime에서 읽는다.
    * 예전엔 총 거리를 progress[].cumulativeKm 합으로 구했는데, 그건 예수 코스 진행도라
@@ -573,12 +592,14 @@ export function daysThisWeek(s: PilgrimState): number {
 }
 
 /* 전체 여정(모든 코스 자리 유니크) 대비 도달 % — "여정 진도" 티어 */
+/* 지금 걷는 여정을 얼마나 걸었나.
+ *
+ * 예전엔 예수 **코스**의 자리 집합에서 구했다. 진행을 여정 하나로 통일하면서 그 값이 멈추므로
+ * 지금 걷는 여정의 진행률로 바꾼다. 화면 문구("세례에서 땅 끝까지")도 여정 이름을 따라간다. */
 export function overallJourneyPct(s: PilgrimState): number {
-  const all = new Set(COURSES.flatMap((c) => c.stations.map((st) => st.id)))
-  const reached = new Set(Object.values(s.progress).flatMap((p) => p.reached))
-  let hit = 0
-  reached.forEach((id) => all.has(id) && hit++)
-  return all.size ? Math.round((hit / all.size) * 100) : 0
+  const j = journeyById(s.activeJourneyId)
+  if (!j) return 0
+  return journeyProgress(j, toJourneyKm(j.id, journeyKmOf(s, j.id))).pct
 }
 
 /* 지금 걷는 여정의 단계.

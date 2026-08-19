@@ -199,27 +199,20 @@ export const useRun = create<RunState>((set, get) => ({
       _splitStartSec = elapsedSec
     }
 
-    // 자리 통과 판정
-    const course = courseById(st.courseId)
-    const cumulative = st.startKm + distanceKm
-    const already = new Set([...progressFor(usePilgrim.getState(), st.courseId).reached, ...st.reachedThisRun])
-    let reachedThisRun = st.reachedThisRun
+    /* 자리 통과 판정은 **여정 하나만** 본다.
+     *
+     * 예전엔 여기서 예수 코스(course.stations)의 자리도 함께 열었다. 그 결과 한 번의 러닝이
+     * 서로 모르는 두 진행도를 동시에 밀었다 — `progress[courseId]`와 `journeyKm[journeyId]`.
+     * 홈은 뒤엣것을, Setup은 앞엣것을 읽어서 같은 앱의 두 화면이 다른 길을 말했다.
+     * 게다가 베드로의 길을 달리는 사람에게 갈릴리 코스의 자리가 함께 열리기까지 했다.
+     *
+     * 예수님의 사역 길이 이제 정식 여정이 되면서(geo/journeys/jesus.ts) 코스 자리는 내용상
+     * 완전히 중복이다 — 여정 자리의 id가 곧 자리 id이고 묵상·기도·성구가 같은 데이터다.
+     * 그래서 코스는 **오늘 달릴 거리 프리셋**으로만 남기고, 진행은 여정 하나로 통일한다.
+     * (reachedThisRun은 예전 기록을 읽는 화면들을 위해 필드만 남는다 — 새 런에선 늘 비어 있다.) */
+    const reachedThisRun = st.reachedThisRun
     let lastReached = st.lastReached
     let flashAt = st.flashAt
-    if (course) {
-      for (const cs of course.stations) {
-        if (cumulative >= cs.at && !already.has(cs.id)) {
-          reachedThisRun = [...reachedThisRun, cs.id]
-          lastReached = cs.id
-          flashAt = elapsedSec
-          already.add(cs.id)
-          /* 진동은 여기서 울리지 않는다. 스토어가 기기 API를 직접 만지면
-           * (a) haptics.ts의 prefers-reduced-motion 가드를 우회하고
-           * (b) Run 화면의 arrival 패턴과 겹쳐 서로를 끊는다(vibrate는 진행 중 패턴을 취소한다).
-           * 도달 진동은 flashAt을 보고 Run.tsx가 울린다. */
-        }
-      }
-    }
 
     /* 성경 여정 자리 통과 판정.
      * 이 블록이 없어서 여정을 골라 달려도 도달이 영영 일어나지 않았다(예수 코스만 봤다).

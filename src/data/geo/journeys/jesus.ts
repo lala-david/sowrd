@@ -3,6 +3,7 @@ import { STATIONS, JESUS_ORDER, type PassageSlug } from '../../journey'
 import { passageOf } from '../../scripture'
 import { haversine } from '../../../lib/geo'
 import type { Journey, JourneyEpisode, JourneyTier } from './index'
+import type { Milestone } from './milestones'
 
 /* ── 예수님의 사역 길을 여정 모델로 ────────────────────────────────────────
  *
@@ -128,6 +129,80 @@ const tiers: JourneyTier[] = (() => {
       note: c.note,
     }
   })
+})()
+
+/* ── 이정표 ────────────────────────────────────────────────────────────────
+ *
+ * 다른 네 여정은 `scripts/gen-milestones.mjs`가 JSON에서 뽑아 milestones.ts에 구워 둔다.
+ * 그런데 예수 여정은 JSON이 아니라 **이 파일이 조인해서 만드는 것**이라 스크립트가 읽을
+ * 소스가 없다. 그래서 예수 여정만 이정표가 0개였고, 홈의 "이정표 n/N" 칩이 통째로 사라졌다 —
+ * 자리 사이가 29km씩 벌어지는 여정에서 그 사이를 메울 것이 하나도 없다는 뜻이다.
+ *
+ * 스크립트에 조인 로직을 복사해 넣을 수도 있었지만, 그러면 누적거리를 계산하는 곳이 둘이 되고
+ * 언젠가 반드시 어긋난다. 같은 규칙을 여기서 런타임에 적용한다 — 33자리라 비용은 없고,
+ * 무엇보다 거리의 진실이 한 군데에만 남는다. 규칙은 스크립트와 동일하다:
+ *   · 구간이 실제 2.5km를 넘을 때만, 실제 2km 간격으로
+ *   · 좌표는 두 자리 사이 대권(great circle) 보간 — 지도 위의 실제 지점 */
+const MILE_REAL_KM = 2.0
+const MIN_SEG_REAL_KM = 2.5
+/** geo/journeys/index.ts의 JOURNEY_SCALE.jesus와 같아야 한다 */
+const JESUS_SCALE = 3
+
+const rad = (d: number) => (d * Math.PI) / 180
+const deg = (r: number) => (r * 180) / Math.PI
+
+/** 대권 보간 — 두 좌표 사이를 f(0~1) 비율로 */
+function slerp(aLat: number, aLng: number, bLat: number, bLng: number, f: number): [number, number] {
+  const p1 = rad(aLat)
+  const l1 = rad(aLng)
+  const p2 = rad(bLat)
+  const l2 = rad(bLng)
+  const D =
+    2 *
+    Math.asin(
+      Math.sqrt(Math.sin((p2 - p1) / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin((l2 - l1) / 2) ** 2),
+    )
+  if (D === 0) return [aLat, aLng]
+  const A = Math.sin((1 - f) * D) / Math.sin(D)
+  const B = Math.sin(f * D) / Math.sin(D)
+  const x = A * Math.cos(p1) * Math.cos(l1) + B * Math.cos(p2) * Math.cos(l2)
+  const y = A * Math.cos(p1) * Math.sin(l1) + B * Math.cos(p2) * Math.sin(l2)
+  const z = A * Math.sin(p1) + B * Math.sin(p2)
+  return [
+    +deg(Math.atan2(z, Math.hypot(x, y))).toFixed(4),
+    +deg(Math.atan2(y, x)).toFixed(4),
+  ]
+}
+
+export const JESUS_MILESTONES: Milestone[] = (() => {
+  const list: Milestone[] = []
+  for (let i = 1; i < episodes.length; i++) {
+    const a = episodes[i - 1]
+    const b = episodes[i]
+    const segJourneyKm = b.cumulativeKm - a.cumulativeKm
+    const segRealKm = segJourneyKm / JESUS_SCALE
+    if (segRealKm <= MIN_SEG_REAL_KM) continue
+    const n = Math.max(1, Math.round(segRealKm / MILE_REAL_KM) - 1) // 양 끝은 자리이므로 내부만
+    for (let k = 1; k <= n; k++) {
+      const f = k / (n + 1)
+      const [lat, lng] = slerp(a.lat, a.lng, b.lat, b.lng, f)
+      list.push({
+        id: `jesus-m${String(list.length + 1).padStart(3, '0')}`,
+        cumulativeKm: +(a.cumulativeKm + segJourneyKm * f).toFixed(1),
+        lat,
+        lng,
+        from: a.place,
+        to: b.place,
+        region: a.region,
+        // 예수님의 사역은 전부 육로다. 갈릴리 호수를 건너신 장면이 있으나 자리와 자리 사이의
+        // 이동 수단을 이 데이터가 구분하지 않으므로, 단정하지 않고 육로로 둔다.
+        leg: 'land',
+        step: k,
+        of: n,
+      })
+    }
+  }
+  return list
 })()
 
 export const JESUS_JOURNEY: Journey = {

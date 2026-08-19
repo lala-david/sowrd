@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { usePilgrim, pilgrimTotals, overallJourneyPct, activeTier, weeklyKm, daysThisWeek } from '../state/pilgrim'
 import { STATIONS } from '../data/journey'
+import { journeyById } from '../data/geo/journeys'
 import { fmtDistance, fmtDuration, fmtPace, unitLabel } from '../lib/format'
 import { StatTile, SectionLabel, ProgressBar, SettingSwitch, WeeklyBars } from '../components/ui'
 import TabBar from '../components/TabBar'
@@ -68,7 +69,10 @@ export default function Profile() {
             <span className="font-display text-[15px] text-clay-deep" style={{ fontFeatureSettings: "'lnum' 1" }}>{overall}%</span>
           </div>
           <div className="mt-3"><ProgressBar pct={overall} height={5} /></div>
-          <p className="mt-3 text-[12.5px] text-muted">세례에서 땅 끝까지 — 예수님의 전 여정 중 {overall}%를 따라 걸었습니다.</p>
+          {/* 문구도 지금 걷는 여정을 따라간다 — 예전엔 어느 길을 걷든 "예수님의 전 여정"이었다 */}
+          <p className="mt-3 text-[12.5px] text-muted">
+            {journeyById(pilgrim.activeJourneyId)?.name ?? '이 길'} — 전체 여정 중 {overall}%를 따라 걸었습니다.
+          </p>
         </div>
       </div>
 
@@ -171,7 +175,15 @@ export default function Profile() {
           {runs.length === 0 && <p className="py-4 text-[13px] text-muted">아직 기록이 없어요. 첫 순례를 시작해보세요.</p>}
           {runs.slice(0, 12).map((r) => {
             const d = new Date(r.endedAt)
-            const reached = r.reached.map((id) => STATIONS[id]?.place).filter(Boolean)
+            /* 이 런에서 닿은 자리 이름.
+             * 진행을 여정 하나로 통일하면서 새 런의 r.reached(예수 코스)는 늘 비어 있고,
+             * 실제 도달은 r.reachedEpisodes(여정)에 담긴다. 예전 기록은 r.reached에 남아 있으므로
+             * 둘 다 읽어야 기록이 과거·현재 모두 온전히 보인다. */
+            const journeyOfRun = r.journeyId ? journeyById(r.journeyId) : undefined
+            const reached = [
+              ...r.reached.map((id) => STATIONS[id]?.place),
+              ...(r.reachedEpisodes ?? []).map((id) => journeyOfRun?.episodes.find((e) => e.id === id)?.place),
+            ].filter(Boolean)
             return (
               <div key={r.id} className="flex items-center gap-4 py-3.5">
                 <div className="flex w-12 shrink-0 flex-col items-center">

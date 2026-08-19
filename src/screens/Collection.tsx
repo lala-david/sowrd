@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNav } from '../store'
-import { JOURNEYS, JOURNEY_CHROME, toJourneyKm } from '../data/geo/journeys'
+import { JOURNEYS, JOURNEY_CHROME, toJourneyKm, journeyById, journeyProgress } from '../data/geo/journeys'
 import { usePilgrim, journeyKmOf } from '../state/pilgrim'
 import { STATIONS, JESUS_ORDER, type PassageSlug } from '../data/journey'
 import { featuredVerseById, GRACE_NOTE } from '../data/scripture'
@@ -29,7 +29,21 @@ export default function Collection() {
    * 수집이 37/37이고 잠긴 것이 하나도 없어서 대비도 다음 목표도 사라졌다.
    * 접근은 어차피 막혀 있지 않다(성경 본문은 신학적으로 절대 잠그지 않으므로 자리를
    * 눌러 여는 것은 admin과 무관하게 항상 가능하다). admin이 살 수 있는 것은 가짜 100%뿐이었다. */
-  const reached = new Set(Object.values(pilgrim.progress).flatMap((p) => p.reached))
+  /* 예수 자리의 도달 판정을 **여정**에서 가져온다.
+   * 예전엔 코스 진행(pilgrim.progress)에서 읽었는데, 진행을 여정 하나로 통일하면서
+   * 그 값이 더 이상 자라지 않는다. 예수님의 사역 길이 정식 여정이 되어(geo/journeys/jesus.ts)
+   * 자리 id가 그대로 PassageSlug라 이렇게 바로 맞물린다.
+   * 예전 사용자의 코스 기록은 합집합으로 그대로 살린다 — 마이그레이션으로 수집을 뺏지 않는다. */
+  const jesusJourney = journeyById('jesus')
+  const jesusReached: PassageSlug[] = jesusJourney
+    ? jesusJourney.episodes
+        .slice(0, journeyProgress(jesusJourney, toJourneyKm('jesus', journeyKmOf(pilgrim, 'jesus'))).reachedCount)
+        .map((e) => e.id as PassageSlug)
+    : []
+  const reached = new Set<PassageSlug>([
+    ...Object.values(pilgrim.progress).flatMap((p) => p.reached),
+    ...(journeyKmOf(pilgrim, 'jesus') > 0 ? jesusReached : []),
+  ])
   const collected = pilgrim.collectedVerses.filter((id) => reached.has(id))
   const [mode, setMode] = useState<Mode>('journeys')
 
@@ -60,15 +74,19 @@ export default function Collection() {
         <SectionLabel>예수님의 사역 길</SectionLabel>
         <h1 className="mt-2 font-serif text-[30px] font-bold leading-tight">닿은 자리</h1>
 
+        {/* 총계는 **여정 기준 하나**로 센다.
+            예수님의 사역 길이 정식 여정이 되면서 예전 식(reached.size + epDone)은 예수 자리를
+            두 번 셌다 — 코스 34 + 여정 33이 한 분모에 같이 들어갔다.
+            아래 '예수의 길' 탭은 같은 자리를 순서대로 보는 뷰이지 별도의 수집이 아니다. */}
         <div className="mt-3 flex items-center gap-3">
           <div className="h-[4px] flex-1 overflow-hidden rounded-full bg-line">
             <div
               className="h-full rounded-full transition-[width] duration-700"
-              style={{ width: `${((reached.size + epDone) / (ORDER.length + epTotal)) * 100}%`, background: 'var(--color-lapis)' }}
+              style={{ width: `${epTotal ? (epDone / epTotal) * 100 : 0}%`, background: 'var(--color-lapis)' }}
             />
           </div>
           <span className="font-display text-[12px] text-ink-soft" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>
-            {reached.size + epDone}/{ORDER.length + epTotal}
+            {epDone}/{epTotal}
           </span>
         </div>
 

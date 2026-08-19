@@ -15,7 +15,10 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const DIR = 'src/data/geo/journeys'
-const SCALE = { abraham: 12, exodus: 4, jesus: 10, paul: 30, peter: 12 }
+/* 예수 여정은 여기 없다 — JSON이 아니라 geo/journeys/jesus.ts가 좌표와 서사를 조인해서 만든다.
+   그 이정표는 같은 규칙으로 jesus.ts가 런타임에 만들고, 아래 템플릿이 합쳐 준다.
+   누적거리를 계산하는 곳을 둘로 만들면 언젠가 반드시 어긋난다. */
+const SCALE = { abraham: 12, exodus: 4, paul: 30, peter: 12 }
 const MILE_REAL_KM = 2.0   // 이정표 간격(실제 달릴 km) — 3km 러너가 매번 최소 하나는 지나게
 const MIN_SEG_REAL_KM = 2.5 // 이보다 짧은 구간만 이정표를 안 둔다(한 번의 러닝보다 짧으므로).
                             // 4였을 때 출애굽의 3~4km 구간들이 통째로 비어 3km 러너가 빈손이 됐다.
@@ -81,6 +84,8 @@ const body = `/* 자동 생성 — scripts/gen-milestones.mjs. 직접 고치지 
  * 성경 본문 접근과 무관하고, 공로 프레이밍("달린 만큼 은혜")을 만들지 않는다.
  * 좌표는 두 자리 사이 대권을 따라 보간한 실제 지점이다.
  * 간격: 실제 달릴 거리 ${MILE_REAL_KM}km마다 하나(구간이 실제 ${MIN_SEG_REAL_KM}km를 넘을 때만). */
+import { JESUS_MILESTONES } from './jesus'
+
 export interface Milestone {
   id: string
   /** 여정 좌표계 누적 km */
@@ -96,7 +101,13 @@ export interface Milestone {
   of: number
 }
 
-export const MILESTONES: Record<string, Milestone[]> = ${JSON.stringify(out, null, 2)}
+const GENERATED: Record<string, Milestone[]> = ${JSON.stringify(out, null, 2)}
+
+/* 예수 여정만 여기서 합친다.
+   다른 여정은 JSON이 소스라 이 스크립트가 구울 수 있지만, 예수 여정은 jesus.ts가
+   좌표(jesus-journey.json)와 서사(journey.ts)를 조인해 만드는 것이라 구울 소스가 없다.
+   같은 규칙으로 그 파일이 만든 이정표를 얹는다 — 거리의 진실은 한 군데에만 있어야 한다. */
+export const MILESTONES: Record<string, Milestone[]> = { ...GENERATED, jesus: JESUS_MILESTONES }
 
 /** 그 여정의 이정표 중 [fromKm, toKm) 구간에 있는 것들 */
 export function milestonesBetween(journeyId: string, fromKm: number, toKm: number): Milestone[] {

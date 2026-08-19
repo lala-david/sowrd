@@ -4,6 +4,8 @@
  * 성경 본문 접근과 무관하고, 공로 프레이밍("달린 만큼 은혜")을 만들지 않는다.
  * 좌표는 두 자리 사이 대권을 따라 보간한 실제 지점이다.
  * 간격: 실제 달릴 거리 2km마다 하나(구간이 실제 2.5km를 넘을 때만). */
+import { JESUS_MILESTONES } from './jesus'
+
 export interface Milestone {
   id: string
   /** 여정 좌표계 누적 km */
@@ -19,7 +21,7 @@ export interface Milestone {
   of: number
 }
 
-export const MILESTONES: Record<string, Milestone[]> = {
+const GENERATED: Record<string, Milestone[]> = {
   "abraham": [
     {
       "id": "abraham-m001",
@@ -6497,6 +6499,12 @@ export const MILESTONES: Record<string, Milestone[]> = {
     }
   ]
 }
+
+/* 예수 여정만 여기서 합친다.
+   다른 여정은 JSON이 소스라 이 스크립트가 구울 수 있지만, 예수 여정은 jesus.ts가
+   좌표(jesus-journey.json)와 서사(journey.ts)를 조인해 만드는 것이라 구울 소스가 없다.
+   같은 규칙으로 그 파일이 만든 이정표를 얹는다 — 거리의 진실은 한 군데에만 있어야 한다. */
+export const MILESTONES: Record<string, Milestone[]> = { ...GENERATED, jesus: JESUS_MILESTONES }
 
 /** 그 여정의 이정표 중 [fromKm, toKm) 구간에 있는 것들 */
 export function milestonesBetween(journeyId: string, fromKm: number, toKm: number): Milestone[] {
