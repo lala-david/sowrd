@@ -16,6 +16,11 @@ export default function EpisodeDetail() {
   const journeyId = useNav((s) => s.journeyId)
   const episodeId = useNav((s) => s.episodeId)
   const openJourney = useNav((s) => s.openJourney)
+  /* 지도 → 시트 → 읽기 → 뒤로 = 지도로 복귀. 어디서 왔든 온 곳으로 */
+  const back = () => {
+    if (window.history.length > 1) window.history.back()
+    else openJourney(journeyId ?? 'jesus')
+  }
   const pilgrim = usePilgrim()
 
   /* 본문은 이 화면에서만 쓰므로 여기 들어올 때 받아온다(초기 번들에서 분리). */
@@ -67,7 +72,7 @@ export default function EpisodeDetail() {
           style={{ objectPosition: art ? 'center' : sceneFocus(scene, 'hero') }}
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28" style={{ background: 'linear-gradient(to top, var(--color-sand), transparent)' }} />
-        <button onClick={() => openJourney(journey.id)} className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))] flex h-11 w-11 items-center justify-center rounded-full bg-[#201C15]/85 text-sand-raised transition active:scale-90" aria-label="뒤로">
+        <button onClick={back} className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))] flex h-11 w-11 items-center justify-center rounded-full bg-[#201C15]/85 text-sand-raised transition active:scale-90" aria-label="뒤로">
           <IconArrow size={17} className="rotate-180" />
         </button>
       </div>
@@ -84,20 +89,16 @@ export default function EpisodeDetail() {
         </div>
         <h1 className="mt-2 font-serif text-[32px] font-bold leading-[1.12]">{ep.place}</h1>
         <p className="mt-1.5 text-[13px] text-muted">
-          {ep.region} · 누적 <span className="font-display" style={{ fontFeatureSettings: "'lnum' 1" }}>{ep.cumulativeKm.toLocaleString()}</span>km
+          {ep.region}
           {tier && <> · {tier.name}</>}
+          {/* 읽기 화면의 숫자는 하나뿐 — 남은 거리(축척 해설은 지도·시트의 일) */}
+          {!reached && toGo > 0 && (
+            <>
+              {' · '}
+              <span className="font-display text-clay-deep" style={{ fontFeatureSettings: "'lnum' 1" }}>{toRealKm(journey.id, toGo).toFixed(1)}</span>km 남음
+            </>
+          )}
         </p>
-
-        {/* 여정 위 거리와 내가 실제로 달릴 거리를 함께 보여준다 — 축척을 숨기지 않는다 */}
-        {!reached && toGo > 0 && (
-          <p className="mt-2 text-[12.5px] leading-relaxed text-muted">
-            여기까지 여정으로{' '}
-            <span className="font-display text-ink-soft" style={{ fontFeatureSettings: "'lnum' 1" }}>{Math.round(toGo).toLocaleString()}</span>km,
-            내가 달릴 거리로{' '}
-            <span className="font-display text-clay-deep" style={{ fontFeatureSettings: "'lnum' 1" }}>{toRealKm(journey.id, toGo).toFixed(1)}</span>km
-            남았습니다. 도달하면 이 자리의 인장이 찍힙니다.
-          </p>
-        )}
 
         {ep.confidence && ep.confidence !== 'biblical' && (
           <div className="mt-4 rounded-xl border border-line-strong bg-sand-raised/50 px-4 py-3">
@@ -111,12 +112,13 @@ export default function EpisodeDetail() {
 
         {/* 성경 본문 — 개역한글 원문 그대로 */}
         {passage && (
-          <div className="mt-6 rounded-2xl border border-line bg-sand-raised/40 p-5">
+          /* 본문은 상자에 가두지 않는다 — 성경이 앱에서 가장 좁은 칼럼이 되면 안 된다 */
+          <div className="mt-7">
             <div className="mb-3 flex items-center justify-between">
               <p className="font-display text-[12px] uppercase tracking-[0.18em] text-clay-deep">{passage.ref}</p>
-              <span className="rounded-md border border-line-strong px-2 py-[2px] text-[10.5px] text-muted">{passage.translation}</span>
+              <span className="text-[10.5px] text-muted">{passage.translation}</span>
             </div>
-            <div className="font-serif text-[16px] leading-[1.85] text-ink">
+            <div className="max-w-[34ch] font-serif text-[17px] leading-[2] text-ink">
               {passage.verses.map((line, i) => (
                 <span key={`${line.chapter}:${line.v}`}>
                   {i === 0 ? (
@@ -132,40 +134,40 @@ export default function EpisodeDetail() {
           </div>
         )}
 
-        {/* 요약은 본문이 아니다 — 라벨로 분명히 갈라 둔다 */}
-        <div className="mt-5 border-l-2 border-line-strong pl-4">
-          <SectionLabel>한 줄 요약 · 의역</SectionLabel>
-          <p className="mt-1.5 text-[14px] leading-[1.7] text-ink-soft">{ep.verseKrShort}</p>
-          <p className="mt-1.5 text-[10.5px] text-muted">성경 원문이 아니라 이해를 돕기 위한 요약입니다.</p>
-        </div>
-
-        <div className="mt-7">
-          <SectionLabel>이곳에서 있었던 일</SectionLabel>
-          <p className="mt-2 text-[14.5px] leading-[1.75] text-ink-soft">{ep.event}</p>
-        </div>
-
-        <div className="mt-6">
-          <SectionLabel>묵상</SectionLabel>
-          <p className="mt-2 text-[15px] leading-[1.75] text-ink-soft">{ep.reflection}</p>
-        </div>
-
-        <div className="mt-5 flex gap-3 rounded-xl bg-sand-raised/60 px-4 py-3.5">
-          <span className="mt-0.5 text-rubric"><IconHeld size={18} /></span>
-          <p className="flex-1 text-[14px] leading-relaxed text-ink">{ep.prayer}</p>
-        </div>
-
-        {ep.feel && (
-          <div className="mt-5 rounded-xl border border-line px-4 py-3.5">
-            <SectionLabel>달리는 느낌</SectionLabel>
-            <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-soft">{ep.feel}</p>
+        {/* 본문이 없는 자리에서만 요약을 본문 자리에 둔다(있으면 시트가 이미 보여 준 문장이다) */}
+        {!passage && (
+          <div className="mt-6 border-l-2 border-line-strong pl-4">
+            <SectionLabel>한 줄 요약 · 의역</SectionLabel>
+            <p className="mt-1.5 font-serif text-[16px] leading-[1.8] text-ink">{ep.verseKrShort}</p>
+            <p className="mt-1.5 text-[10.5px] text-muted">성경 원문이 아니라 이해를 돕기 위한 요약입니다.</p>
           </div>
         )}
+
+        {/* 읽기의 리듬은 본문 → 묵상 둘이다. 사건·느낌·기도는 접어 둔다 */}
+        <div className="mt-8">
+          <SectionLabel>묵상</SectionLabel>
+          <p className="mt-2 max-w-[34ch] text-[15px] leading-[1.8] text-ink-soft">{ep.reflection}</p>
+        </div>
+
+        <details className="mt-6 group">
+          <summary className="flex cursor-pointer items-center gap-2 py-1 text-[12.5px] text-muted">
+            <span className="text-rubric"><IconHeld size={15} /></span>
+            이 자리에 두고 가는 말 <span className="text-[11px]">· 기도로 읽어도, 그냥 문장으로 읽어도 됩니다</span>
+          </summary>
+          <p className="mt-2 rounded-xl bg-sand-raised/60 px-4 py-3.5 text-[14px] leading-relaxed text-ink">{ep.prayer}</p>
+        </details>
+
+        <details className="mt-3">
+          <summary className="cursor-pointer py-1 text-[12.5px] text-muted">이곳에서 있었던 일 ▾</summary>
+          <p className="mt-2 text-[14px] leading-[1.75] text-ink-soft">{ep.event}</p>
+          {ep.feel && <p className="mt-3 text-[13px] leading-relaxed text-muted">달리는 느낌 — {ep.feel}</p>}
+        </details>
 
         {/* 은혜 고지 — 거리가 말씀을 여는 열쇠로 읽히지 않게 */}
         <p className="mt-8 text-[12px] leading-[1.8] text-muted">{GRACE_NOTE}</p>
 
-        <button onClick={() => openJourney(journey.id)} className="mt-6 w-full rounded-2xl border border-line py-3.5 text-center font-serif text-[15px] text-ink-soft transition active:scale-[0.99]">
-          여정으로 돌아가기
+        <button onClick={back} className="mt-6 w-full rounded-2xl border border-line py-3.5 text-center font-serif text-[15px] text-ink-soft transition active:scale-[0.99]">
+          돌아가기
         </button>
       </div>
     </div>

@@ -16,7 +16,6 @@ import { ROMAN } from '../lib/board'
 export default function Journeys() {
   const openMap = useNav((s) => s.openMap)
   const openJourney = useNav((s) => s.openJourney)
-  const go = useNav((s) => s.go)
   const pilgrim = usePilgrim()
   const setActiveJourney = usePilgrim((s) => s.setActiveJourney)
 
@@ -25,7 +24,7 @@ export default function Journeys() {
       <header className="px-7" style={{ paddingTop: 'max(3rem, env(safe-area-inset-top))' }}>
         <SectionLabel>여정을 고르다</SectionLabel>
         <h1 className="mt-2 font-serif text-[30px] font-bold leading-tight">어느 길을 달릴까</h1>
-        <p className="mt-2 text-[13.5px] leading-relaxed text-muted">달린 거리만큼 그 사람이 걸었던 길이 이어집니다. 닿은 자리마다 말씀이 남습니다.</p>
+        <p className="mt-2 text-[13.5px] leading-relaxed text-muted">달린 거리만큼 옛사람이 걸었던 길이 이어집니다. 3,000년 된 지도 위를 오늘 당신이 걷습니다.</p>
       </header>
 
       <div className="mt-6 flex flex-col gap-4 px-5 pb-4">
@@ -48,9 +47,9 @@ export default function Journeys() {
               }}
               className="relative w-full overflow-hidden rounded-[26px] text-left transition active:scale-[0.99]"
               style={{
-                height: 176,
+                height: 160,
                 boxShadow: active
-                  ? '0 0 0 2.5px var(--color-seal), 0 18px 36px -20px rgba(60,40,18,.6)'
+                  ? '0 0 0 2.5px var(--color-clay), 0 18px 36px -20px rgba(60,40,18,.6)'
                   : '0 1px 2px rgba(80,60,30,.12), 0 18px 36px -22px rgba(60,40,18,.55)',
               }}
             >
@@ -58,7 +57,7 @@ export default function Journeys() {
                 <img src={art} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: 'center 38%' }} />
               )}
               {/* 글이 앉을 자리만 어둡게 — 그림은 오른쪽에서 숨 쉰다 */}
-              <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(100deg, rgba(28,18,8,.72) 0%, rgba(28,18,8,.46) 40%, rgba(28,18,8,.06) 66%, rgba(28,18,8,0) 100%)' }} />
+              <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(100deg, rgba(28,18,8,.6) 0%, rgba(28,18,8,.4) 40%, rgba(28,18,8,.05) 66%, rgba(28,18,8,0) 100%)' }} />
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20" style={{ background: 'linear-gradient(to top, rgba(28,18,8,.6), transparent)' }} />
 
               <div className="relative flex h-full flex-col justify-between p-5">
@@ -113,12 +112,10 @@ export default function Journeys() {
                   </p>
                   <div className="mt-2 flex items-center gap-2.5">
                     <div className="h-[4px] flex-1 overflow-hidden rounded-full" style={{ background: 'rgba(255,240,214,.25)' }}>
-                      <div className="h-full rounded-full" style={{ width: `${prog.pct}%`, background: 'var(--color-seal-bright)' }} />
+                      {/* 걸어온 길 = 라피스(보드와 같은 문법). 금은 인장에만 */}
+                      <div className="h-full rounded-full" style={{ width: `${prog.pct}%`, background: 'var(--color-lapis-bright)' }} />
                     </div>
-                    <span className="flex items-center gap-1 font-display text-[11px]" style={{ color: 'rgba(255,240,214,.9)', fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>
-                      {walked && <IconSeal size={11} style={{ color: '#ffd868' }} />}
-                      {prog.reachedCount}/{prog.total} · 내가 달릴 {Math.round(toRealKm(j.id, j.totalKm)).toLocaleString()}km
-                    </span>
+                    {walked && <IconSeal size={12} style={{ color: '#ffd868' }} />}
                   </div>
                 </div>
               </div>
@@ -134,9 +131,6 @@ export default function Journeys() {
           className="flex w-full items-center justify-center gap-2 rounded-2xl border border-line py-3.5 font-serif text-[15px] text-ink-soft transition active:scale-[0.99]"
         >
           지금 걷는 길의 자리 목록 <IconArrow size={15} />
-        </button>
-        <button onClick={() => go('courses')} className="flex w-full items-center justify-center gap-2 py-2 text-[12.5px] text-muted transition active:scale-[0.99]">
-          실제 순례길 보기 <IconArrow size={13} />
         </button>
       </div>
 

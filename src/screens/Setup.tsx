@@ -9,6 +9,7 @@ import { fmtDistance, fmtDuration } from '../lib/format'
 import { toneOf } from '../lib/mood'
 import { arcIcon, IconArrow, IconHeld, IconStep } from '../components/icons'
 import { SectionLabel } from '../components/ui'
+import { ROMAN } from '../lib/board'
 import { PRAYER_NOTE } from '../data/prayer'
 import { getCurrentPositionOnce, geoBlockedReason, type TracePoint } from '../lib/geo'
 import LiveMap from '../components/LiveMap'
@@ -29,7 +30,8 @@ export default function Setup() {
   const q = questNow(journey, jKm)
 
   const [mode, setMode] = useState<RunMode>('guided')
-  const [goalKm, setGoalKm] = useState(5)
+  /* 기본 목표는 '다음 자리까지' — 목표 거리가 곧 자리에 닿는 거리가 되게 */
+  const [goalKm, setGoalKm] = useState(() => Math.max(2, Math.min(42, Math.ceil(q.toRealKm || 5))))
   const [goalMin, setGoalMin] = useState(30)
   // 오늘 품고 달릴 사람 — 여기서 바로 고른다(예전엔 Profile로 나갔다 와야 했다)
   const [carryId, setCarryId] = useState<string | null>(null)
@@ -94,7 +96,7 @@ export default function Setup() {
       <SectionLabel>오늘 걸을 길</SectionLabel>
       <h1 className="mt-2 font-serif text-[30px] font-bold leading-tight">{journey.name}</h1>
       <p className="mt-1 text-[13px] text-muted">
-        {q.chapter ? `${q.chapter.index}장 · ${q.chapter.name}` : journey.who} · 자리 {q.reachedCount}/{q.total}
+        {q.chapter ? `${ROMAN[q.chapter.index - 1] ?? q.chapter.index} · ${q.chapter.name}` : journey.who}
       </p>
 
       {/* 모드 세그먼트 */}
@@ -181,9 +183,9 @@ export default function Setup() {
           <span className="text-[12.5px]">
             {gpsState === 'ready' ? 'GPS 준비됨 · 지금 여기 있어요' : gpsState === 'failed' ? '위치를 못 잡았어요' : gpsState === 'checking' ? '위치 확인 중…' : '달리기 전에 위치가 잡히는지 볼 수 있어요'}
           </span>
-          {gpsState === 'idle' && (
+          {gpsState !== 'checking' && gpsState !== 'ready' && (
             <button onClick={checkGps} className="ml-auto rounded-full border border-line-strong px-3 py-1.5 text-[12px] text-ink-soft transition active:scale-95">
-              내 위치 확인
+              {gpsState === 'failed' ? '다시 확인' : '내 위치 확인'}
             </button>
           )}
         </div>
@@ -200,6 +202,9 @@ export default function Setup() {
         ) : null}
       </div>
 
+      {/* 위치 권한 안내는 START보다 **먼저** 읽혀야 한다 */}
+      <p className="mt-2 px-1 text-[11px] leading-relaxed text-muted">시작하면 위치 권한을 묻습니다. 달린 거리를 재는 데만 쓰고, 위치나 경로는 저장하지도 밖으로 보내지도 않습니다.</p>
+
       <div className="flex-1 min-h-6" />
 
       {/* START */}
@@ -207,12 +212,7 @@ export default function Setup() {
         <IconStep size={34} strokeWidth={1.6} />
         <span className="mt-2 font-serif text-[17px]">달리기 시작</span>
       </button>
-      <p className="mt-4 text-center text-[12px] text-muted">멈추면 오늘의 자리에서 말씀을 함께 읽습니다</p>
-      {/* 위치 권한을 왜 묻는지 먼저 밝힌다 — 시스템 팝업이 뜨기 전에 */}
-      <p className="mx-auto mt-3 max-w-[30ch] text-center text-[11px] leading-relaxed text-muted">
-        시작하면 위치 권한을 묻습니다. 달린 거리를 재는 데만 쓰고,
-        위치나 경로는 저장하지도 밖으로 보내지도 않습니다.
-      </p>
+      <p className="mt-4 text-center text-[12px] text-muted">마치면 오늘의 자리에서 말씀을 함께 읽습니다</p>
     </div>
   )
 }

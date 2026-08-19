@@ -14,6 +14,7 @@ import JourneyDetail from './screens/JourneyDetail'
 import EpisodeDetail from './screens/EpisodeDetail'
 import JourneyMap from './screens/JourneyMap'
 import Intro from './screens/Intro'
+import Stats from './screens/Stats'
 
 const SCREENS = {
   home: Home,
@@ -28,6 +29,7 @@ const SCREENS = {
   journey: JourneyDetail,
   episode: EpisodeDetail,
   map: JourneyMap,
+  stats: Stats,
 } as const
 
 export default function App() {

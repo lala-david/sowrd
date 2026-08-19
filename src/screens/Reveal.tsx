@@ -345,7 +345,11 @@ export default function Reveal() {
             )}
 
             <p className="mt-6 max-w-[32ch] text-[14px] leading-relaxed text-ink-soft">{moment.reflection}</p>
-            <p className="mt-3 text-[12.5px] text-muted">기도 · {moment.prayer}</p>
+            {/* 기도 한 줄은 접어 둔다 — 기도로 읽어도, 그냥 문장으로 읽어도 된다 */}
+            <details className="mt-3">
+              <summary className="cursor-pointer text-[12px] text-muted">이 자리에 두고 가는 말 ▾</summary>
+              <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted">{moment.prayer}</p>
+            </details>
           </>
         ) : (
           <>
@@ -366,6 +370,19 @@ export default function Reveal() {
             ) : (
               <p className="mt-4 max-w-[30ch] text-[14px] leading-relaxed text-ink-soft">오늘도 길 위에 있었습니다. 길은 언제나 여기 있어요.</p>
             )}
+            {/* 차오르는 한 절 — 자리에 못 닿은 날의 **보상**이므로 화면의 두 번째 자리에 둔다(요약 맨 아래가 아니라).
+                다음 자리의 말씀이 구간 진행만큼 드러난다. 본문은 원래 늘 열려 있으므로(미리 읽기)
+                거리가 여는 열쇠가 아니라 미리 읽는 것이다 — 열 번 중 여덟아홉 번이던 빈손의 날이,
+                다음 말씀이 조금 더 가까워진 날이 된다. */}
+            {jNext && jProg && distanceKm > 0.05 && (
+              <FillingVerse
+                place={jNext.place}
+                text={jNext.verseKrShort}
+                ref_={jNext.passageRef}
+                progress={jProg.segProgress}
+                onOpen={() => openEpisode(journeyId, jNext.id)}
+              />
+            )}
           </>
         )}
 
@@ -380,9 +397,7 @@ export default function Reveal() {
           <section className="mt-7">
             <div className="mb-2.5 flex items-baseline justify-between">
               <SectionLabel>길 위에서 오늘</SectionLabel>
-              <span className="text-[11.5px] text-muted">
-                여정 <span className="font-display text-ink-soft" style={{ fontFeatureSettings: "'lnum' 1" }}>{Math.round(toJourneyKm(journeyId, distanceKm)).toLocaleString()}</span>km 만큼
-              </span>
+              <span className="text-[11.5px] text-muted">오늘 {fmtDistance(distanceKm, units)}{units}</span>
             </div>
             <BoardWindow
               journey={journey}
@@ -435,14 +450,17 @@ export default function Reveal() {
             {/* 예전엔 이 블록 전체가 splits.length > 1 조건이라, 1km를 못 채운 러닝은
                 한 문장도 못 받았다("1km를 채우기 전에 멈췄습니다"는 렌더 불가능한 죽은 코드였다). */}
             <div className="mt-5 border-t border-line pt-4">
-              {splits.length > 1 && (
-                <>
-                  <p className="mb-3 text-[11px] tracking-[0.1em] text-muted">1km마다 걸린 시간</p>
-                  <SplitBars splits={splits} units={units} avgPaceSecPerKm={avgPace} />
-                </>
-              )}
                 {/* 오늘의 러닝을 한 문장으로 — 칭찬도 질책도 아닌 관찰 */}
-                <p className={`${splits.length > 1 ? 'mt-4' : ''} text-[13px] leading-relaxed text-ink-soft`}>{readingOf(analysis)}</p>
+                <p className="text-[13px] leading-relaxed text-ink-soft">{readingOf(analysis)}</p>
+              {/* 스플릿은 접어 둔다 — 리빌의 주장은 자리와 말씀이지 막대그래프가 아니다 */}
+              {splits.length > 1 && (
+                <details className="mt-3">
+                  <summary className="cursor-pointer text-[11.5px] tracking-[0.06em] text-muted">1km마다 걸린 시간 ▾</summary>
+                  <div className="mt-3">
+                    <SplitBars splits={splits} units={units} avgPaceSecPerKm={avgPace} />
+                  </div>
+                </details>
+              )}
                 {/* 통계는 표본이 충분할 때만 말한다.
                     예전엔 "페이스 이야기를 하기엔 짧습니다"라고 말한 직후 페이스 통계를 세 개 보여줬다. */}
                 {analysis.splitConfident && (
@@ -453,7 +471,7 @@ export default function Reveal() {
                   </div>
                 )}
               </div>
-            {(reachedThisRun.length > 0 || journeyPlaces.length > 0 || miles.length > 0 || (!moment && jNext && distanceKm > 0.05)) && (
+            {(reachedThisRun.length > 0 || journeyPlaces.length > 0 || miles.length > 0) && (
               <div className="mt-5 border-t border-line pt-4">
                 <div className="flex flex-wrap gap-2">
                   {journeyPlaces.map((place) => (
@@ -484,15 +502,6 @@ export default function Reveal() {
                     다음 자리의 말씀이 이정표를 지날 때마다 한 조각씩 드러난다. 본문은 원래 늘 열려
                     있으므로(아래 "미리 읽기") 거리가 여는 열쇠가 아니라 **미리 읽는 것**이다 —
                     열 번 중 여덟아홉 번이던 빈손의 날이, 이제 다음 말씀이 조금 더 가까워진 날이 된다. */}
-                {!moment && jNext && jProg && (
-                  <FillingVerse
-                    place={jNext.place}
-                    text={jNext.verseKrShort}
-                    ref_={jNext.passageRef}
-                    progress={jProg.segProgress}
-                    onOpen={() => openEpisode(journeyId, jNext.id)}
-                  />
-                )}
               </div>
             )}
         </div>
@@ -541,14 +550,17 @@ function FillingVerse({ place, text, ref_, progress, onOpen }: { place: string; 
   const head = words.slice(0, shown).join(' ')
   const full = shown >= words.length
   return (
-    <button onClick={onOpen} className="mt-3 w-full rounded-xl px-4 py-3.5 text-left transition active:scale-[0.99]" style={{ background: 'var(--color-sand-raised)', boxShadow: 'inset 0 0 0 1px var(--color-line)' }}>
-      <p className="flex items-center justify-between font-display text-[10.5px] uppercase tracking-[0.2em] text-muted">
-        <span>다음 자리 {place} · 차오르는 한 절</span>
-        <span style={{ fontFeatureSettings: "'lnum' 1" }}>{Math.round(progress * 100)}%</span>
-      </p>
+    <button onClick={onOpen} className="mt-5 w-full rounded-[22px] px-5 py-4 text-left transition active:scale-[0.99]" style={{ background: 'var(--color-sand-raised)', boxShadow: 'inset 0 0 0 1px var(--color-line), 0 10px 24px -18px rgba(60,40,18,.5)' }}>
+      <p className="font-display text-[10.5px] uppercase tracking-[0.2em] text-muted">다음 자리 {place} · 차오르는 한 절</p>
       <p className="mt-2 font-serif text-[15px] leading-[1.75] text-ink">
         {head}
-        {!full && <span className="text-muted"> ···</span>}
+        {!full && (
+          /* 뒷부분은 실루엣만 — 잘린 게 아니라 가려져 있다는 것이 보여야 "차오른다"가 읽힌다 */
+          <span aria-hidden className="select-none" style={{ filter: 'blur(3.5px)', opacity: 0.35 }}>
+            {' '}
+            {words.slice(shown).join(' ')}
+          </span>
+        )}
       </p>
       <p className="mt-2 text-[11.5px] text-muted">{ref_} · 미리 읽기 →</p>
     </button>

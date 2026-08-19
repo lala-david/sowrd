@@ -233,3 +233,10 @@ export const figureArt = (key: string): string | undefined => FIGURE_MAP[key]
 /** 그 여정의 주인공 토큰 */
 export const journeyFigure = (journeyId: string): string | undefined =>
   FIGURE_MAP[{ jesus: 'lamp', abraham: 'abraham', exodus: 'moses', paul: 'paul', peter: 'peter' }[journeyId] ?? '']
+
+/* ── 장식 그림 — 기록 화면 머리 등(scripts/world-art.mjs extras) ──────────── */
+const EXTRA_URLS = import.meta.glob('./extras/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+const EXTRA_MAP: Record<string, string> = Object.fromEntries(
+  Object.entries(EXTRA_URLS).map(([file, url]) => [file.replace(/^\.\/extras\//, '').replace(/\.webp$/, ''), url]),
+)
+export const extraArt = (key: string): string | undefined => EXTRA_MAP[key]

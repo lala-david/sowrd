@@ -135,6 +135,7 @@ export default function QuestBoard({ journey, journeyKm, onSelectNode, selectedI
   const walkedRef = useRef<SVGPathElement>(null)
   const segRefs = useRef<(SVGPathElement | null)[]>([])
   const [me, setMe] = useState<Pt | null>(null)
+  const played = useRef(false)
   useEffect(() => {
     const road = roadRef.current
     const walked = walkedRef.current
@@ -159,11 +160,16 @@ export default function QuestBoard({ journey, journeyKm, onSelectNode, selectedI
     }
     const pt = road.getPointAtLength(done)
     walked.style.strokeDasharray = `${done} ${L}`
-    if (reduce) {
+    /* 처음 한 번만 "걸어오는" 연출을 한다. 그 뒤의 갱신(러닝 중 거리가 조금씩 늘 때)은
+       말이 제자리에서 다음 점으로 옮겨 가야지, 길의 처음으로 튕겼다가 다시 와선 안 된다 —
+       완주한 여정의 러닝 화면에서 말이 위에서 아래로 계속 떨어지던 버그가 그것이었다. */
+    if (reduce || played.current) {
+      walked.style.transition = 'none'
       walked.style.strokeDashoffset = '0'
       setMe([pt.x, pt.y])
       return
     }
+    played.current = true
     const start = road.getPointAtLength(from)
     setMe([start.x, start.y])
     walked.style.strokeDashoffset = String(Math.max(0, done - from))

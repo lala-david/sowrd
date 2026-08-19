@@ -7,10 +7,11 @@ export type Screen =
   | 'journey' // 여정 상세(등급별 에피소드)
   | 'episode' // 에피소드 상세(말씀 읽기)
   | 'map' // 지도만 보는 화면 — 길 전체
+  | 'stats' // 기록 — 주·월·년
 
 const SCREENS: Screen[] = [
   'home', 'courses', 'setup', 'run', 'reveal', 'collection', 'profile', 'detail',
-  'journeys', 'journey', 'episode', 'map',
+  'journeys', 'journey', 'episode', 'map', 'stats',
 ]
 
 /* 화면과 인자를 전부 해시에 담는다.

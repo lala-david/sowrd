@@ -20,7 +20,8 @@ export default function BoardWindow({
   journey: Journey
   journeyKm: number
   height?: number
-  onOpen: () => void
+  /** 없으면 버튼이 아니라 그냥 창이다(러닝 중처럼 화면을 떠나면 안 되는 곳) */
+  onOpen?: () => void
   className?: string
   /** 창 아래 왼쪽에 얹는 한 줄(예: "가버나움까지 3.2km") */
   caption?: string
@@ -37,11 +38,12 @@ export default function BoardWindow({
     [height],
   )
 
+  const Tag = onOpen ? 'button' : 'div'
   return (
-    <button
+    <Tag
       onClick={onOpen}
-      aria-label={`${journey.name} 지도 열기`}
-      className={`relative block w-full overflow-hidden rounded-[28px] text-left transition active:scale-[0.995] ${className}`}
+      aria-label={onOpen ? `${journey.name} 지도 열기` : undefined}
+      className={`relative block w-full overflow-hidden rounded-[28px] text-left transition ${onOpen ? 'active:scale-[0.995]' : ''} ${className}`}
       style={{ height, boxShadow: 'inset 0 1px 0 rgba(255,255,255,.5), 0 1px 2px rgba(80,60,30,.12), 0 18px 36px -22px rgba(80,60,30,.55)' }}
     >
       <div className="pointer-events-none absolute left-0 top-0 w-full" style={{ transform: `translateY(${-shift}px)`, transition: 'transform 600ms cubic-bezier(.22,1,.36,1)' }}>
@@ -52,14 +54,25 @@ export default function BoardWindow({
       <span className="pointer-events-none absolute inset-x-0 bottom-0 h-16" style={{ background: 'linear-gradient(to top, rgba(247,236,213,.75), transparent)' }} />
       <span className="pointer-events-none absolute inset-0 rounded-[28px]" style={{ boxShadow: 'inset 0 0 0 1px rgba(90,58,18,.18), inset 0 0 40px rgba(90,58,18,.12)' }} />
 
+      {/* 캡션은 보드의 장 리본과 같은 형태 — 알약을 얹으면 스티커가 된다 */}
       {caption && (
-        <span className="absolute bottom-3.5 left-4 rounded-full px-3 py-1.5 font-serif text-[12.5px] text-ink" style={{ background: 'rgba(251,241,220,.92)', boxShadow: '0 2px 8px rgba(60,40,18,.2)' }}>
+        <span
+          className="absolute bottom-3.5 left-4 max-w-[78%] truncate px-4 py-1.5 font-serif text-[12.5px] text-ink"
+          style={{
+            background: '#fbf1dc',
+            clipPath: 'polygon(0 0, 100% 0, calc(100% - 8px) 50%, 100% 100%, 0 100%, 8px 50%)',
+            boxShadow: '0 2px 0 rgba(90,58,18,.25)',
+            filter: 'drop-shadow(0 3px 5px rgba(60,40,18,.25))',
+          }}
+        >
           {caption}
         </span>
       )}
-      <span className="absolute bottom-3.5 right-4 flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] text-ink-soft" style={{ background: 'rgba(251,241,220,.92)', boxShadow: '0 2px 8px rgba(60,40,18,.2)' }}>
-        <IconCompass size={12} /> 지도 펼치기
-      </span>
-    </button>
+      {onOpen && (
+        <span className="absolute bottom-3.5 right-4 flex h-8 w-8 items-center justify-center rounded-full text-ink-soft" style={{ background: 'rgba(251,241,220,.9)', boxShadow: '0 2px 8px rgba(60,40,18,.2)' }} aria-hidden>
+          <IconCompass size={15} />
+        </span>
+      )}
+    </Tag>
   )
 }

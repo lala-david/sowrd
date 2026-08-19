@@ -120,6 +120,17 @@ const FIGURE_SCAFFOLD =
   'warm flat colours with soft two-tone shading, clean edges, no outlines, readable when shrunk to a tiny badge. ' +
   'The figure has no face — the head is a smooth featureless shape — and nothing glows around the head. Subject: '
 
+/* 장식 그림(래스터) — 기록 화면 머리 등. 패널과 같은 결로, 가로 16:9 */
+const EXTRAS = {
+  'stats-hero':
+    'Hand-painted storybook map banner in the same soft gouache watercolour style, wide horizontal composition: ' +
+    'a single winding pale road crossing rolling olive and ochre hills from the lower left to the far upper right, ' +
+    'small stone cairns (stacked stone markers) beside the road at intervals, a tiny walled town far away, a few ' +
+    'scattered trees, gentle morning light. The left half of the picture is calm open land with very little detail ' +
+    'so that writing can be laid over it later. Warm cream, ochre, sage, a thread of deep blue for a stream. ' +
+    'No people, no text, no border, edge to edge.',
+}
+
 const FIGURES = {
   pilgrim: 'a runner pilgrim seen from behind, walking forward with a light pack and a staff, simple tunic of deep umber and terracotta, feet on a small patch of ground',
   'pilgrim-2': 'a runner pilgrim seen from behind, a woman with a long braid and a light sage-green headscarf, small pack and a staff, tunic of olive and cream, feet on a small patch of ground',
@@ -170,10 +181,11 @@ async function run() {
   const force = argv.includes('--force')
   const dry = argv.includes('--dry')
   const vector = kind === 'figures'
-  const all = vector ? FIGURES : PANELS
+  const extra = kind === 'extras'
+  const all = vector ? FIGURES : extra ? EXTRAS : PANELS
   const items = only.length ? Object.fromEntries(only.map((k) => [k, all[k]])) : all
   for (const [k, v] of Object.entries(items)) if (!v) throw new Error(`알 수 없는 키: ${k}`)
-  const outDir = path.join(ROOT, 'src/assets/art', vector ? 'figures' : 'world')
+  const outDir = path.join(ROOT, 'src/assets/art', vector ? 'figures' : extra ? 'extras' : 'world')
   fs.mkdirSync(outDir, { recursive: true })
 
   const KEY = dry ? '' : loadKey()
@@ -189,13 +201,13 @@ async function run() {
     }
     const journey = key.split('-')[0]
     const w = WORLD[journey]
-    const prompt = vector ? FIGURE_SCAFFOLD + subject : PANEL_SCAFFOLD + subject + '. Palette: ' + w.palette + '.'
+    const prompt = vector ? FIGURE_SCAFFOLD + subject : extra ? subject : PANEL_SCAFFOLD + subject + '. Palette: ' + w.palette + '.'
     if (dry) {
       console.log(`\n[${key}] (${prompt.length}자)\n${prompt}`)
       continue
     }
     try {
-      const { buf, kind: fmt } = await generate(KEY, { prompt, vector, size: '9:16', colors: vector ? undefined : w?.colors })
+      const { buf, kind: fmt } = await generate(KEY, { prompt, vector, size: extra ? '16:9' : '9:16', colors: vector || extra ? undefined : w?.colors })
       if (vector) {
         if (fmt !== 'svg') throw new Error(`벡터를 기대했는데 ${fmt}`)
         fs.writeFileSync(out, buf)

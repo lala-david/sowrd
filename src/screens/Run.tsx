@@ -11,6 +11,7 @@ import { haptic } from '../lib/haptics'
 import { watchDistance, geoSupported, geoBlockedReason, type GeoStatus } from '../lib/geo'
 import { IconCairn, IconLocked, IconHeld, IconPause, IconPlay } from '../components/icons'
 import LiveMap from '../components/LiveMap'
+import BoardWindow from '../components/BoardWindow'
 
 /* THE LAMP — "밤의 순례길 · 등불"(dark). 시119:105 "주의 말씀은 내 발에 등이요…"
  * 거리가 곧 앞으로 나아가는 등불. 자리에 닿으면 멈춰서 그 자리의 말씀을 함께 읽는다.
@@ -50,6 +51,13 @@ export default function Run() {
   )
 
   const [locked, setLocked] = useState(false)
+  const unlockTimer = useRef<number | null>(null)
+  const clearUnlock = () => {
+    if (unlockTimer.current != null) {
+      window.clearTimeout(unlockTimer.current)
+      unlockTimer.current = null
+    }
+  }
   const tRef = useRef<number | null>(null)
 
   // 시작
@@ -62,6 +70,7 @@ export default function Run() {
    * tick()이 거리를 받는 유일한 입구라서, 여기만 갈아끼우면 자리 도달·표식·기록·축척이
    * 전부 그대로 동작한다. */
   const [geo, setGeo] = useState<GeoStatus>('idle')
+  const [view, setView] = useState<'board' | 'map'>('board')
   /* 'prompting'을 GPS로 치면 안 된다.
    * OS 권한 팝업을 사용자가 그냥 두거나 브라우저가 프롬프트를 미루면 상태가 'prompting'에
    * 머무는데, 그 동안 GPS 표본은 하나도 안 오고 시뮬 폴백도 막힌다 — 화면이 0.00 KM · 0'00"에서
@@ -183,13 +192,18 @@ export default function Run() {
   /* km 경계 스플릿 — 이번 런의 주행거리 기준(run.ts가 splits를 기록하는 기준과 같아야 한다).
    * 누적거리로 재면 시작하자마자 한 번 울린다(시드 진행도가 이미 3km이므로). */
   const lastSplitRef = useRef(0)
+  const [verseOn, setVerseOn] = useState(false)
   useEffect(() => {
     const km = Math.floor(distanceKm)
     if (km > lastSplitRef.current) {
       lastSplitRef.current = km
       haptic('split')
+      setVerseOn(true)
+      const id = window.setTimeout(() => setVerseOn(false), 3200)
+      return () => window.clearTimeout(id)
     }
   }, [distanceKm])
+
 
   /* 통과 플래시(2.6s) — 자리와 이정표는 위계가 다르다.
    * 자리(place): 금색, "닿았습니다 · 멈추면 함께 읽습니다"
@@ -272,11 +286,24 @@ export default function Run() {
 
   const mileCount = run.reachedMilestones.length
 
+  /* 다음 자리 250m 전 — 이 앱에서 감정이 가장 큰 순간을 진동으로 미리 알린다(한 자리에 한 번) */
+  const approachedRef = useRef<string | null>(null)
+  useEffect(() => {
+    const next = jProg?.next
+    if (!next) return
+    if (jNextRealKm <= 0.25 && approachedRef.current !== next.id) {
+      approachedRef.current = next.id
+      haptic('approach')
+    }
+  }, [jNextRealKm, jProg?.next])
+
   return (
+    /* 3단: 머리(자리·상태) / 몸(스크롤 — 거리·지표·창·게이지) / 발(컨트롤, 항상 손에 닿는 자리).
+       예전엔 한 덩어리라 640~700px 기기에서 "길게 눌러 마치기"가 화면 밖으로 잘렸다(세로 예산 ≈ 804px). */
     <div
       data-theme="dark"
-      className="relative flex flex-1 flex-col bg-sand text-ink"
-      style={{ paddingTop: 'max(3rem, env(safe-area-inset-top))', paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+      className="relative flex h-[100dvh] flex-col overflow-hidden bg-sand text-ink"
+      style={{ paddingTop: 'max(2.4rem, env(safe-area-inset-top))' }}
     >
       <div className="pointer-events-none absolute left-1/2 top-[22%] h-[440px] w-[440px] -translate-x-1/2" style={{ background: `radial-gradient(circle, ${tone.glow}, transparent 62%)` }} />
 
@@ -321,12 +348,12 @@ export default function Run() {
       {status === 'running' && geo !== 'tracking' && (
         <p className="relative z-10 mt-2 px-7 text-[12px] leading-relaxed text-muted">
           {geo === 'prompting' && '위치 신호를 찾는 중이에요'}
-          {geo === 'denied' && '위치 권한이 꺼져 있어요 · 거리는 어림으로 잽니다'}
+          {geo === 'denied' && (simAllowed ? '위치 권한이 꺼져 있어요 · 연습 모드로 잽니다' : '위치 권한이 꺼져 있어요 · 거리를 못 재고 시간만 셉니다')}
           {geo === 'unavailable' &&
             (geoBlockedReason() === 'insecure'
               ? 'http 주소에선 위치를 못 써요 · 설치한 앱이나 https 주소로 열어 주세요'
-              : '이 기기는 위치를 못 재요 · 거리는 어림으로 잽니다')}
-          {geo === 'lost' && '위치 신호가 약해요 · 잠깐 어림으로 잇습니다'}
+              : simAllowed ? '이 기기는 위치를 못 재요 · 연습 모드로 잽니다' : '이 기기는 위치를 못 재요 · 거리를 못 재고 시간만 셉니다')}
+          {geo === 'lost' && '위치 신호가 약해요 · 잡히는 대로 잇습니다'}
           {geo === 'idle' && '연습 모드 · 실제 거리가 아닙니다'}
         </p>
       )}
@@ -340,8 +367,8 @@ export default function Run() {
         </div>
       )}
 
-      {/* HERO — 거리는 등불 */}
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-7">
+      {/* HERO — 거리는 등불. 이 안만 스크롤한다 */}
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-7 pb-4 pt-2" style={{ scrollbarWidth: 'none' }}>
         {/* 스크린리더용 — 화면의 숫자는 초마다 바뀌지만 소리로는 아무것도 나가지 않았다.
             시각장애 러너가 주 화면에서 받는 피드백이 0이었다. 매초 읽으면 소음이 되므로
             1km 단위로만 알린다(거리 문자열이 바뀔 때가 아니라 정수 km가 바뀔 때). */}
@@ -366,15 +393,40 @@ export default function Run() {
         <div className="mt-6 flex items-center gap-6 font-display text-muted" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>
           <Metric big={fmtDuration(elapsedSec)} small="시간" />
           <span className="h-8 w-px bg-line-strong" />
-          <Metric big={fmtPace(curPace, units)} small="지금 속도" />
+          <Metric big={fmtPace(curPace, units)} small="지금 페이스" />
           <span className="h-8 w-px bg-line-strong" />
-          <Metric big={fmtPace(avgPace, units)} small="1km 평균" />
+          <Metric big={fmtPace(avgPace, units)} small="평균 페이스" />
         </div>
 
-        {/* 실시간 지도 — 지금 내 위치와 달린 길. 좌표는 화면 표시용이고 저장은 「경로 기록」을 켤 때만.
-            다크 화면 속 밝은 지도라 카드로 감싸 이물감을 줄인다. */}
-        <div className="mt-7 w-full max-w-[320px]">
-          {run.trace.length > 0 ? (
+        {/* 가운데 창 — 기본은 **여정**(보드 위의 내 말이 지금 이 걸음으로 앞으로 간다),
+            원하면 **내 위치**(실시간 GPS 지도). 예전엔 GPS 지도뿐이라 권한이 없거나 신호를 찾는
+            동안 검은 상자만 있었다 — 달리는 이유(다음 자리)가 화면에서 사라졌던 셈이다. */}
+        <div className="mt-6 flex w-full max-w-[320px] items-center justify-center gap-1 rounded-full p-[3px]" style={{ background: 'rgba(255,250,238,.06)', boxShadow: 'inset 0 0 0 1px var(--color-line)' }} role="tablist" aria-label="가운데 창">
+          {([['board', '여정'], ['map', '내 위치']] as const).map(([v, label]) => (
+            <button
+              key={v}
+              role="tab"
+              aria-selected={view === v}
+              onClick={() => {
+                setView(v)
+                /* "내 위치"를 누르면 권한을 **실제로** 묻는다. 아직 결정 전(prompting/idle)이면
+                   OS 팝업이 뜨고, 이미 거부됐으면 아래 안내가 뜬다. 한 번 호출하면 watch가
+                   살아 있는 동안 같은 권한을 쓴다. */
+                if (v === 'map' && geo !== 'tracking' && geoSupported()) {
+                  navigator.geolocation.getCurrentPosition(() => undefined, () => undefined, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 })
+                }
+              }}
+              className={`min-h-[36px] flex-1 rounded-full text-[12.5px] transition ${view === v ? 'text-ink' : 'text-muted'}`}
+              style={{ background: view === v ? 'var(--color-sand-raised)' : 'transparent' }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="mt-3 w-full max-w-[320px]">
+          {view === 'board' && journey ? (
+            <BoardWindow journey={journey} journeyKm={toJourneyKm(journeyId, journeyStartRealKm + distanceKm)} height={236} />
+          ) : run.trace.length > 0 ? (
             <LiveMap points={run.trace} avgPaceSecPerKm={avgPace} height={190} />
           ) : (
             <div className="flex h-[190px] flex-col items-center justify-center gap-2 rounded-2xl bg-sand-raised/10 ring-1 ring-line-strong/50">
@@ -399,8 +451,15 @@ export default function Run() {
           )}
         </div>
 
-        {/* 등불 구절 시119:105 */}
-        <p className="mt-7 max-w-[24ch] text-center font-serif text-[13.5px] leading-[1.7] text-ink-soft/90">{LAMP_VERSE.kr}</p>
+        {/* 등불 구절(시 119:105) — 상시 노출이 아니라 **km를 넘는 순간에만** 잠깐 떠오른다.
+            30분 내내 박혀 있으면 러닝 화면이 전도지가 된다(비크리스천 관점 검토). 리듬의 일부로만. */}
+        <p
+          aria-hidden={!verseOn}
+          className="mt-6 max-w-[24ch] text-center font-serif text-[13.5px] leading-[1.7] text-ink-soft transition-opacity duration-700"
+          style={{ opacity: verseOn ? 1 : 0, minHeight: 46 }}
+        >
+          {LAMP_VERSE.kr}
+        </p>
 
         {/* 목표 게이지 — 목표 거리/시간을 골랐으면 그 진행을 보여준다.
             예전엔 Setup에서 목표를 정해도 Run이 goalKm/goalSec을 안 읽어서 아무 일도 없었다.
@@ -440,8 +499,8 @@ export default function Run() {
           </div>
           <div className="mt-2 h-[3px] w-full overflow-hidden rounded-full bg-line-strong">
             <div
-              className="h-full rounded-full bg-sun transition-[width] duration-300"
-              style={{ width: `${(jProg?.segProgress ?? prog.segProgress) * 100}%` }}
+              className="h-full rounded-full transition-[width] duration-300"
+              style={{ width: `${(jProg?.segProgress ?? prog.segProgress) * 100}%`, background: 'var(--color-lapis-bright)' }}
             />
           </div>
           {/* 표식 — 자리 사이가 멀어도 매 km 무언가를 지난다 */}
@@ -461,8 +520,26 @@ export default function Run() {
           캡션이 flex-basis:auto라 max-content(약 219px)를 요구했고, 총 요구폭 379px > 304px이라
           flex가 세 자식을 비례 축소해 48px 버튼이 **42.9px로 눌렸다**(실측). 하필 러닝 중에
           화면을 안 보고 누르는 버튼이다. shrink-0으로 고정하고 캡션은 아래 한 줄로 내린다. */}
-      <div className="relative z-10 flex items-center justify-center gap-8 px-7">
-        <button onClick={() => setLocked((v) => !v)} className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border transition active:scale-95 ${locked ? 'border-sun text-sun' : 'border-line-strong text-muted'}`} aria-label="화면 잠금">
+      <div className="relative z-10 flex shrink-0 items-center justify-center gap-8 px-7 pt-3" style={{ background: 'linear-gradient(to top, var(--color-sand) 70%, transparent)' }}>
+        {/* 잠금은 한 탭, 해제는 길게(0.8초) — 주머니 속 손가락 하나에 풀리면 잠금이 아니다 */}
+        <button
+          onClick={() => {
+            if (!locked) setLocked(true)
+          }}
+          onPointerDown={() => {
+            if (!locked) return
+            unlockTimer.current = window.setTimeout(() => {
+              unlockTimer.current = null
+              setLocked(false)
+            }, 800)
+          }}
+          onPointerUp={clearUnlock}
+          onPointerLeave={clearUnlock}
+          onPointerCancel={clearUnlock}
+          className={`flex h-12 w-12 shrink-0 select-none items-center justify-center rounded-full border transition active:scale-95 ${locked ? 'border-sun text-sun' : 'border-line-strong text-muted'}`}
+          style={{ touchAction: 'none' }}
+          aria-label={locked ? '길게 눌러 잠금 해제' : '화면 잠금'}
+        >
           <IconLocked size={19} />
         </button>
 
@@ -473,8 +550,8 @@ export default function Run() {
           onPointerCancel={holdEnd}
           onContextMenu={(e) => e.preventDefault()}
           disabled={locked}
-          className={`relative flex h-[80px] w-[80px] shrink-0 select-none items-center justify-center rounded-full border-2 border-sun text-sun transition active:scale-95 ${locked ? 'opacity-30' : ''}`}
-          style={{ touchAction: 'none', WebkitTouchCallout: 'none' }}
+          className={`relative flex h-[80px] w-[80px] shrink-0 select-none items-center justify-center rounded-full border-2 border-sun transition active:scale-95 ${locked ? 'opacity-30' : ''}`}
+          style={{ touchAction: 'none', WebkitTouchCallout: 'none', background: holding ? 'rgba(245,198,92,.12)' : 'transparent' }}
           aria-label="길게 눌러 마치기"
         >
           {/* 차오르는 링 */}
@@ -493,7 +570,8 @@ export default function Run() {
               style={{ transition: holding ? `stroke-dashoffset ${HOLD_MS}ms linear` : 'none' }}
             />
           </svg>
-          <IconCairn size={30} />
+          {/* 마침표 하나 — 둥근 네모. 군더더기 없이 */}
+          <span className="block h-[22px] w-[22px] rounded-[6px]" style={{ background: 'var(--color-sun)' }} aria-hidden />
         </button>
 
         <button
@@ -509,8 +587,8 @@ export default function Run() {
           {status === 'paused' ? <IconPlay size={19} /> : <IconPause size={19} />}
         </button>
       </div>
-      <p className="relative z-10 mt-2.5 px-7 text-center text-[12px] text-muted">
-        {locked ? '잠김 — 왼쪽 자물쇠로 해제' : holdHint ? '가운데를 길게 누르면 마칩니다' : '길게 눌러 마치면 이 자리의 말씀을 함께 읽습니다'}
+      <p className="relative z-10 mt-2.5 shrink-0 px-7 text-center text-[12px] text-muted" style={{ paddingBottom: 'max(1.2rem, env(safe-area-inset-bottom))' }}>
+        {locked ? '잠김 — 자물쇠를 길게 눌러 해제' : holdHint ? '가운데를 길게 누르면 마칩니다' : '길게 눌러 마치면 이 자리의 말씀을 함께 읽습니다'}
       </p>
     </div>
   )
@@ -519,8 +597,8 @@ export default function Run() {
 function Metric({ big, small }: { big: string; small: string }) {
   return (
     <div className="flex flex-col items-center">
-      <span className="text-[19px] text-ink-soft">{big}</span>
-      <span className="mt-1 text-[10.5px] tracking-[0.08em]">{small}</span>
+      <span className="text-[26px] leading-none text-ink">{big}</span>
+      <span className="mt-1.5 text-[10.5px] tracking-[0.08em]">{small}</span>
     </div>
   )
 }

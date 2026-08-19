@@ -74,14 +74,18 @@ export interface Lifetime {
    * 주당 13회를 넘으면 가장 오래된 주부터 무너지고 8주 합계가 500km에서 영구히 멈췄다 —
    * lifetime을 만든 이유("열심히 달릴수록 기록이 후퇴한다")를 주간 차트가 그대로 반복했다. */
   weeks: Record<string, { km: number; runs: number }>
+  /* 날(YYYY-MM-DD)별 거리·시간·횟수 — 일/월/년 기록 화면의 원천.
+   * weeks만으로는 월·년 합계가 주 경계에서 어긋나고(한 주가 두 달에 걸친다), runs[]는 100건에서 잘린다.
+   * 하루 한 줄이라 1년에 365개 — 영원히 들고 가도 작다. */
+  days: Record<string, { km: number; sec: number; runs: number }>
 }
 
-const emptyLifetime = (): Lifetime => ({ runs: 0, km: 0, sec: 0, longestRunKm: 0, runDays: [], weeks: {}, milestones: {}, episodeReachedAt: {} })
+const emptyLifetime = (): Lifetime => ({ runs: 0, km: 0, sec: 0, longestRunKm: 0, runDays: [], weeks: {}, days: {}, milestones: {}, episodeReachedAt: {} })
 
 /** 경로(trace)를 들고 있을 최근 런 수. 나머지 런은 숫자 기록만 남는다 */
 const TRACE_KEEP = 20
 
-interface PilgrimState {
+export interface PilgrimState {
   activeCourseId: string
   /* 지금 걷고 있는 성경 여정. 여정을 고르는 행위가 상태를 바꿔야 선택에 의미가 생긴다. */
   activeJourneyId: string
@@ -211,6 +215,7 @@ const demo = (): SeedShape => ({
     fastest1kSec: Math.min(...seedRuns.flatMap((r) => r.splits)),
     longestRunKm: Math.max(...seedRuns.map((r) => r.distanceKm)),
     runDays: Array.from(new Set(seedRuns.map((r) => dayKey(r.endedAt)))),
+    days: {},
     milestones: {},
     episodeReachedAt: {},
     weeks: seedRuns.reduce((acc, r) => {
@@ -247,6 +252,7 @@ function migrateInner(s: Partial<PilgrimState>, from: number): Partial<PilgrimSt
               fastest1kSec: splits.length ? Math.min(...splits) : undefined,
               longestRunKm: real.length ? Math.max(...real.map((r) => r.distanceKm || 0)) : 0,
               runDays: Array.from(new Set(runs.map((r) => dayKey(r.endedAt)))).sort(),
+              days: {},
               milestones: {},
               episodeReachedAt: {},
               weeks: runs.reduce((acc, r) => {
@@ -276,6 +282,22 @@ function migrateInner(s: Partial<PilgrimState>, from: number): Partial<PilgrimSt
       list.unshift({ id: 'ic-legacy', alias: legacy, createdAt: Date.now() })
     }
     s = { ...s, intercessions: list }
+  }
+  /* v6: 날별 합계(lifetime.days). 남아 있는 runs[]에서 되살린다 — 100건 밖은 복구할 수 없다. */
+  if (from < 6) {
+    const lt = (s.lifetime ?? emptyLifetime()) as Lifetime
+    if (!lt.days) {
+      const runs = Array.isArray(s.runs) ? s.runs : []
+      const days = runs.reduce(
+        (acc, r) => {
+          const k = dayKey(r.endedAt)
+          acc[k] = { km: (acc[k]?.km ?? 0) + (r.distanceKm || 0), sec: (acc[k]?.sec ?? 0) + (r.durationSec || 0), runs: (acc[k]?.runs ?? 0) + 1 }
+          return acc
+        },
+        {} as Record<string, { km: number; sec: number; runs: number }>,
+      )
+      s = { ...s, lifetime: { ...lt, days } }
+    }
   }
   return s
 }
@@ -435,6 +457,11 @@ export const usePilgrim = create<PilgrimState>()(
             }
             return cur
           })(),
+          days: (() => {
+            const k = dayKey(r.endedAt)
+            const prev = (lt.days ?? {})[k] ?? { km: 0, sec: 0, runs: 0 }
+            return { ...(lt.days ?? {}), [k]: { km: prev.km + r.distanceKm, sec: prev.sec + r.durationSec, runs: prev.runs + 1 } }
+          })(),
           weeks: (() => {
             const k = mondayKey(r.endedAt)
             const prev = (lt.weeks ?? {})[k] ?? { km: 0, runs: 0 }
@@ -521,7 +548,7 @@ export const usePilgrim = create<PilgrimState>()(
       /* 버전을 둔다. 기본 merge는 한 겹 얕은 병합이라 새 최상위 키는 초기값을 물려받지만,
          CourseProgress·RunRecord처럼 중첩 구조에 필드가 늘면 기존 사용자가 undefined를 받는다.
          지금은 무해할 때 자리를 만들어 둔다. */
-      version: 5,
+      version: 6,
       migrate: (state, from) => {
         try {
           return migrateInner(state as Partial<PilgrimState>, from)

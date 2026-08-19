@@ -85,6 +85,14 @@ export const IconCairn = (p: IconProps) => (
   </Svg>
 )
 
+/* 깃발 — 오늘의 길을 여기서 마친다(러닝 종료). 돌무더기는 이정표이지 '끝'이 아니었다 */
+export const IconFlag = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M6 21V4" />
+    <path d="M6 4.5c2.2-1.3 4.2-1.3 6.2 0s4 1.3 6.3 0v9c-2.3 1.3-4.3 1.3-6.3 0s-4-1.3-6.2 0" />
+  </Svg>
+)
+
 /* 두루마리 — 성구 */
 export const IconScroll = (p: IconProps) => (
   <Svg {...p}>

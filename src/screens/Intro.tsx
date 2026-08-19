@@ -20,13 +20,13 @@ export default function Intro() {
     /* 첫 문장은 "실제 길을 달린다"다. 성경 인물 이름으로 시작하면 비크리스천이 첫 화면에서
        끊긴다(전문가 검토). 무엇을 하는 앱인지 → 어디를 가는지 → 닿으면 무엇을 받는지 순서로. */
     { Icon: IconPath, text: '달립니다. 실제 GPS로 거리를 잽니다.' },
-    { Icon: IconCairn, text: '그만큼 지도 위의 내가 앞으로 갑니다 — 갈릴리 호숫가에서 예루살렘까지, 우르에서 가나안까지, 안디옥에서 로마까지. 실제 있었던 길입니다.' },
-    { Icon: IconScroll, text: '자리에 닿으면 인장이 찍히고, 그곳에서 있었던 이야기와 말씀을 받습니다.' },
+    { Icon: IconCairn, text: '달린 만큼 지도 위의 내가 나아갑니다. 실제로 있었던 길입니다.' },
+    { Icon: IconScroll, text: '자리에 닿으면 인장이 찍히고, 그 자리에서 있었던 이야기가 열립니다.' },
   ]
 
   return (
     <div
-      className="fixed inset-0 z-50 mx-auto flex max-w-[440px] flex-col justify-end bg-sand px-8"
+      className="fixed inset-0 z-50 mx-auto flex max-w-[440px] flex-col justify-center overflow-y-auto bg-sand px-8"
       style={{
         paddingTop: 'max(4rem, env(safe-area-inset-top))',
         paddingBottom: 'max(2.5rem, env(safe-area-inset-bottom))',

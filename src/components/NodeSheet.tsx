@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Journey } from '../data/geo/journeys'
-import { tierOfEpisode, scaleOf } from '../data/geo/journeys'
+import { scaleOf } from '../data/geo/journeys'
 import type { BoardNode } from '../lib/board'
-import { ROMAN } from '../lib/board'
 import { celebrationAllowed } from '../lib/quest'
 import { episodeArt, sealArt } from '../assets/art'
 import { IconArrow, IconLocked, IconScroll, IconSeal, IconStep } from './icons'
@@ -35,8 +34,6 @@ export default function NodeSheet({
 }) {
   const { ep, state } = node
   const art = episodeArt(journey.id, ep.id)
-  const tier = tierOfEpisode(journey, ep)
-  const tierIdx = tier ? journey.tiers.findIndex((t) => t.id === tier.id) : -1
   const reached = state === 'reached' || state === 'current'
   const solemn = !celebrationAllowed(ep.mood)
   const seal = sealArt()
@@ -127,12 +124,7 @@ export default function NodeSheet({
           </span>
 
           <div className="min-w-0 flex-1">
-            {tier && (
-              <p className="font-display text-[11px] uppercase tracking-[0.18em] text-muted">
-                {ROMAN[tierIdx] ?? tierIdx + 1} · {tier.name}
-              </p>
-            )}
-            <h2 className="mt-1 font-serif text-[22px] font-bold leading-tight text-ink">{ep.place}</h2>
+            <h2 className="font-serif text-[22px] font-bold leading-tight text-ink">{ep.place}</h2>
             <p className="mt-0.5 truncate font-display text-[12px] italic text-muted">{ep.placeLatin}</p>
             <p className="mt-0.5 text-[11.5px] text-muted">{ep.region}</p>
 
@@ -142,13 +134,11 @@ export default function NodeSheet({
                 <>
                   <IconSeal size={13} style={{ color: solemn ? '#8a6a3c' : 'var(--color-sun-deep)' }} />
                   <span className="text-ink-soft">
-                    {solemn ? '지나온 자리' : '인장이 찍힌 자리'}
-                    {when && (
-                      <span className="text-muted">
-                        {' · '}
-                        {when.getFullYear()}.{String(when.getMonth() + 1).padStart(2, '0')}.{String(when.getDate()).padStart(2, '0')}
-                      </span>
-                    )}
+                    {when
+                      ? `${when.getFullYear()}.${String(when.getMonth() + 1).padStart(2, '0')}.${String(when.getDate()).padStart(2, '0')}에 ${solemn ? '지났습니다' : '닿았습니다'}`
+                      : solemn
+                        ? '지나온 자리'
+                        : '닿은 자리'}
                   </span>
                 </>
               ) : state === 'next' ? (
@@ -173,7 +163,7 @@ export default function NodeSheet({
         </div>
 
         {/* 사건 */}
-        <p className="mt-4 px-6 text-[13.5px] leading-relaxed text-ink-soft">{ep.event}</p>
+        <p className="mt-4 line-clamp-2 px-6 text-[13.5px] leading-relaxed text-ink-soft">{ep.event}</p>
         {/* 거리 — 실측과 내 걸음을 나란히. 걸음을 고른 거리로 진행하되(pace.ts) 실측은 숨기지 않는다 */}
         {ep.measuredSegmentKm != null && ep.measuredSegmentKm > 0 && (
           <p className="mt-2 px-6 text-[11.5px] text-muted">
@@ -191,23 +181,29 @@ export default function NodeSheet({
           <p className="mt-2 font-serif text-[15px] leading-[1.75] text-ink">{ep.verseKrShort}</p>
         </div>
 
-        <div className="mt-4 flex gap-2.5 px-6">
-          <button
-            onClick={onRead}
-            className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 font-serif text-[15px] transition active:scale-[0.98]"
-            style={{ background: 'var(--color-clay-deep)', color: 'var(--color-sand-raised)' }}
-          >
-            말씀 읽기 <IconArrow size={14} />
-          </button>
-          {/* 봉인된 자리에서도 달리기로 갈 수 있어야 한다 — 막다른 시트는 없다 */}
-          {onRun && !reached && (
+        {/* 닿은 자리의 주장은 말씀, 아직인 자리의 주장은 달리기 — 버튼 둘을 동급으로 두지 않는다 */}
+        <div className="mt-4 flex items-center gap-3 px-6">
+          {reached || !onRun ? (
             <button
-              onClick={onRun}
-              className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 font-serif text-[15px] text-ink transition active:scale-[0.98]"
-              style={{ background: 'var(--color-seal-bright)' }}
+              onClick={onRead}
+              className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 font-serif text-[15px] transition active:scale-[0.98]"
+              style={{ background: 'var(--color-clay-deep)', color: 'var(--color-sand-raised)' }}
             >
-              <IconStep size={15} /> {state === 'next' ? '이 자리로 달리기' : '이 길을 달리기'}
+              말씀 읽기 <IconArrow size={14} />
             </button>
+          ) : (
+            <>
+              <button
+                onClick={onRun}
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 font-serif text-[15px] transition active:scale-[0.98]"
+                style={{ background: 'var(--color-clay-deep)', color: 'var(--color-sand-raised)' }}
+              >
+                <IconStep size={15} /> {state === 'next' ? '이 자리로 달리기' : '이 길을 달리기'}
+              </button>
+              <button onClick={onRead} className="flex shrink-0 items-center gap-1 px-2 py-3 font-serif text-[14px] text-clay-deep transition active:scale-95">
+                말씀 읽기 <IconArrow size={13} />
+              </button>
+            </>
           )}
         </div>
       </div>

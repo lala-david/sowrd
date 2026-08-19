@@ -298,7 +298,7 @@ export function SummaryTriple({ distance, unit, durationSec, paceSec, units }: {
     <div className="grid grid-cols-3 divide-x divide-line">
       <Cell big={distance} small={unit} />
       <Cell big={fmtDuration(durationSec)} small="시간" />
-      <Cell big={fmtPace(paceSec, units)} small={units === 'mi' ? '1마일 평균' : '1km 평균'} />
+      <Cell big={fmtPace(paceSec, units)} small="평균 페이스" />
     </div>
   )
 }

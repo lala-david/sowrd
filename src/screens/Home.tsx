@@ -6,7 +6,8 @@ import { featuredVerse } from '../data/scripture'
 import TabBar from '../components/TabBar'
 import InstallPrompt from '../components/InstallPrompt'
 import BoardWindow from '../components/BoardWindow'
-import { IconHeld, IconChevron, IconStep, IconScroll, IconSeal } from '../components/icons'
+import { IconHeld, IconChevron, IconArrow, IconScroll, IconSeal } from '../components/icons'
+import { SectionLabel } from '../components/ui'
 import { crestArt, stationArt } from '../assets/art'
 import { JOURNEYS, journeyById, journeyProgress, toJourneyKm } from '../data/geo/journeys'
 import { questNow, questCall } from '../lib/quest'
@@ -126,12 +127,8 @@ export default function Home() {
             <span className="min-w-0">
               <span className="block font-serif text-[20px] leading-tight">바로 달리기</span>
             </span>
-            <span
-              className="ml-3 flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-ink shadow-[0_0_18px_rgba(240,195,104,.55)]"
-              style={{ background: 'var(--color-seal-bright)' }}
-            >
-              <IconStep size={21} strokeWidth={1.7} />
-            </span>
+            {/* 탭바 FAB(IconStep)와 같은 아이콘을 두 번 쓰지 않는다 — 여기는 화살표 하나 */}
+            <IconArrow size={20} className="ml-3 shrink-0 opacity-90" />
           </button>
 
           {/* 이정표 카운터(14 / 142)는 뺐다. 홈에 숫자가 스물한 개였다.
@@ -155,7 +152,7 @@ export default function Home() {
         {!homeCompact && (
           <section className="mt-7 px-6">
             <div className="flex items-baseline justify-between">
-              <h2 className="font-display text-[12px] uppercase tracking-[0.26em] text-muted">오늘의 말씀</h2>
+              <SectionLabel>오늘의 말씀</SectionLabel>
               <span className="font-display text-[10.5px] uppercase tracking-[0.18em] text-clay-deep">
                 {today.verse.refLatin}
               </span>
@@ -186,7 +183,7 @@ export default function Home() {
         {!homeCompact && (
           <section className="mt-8">
             <div className="flex items-baseline justify-between px-7">
-              <h2 className="font-display text-[12px] uppercase tracking-[0.26em] text-muted">길 바꾸기</h2>
+              <SectionLabel>길 바꾸기</SectionLabel>
               <button
                 onClick={() => go('journeys')}
                 className="tap flex items-center gap-1 text-[12px] text-muted transition active:scale-95"
@@ -210,10 +207,8 @@ export default function Home() {
                     /* 라벨이 "길 바꾸기"인데 실제로는 길을 안 바꾸고 있었다 —
                        상세 화면만 열고 activeJourneyId는 그대로였다. 라벨과 동작이 어긋나면
                        라벨이 거짓말이 된다. 이제 정말 그 길로 갈아타고, 그 길의 지도를 보여준다. */
-                    onClick={() => {
-                      pilgrim.setActiveJourney(j.id)
-                      openMap(j.id)
-                    }}
+                    /* 둘러보는 것과 갈아타는 것을 가른다 — 지도를 열기만 하고, 전환은 지도에서 확정한다 */
+                    onClick={() => openMap(j.id)}
                     aria-current={on ? 'true' : undefined}
                     className="flex min-w-0 flex-col items-center gap-1.5 transition active:scale-95"
                   >
@@ -221,7 +216,7 @@ export default function Home() {
                       <svg viewBox="0 0 48 48" className="absolute inset-0 -rotate-90" aria-hidden>
                         <circle cx="24" cy="24" r="22" fill="none" stroke="var(--color-line)" strokeWidth="2" />
                         <circle
-                          cx="24" cy="24" r="22" fill="none" stroke="var(--color-lapis)" strokeWidth="2" strokeLinecap="round"
+                          cx="24" cy="24" r="22" fill="none" stroke="var(--color-seal)" strokeWidth="2" strokeLinecap="round"
                           strokeDasharray={`${(p.pct / 100) * 138} 138`}
                         />
                       </svg>
@@ -247,8 +242,8 @@ export default function Home() {
                     </span>
                     {/* n/N 숫자는 뺐다 — 문장 둘레의 링이 이미 같은 진행을 그리고 있다.
                         다섯 개가 나란히 있으면 숫자 열 개가 한 줄에 서는 셈이었다. */}
-                    <span className={`w-full break-keep text-center text-[10.5px] leading-[1.25] ${on ? 'text-clay-deep' : 'text-ink-soft'}`}>
-                      {j.who}
+                    <span className={`line-clamp-2 min-h-[28px] w-full break-keep text-center text-[11px] leading-[1.25] ${on ? 'text-clay-deep' : 'text-ink-soft'}`}>
+                      {({ jesus: '예수의 길', abraham: '아브라함', exodus: '출애굽', paul: '바울', peter: '베드로' } as Record<string, string>)[j.id] ?? j.who}
                       {on && <span className="sr-only"> (지금 걷는 길)</span>}
                     </span>
                   </button>
