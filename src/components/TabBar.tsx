@@ -1,5 +1,6 @@
 import { useNav, type Screen } from '../store'
 import { useRun } from '../state/run'
+import { primeVoice } from '../lib/voice'
 import { usePilgrim } from '../state/pilgrim'
 import { IconPath, IconSeal, IconCompass, IconPilgrim, IconStep } from './icons'
 
@@ -25,6 +26,7 @@ export default function TabBar({ active = 'home' }: { active?: Screen }) {
   /* 홈의 "바로 달리기"와 같은 동작이어야 한다 — 같은 아이콘이 다른 곳으로 가면 라벨이 거짓이 된다.
      고르고 시작하는 길(Setup)은 홈의 작은 링크로 남아 있다. */
   const startRun = () => {
+    primeVoice()
     configure({ mode: 'guided', courseId: activeCourseId, journeyId: activeJourneyId })
     go('run')
   }

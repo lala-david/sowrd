@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNav } from '../store'
+import { primeVoice } from '../lib/voice'
 import { usePilgrim, journeyKmOf } from '../state/pilgrim'
 import { useRun, RUN_MODES, type RunMode } from '../state/run'
 
@@ -77,6 +78,7 @@ export default function Setup() {
   const tone = next ? toneOf(next.mood) : toneOf('everyday')
 
   const begin = () => {
+    primeVoice()
     configure({
       mode, courseId: activeCourseId, journeyId: pilgrim.activeJourneyId,
       goalKm: mode === 'goalDistance' ? goalKm : undefined,

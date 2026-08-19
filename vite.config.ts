@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 import path from 'node:path'
 
 /* 배포 하위 경로.
@@ -23,6 +24,10 @@ export default defineConfig(({ command }) => ({
    * 켜려면: VITE_ALLOW_TUNNEL=1 npx vite --host 127.0.0.1 --port 5173 */
   server: process.env.VITE_ALLOW_TUNNEL ? { allowedHosts: true } : {},
   plugins: [
+    /* 폰에서 LAN으로 열 때 위치 권한을 쓰려면 https여야 한다(브라우저는 http에선 geolocation을 안 준다).
+       VITE_HTTPS=1 npx vite --host  → https://<내 IP>:5173 (자체 서명 인증서, 폰에서 한 번 "계속"을 눌러야 한다).
+       배포(github.io)는 원래 https라 상관없다. */
+    ...(process.env.VITE_HTTPS ? [basicSsl()] : []),
     react(),
     tailwindcss(),
     VitePWA({

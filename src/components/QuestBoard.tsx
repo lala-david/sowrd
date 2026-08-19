@@ -10,6 +10,7 @@ import Ambient from './Ambient'
 import { JOURNEY_WALKER } from '../data/ambient'
 import { haptic } from '../lib/haptics'
 import { usePilgrim } from '../state/pilgrim'
+import { MILESTONES } from '../data/geo/journeys/milestones'
 
 /* ── 길 위를 지나가는 것들 ──────────────────────────────────────────────────
  * 위에서 내려다본 모양(조감)이라 길의 방향을 따라 돌려도 거꾸로 보이는 일이 없다.
@@ -81,6 +82,8 @@ export interface QuestBoardProps {
   onBoard?: (board: Board, scale: number) => void
   /** 이 값(여정 km)에서 journeyKm까지 **걸어오는** 연출 — 리빌에서 오늘 나아간 만큼 말이 움직인다 */
   fromKm?: number
+  /** 핀치 줌 배율(1~2). 1보다 크면 보드가 컨테이너보다 넓어지고 부모가 가로로 스크롤한다 */
+  zoom?: number
   className?: string
 }
 
@@ -102,7 +105,7 @@ const INK = {
 /* 자리의 크기는 상태가 정한다 — 다음 자리가 압도적으로 커야 "오늘의 목표가 하나"라는 말이 형태가 된다 */
 const SIZE: Record<BoardNode['state'], number> = { reached: 62, current: 66, next: 76, sealed: 50 }
 
-export default function QuestBoard({ journey, journeyKm, onSelectNode, selectedId, onBoard, fromKm, className = '' }: QuestBoardProps) {
+export default function QuestBoard({ journey, journeyKm, onSelectNode, selectedId, onBoard, fromKm, zoom = 1, className = '' }: QuestBoardProps) {
   const reduce = useReducedMotion()
   const wrapRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
@@ -115,14 +118,14 @@ export default function QuestBoard({ journey, journeyKm, onSelectNode, selectedI
 
   /* 컨테이너 폭 → scale */
   useLayoutEffect(() => {
-    const el = wrapRef.current
+    const el = wrapRef.current?.parentElement ?? wrapRef.current
     if (!el) return
-    const apply = () => setScale(Math.max(0.5, el.clientWidth / BOARD_W))
+    const apply = () => setScale(Math.max(0.5, el.clientWidth / BOARD_W) * zoom)
     apply()
     const ro = new ResizeObserver(apply)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [])
+  }, [zoom])
 
   useEffect(() => {
     onBoard?.(board, scale)
@@ -136,6 +139,8 @@ export default function QuestBoard({ journey, journeyKm, onSelectNode, selectedI
   const segRefs = useRef<(SVGPathElement | null)[]>([])
   const [me, setMe] = useState<Pt | null>(null)
   const played = useRef(false)
+  /* 이정표 점 — 자리 사이 실제 1.5km마다 하나. 길 위 정확한 지점(구간 곡선의 비율)에 찍는다 */
+  const [mileDots, setMileDots] = useState<{ x: number; y: number; passed: boolean }[]>([])
   useEffect(() => {
     const road = roadRef.current
     const walked = walkedRef.current
@@ -151,6 +156,28 @@ export default function QuestBoard({ journey, journeyKm, onSelectNode, selectedI
     }
     const curIdx = board.current ? board.nodes.indexOf(board.current) : -1
     const done = lengthAt(curIdx, board.segProgress)
+
+    // 이정표
+    const miles = MILESTONES[journey.id] ?? []
+    const dots: { x: number; y: number; passed: boolean }[] = []
+    for (const m of miles) {
+      let i = -1
+      for (let k = 0; k < board.nodes.length - 1; k++) {
+        if (m.cumulativeKm >= board.nodes[k].ep.cumulativeKm && m.cumulativeKm < board.nodes[k + 1].ep.cumulativeKm) {
+          i = k
+          break
+        }
+      }
+      if (i < 0) continue
+      const a = board.nodes[i].ep.cumulativeKm
+      const b = board.nodes[i + 1].ep.cumulativeKm
+      const f = b > a ? (m.cumulativeKm - a) / (b - a) : 0
+      const el = segRefs.current[i]
+      if (!el || !lens[i]) continue
+      const pt0 = el.getPointAtLength(f * lens[i])
+      dots.push({ x: pt0.x, y: pt0.y, passed: m.cumulativeKm <= journeyKm })
+    }
+    setMileDots(dots)
     /* 어디서부터 그릴까 — 기본은 길의 처음부터(지도를 열 때마다 걸어온 길이 차오른다).
        fromKm이 있으면 그 지점부터(리빌: 오늘 나아간 만큼만 움직인다 — 그래야 "오늘"이 보인다). */
     let from = 0
@@ -181,7 +208,7 @@ export default function QuestBoard({ journey, journeyKm, onSelectNode, selectedI
       setMe([pt.x, pt.y])
     })
     return () => cancelAnimationFrame(raf)
-  }, [d, board, pts.length, reduce, fromKm, journey])
+  }, [d, board, pts.length, reduce, fromKm, journey, journeyKm])
 
   /* 안개는 다음 자리 조금 아래에서 시작한다. 다음 자리가 없으면(완주) 안개도 없다. */
   const fogY = board.next ? board.next.y + 74 : null
@@ -214,7 +241,13 @@ export default function QuestBoard({ journey, journeyKm, onSelectNode, selectedI
   }
 
   return (
-    <div ref={wrapRef} className={`relative w-full overflow-hidden ${className}`} style={{ height: board.height * scale }} onPointerDown={onBoardDown} onPointerUp={onBoardUp}>
+    <div
+      ref={wrapRef}
+      className={`relative overflow-hidden ${className}`}
+      style={{ height: board.height * scale, width: zoom > 1 ? BOARD_W * scale : '100%' }}
+      onPointerDown={onBoardDown}
+      onPointerUp={onBoardUp}
+    >
       <div
         className="absolute left-0 top-0"
         style={{ width: BOARD_W, height: board.height, transform: `scale(${scale})`, transformOrigin: 'top left' }}
@@ -268,6 +301,10 @@ export default function QuestBoard({ journey, journeyKm, onSelectNode, selectedI
               fill="none"
               stroke="none"
             />
+          ))}
+          {/* 이정표 — 지난 것은 라피스로 채워지고, 아직인 것은 종이색 점 */}
+          {mileDots.map((m, i) => (
+            <circle key={`ms${i}`} cx={m.x} cy={m.y} r={3.2} fill={m.passed ? INK.path : INK.paper} stroke={m.passed ? INK.paper : INK.path} strokeWidth={1.2} strokeOpacity={m.passed ? 0.95 : 0.6} />
           ))}
           {/* 길 위를 지나가는 것들 — 양 떼·낙타·구름 기둥. 길을 그대로 따라간다 */}
           {walker !== 'none' && !reduce && d && (

@@ -5,10 +5,10 @@ import { JOURNEYS, journeyById, type JourneyEpisode } from '../data/geo/journeys
 import { ROMAN } from '../lib/board'
 import { useNav } from '../store'
 import { fmtDistance, fmtDuration, fmtPace, unitLabel } from '../lib/format'
-import { StatTile, SectionLabel, SettingSwitch, WeeklyBars } from '../components/ui'
+import { StatTile, SectionLabel, WeeklyBars } from '../components/ui'
 import TabBar from '../components/TabBar'
 import { figureArt, episodeArt } from '../assets/art'
-import { IconPilgrim, IconHeld, IconEmber, IconReached, IconSettings, IconLamp, IconChevron } from '../components/icons'
+import { IconPilgrim, IconHeld, IconEmber, IconReached, IconSettings, IconChevron } from '../components/icons'
 import { validateAlias } from '../data/prayer'
 
 export default function Profile() {
@@ -16,7 +16,7 @@ export default function Profile() {
   const go = useNav((s) => s.go)
   const [showAllRuns, setShowAllRuns] = useState(false)
   const openEpisode = useNav((s) => s.openEpisode)
-  const { units, setUnits, intercessions, addIntercession, removeIntercession, runs, resetAll, textScale, setTextScale, theme, setTheme } = pilgrim
+  const { units, intercessions, addIntercession, removeIntercession, runs } = pilgrim
   const totals = pilgrimTotals(pilgrim)
   const tier = activeTier(pilgrim)
   /* 마지막으로 받은 말씀 — 닿은 시각(lifetime.episodeReachedAt)이 가장 늦은 자리 */
@@ -256,90 +256,10 @@ export default function Profile() {
         </div>
       )}
 
-      {/* 설정 */}
-      <div className="mt-6 px-6">
-        <SectionLabel>설정</SectionLabel>
-        <div className="mt-3 flex items-center justify-between rounded-xl border border-line bg-sand-raised/30 px-4 py-3">
-          <span className="flex items-center gap-2.5 text-[14px] text-ink-soft"><IconSettings size={18} className="text-muted" /> 거리 단위</span>
-          <div className="flex overflow-hidden rounded-lg border border-line-strong">
-            {(['km', 'mi'] as const).map((u) => (
-              <button key={u} onClick={() => setUnits(u)} className={`min-h-[44px] min-w-[52px] px-3.5 text-[13px] uppercase ${units === u ? 'bg-clay-deep text-sand-raised' : 'text-muted'}`}>{u}</button>
-            ))}
-          </div>
-        </div>
-        {/* 글자 크기 — 이 앱의 폰트는 전부 px 하드코딩이라 브라우저·OS의 글꼴 설정이 듣지 않는다.
-            그래서 앱이 직접 레버를 준다. 노안 사용자에게는 이게 유일한 수단이다. */}
-        <div className="mt-3 flex items-center justify-between rounded-xl border border-line bg-sand-raised/30 px-4 py-3">
-          <span className="flex items-center gap-2.5 text-[14px] text-ink-soft">
-            <IconSettings size={18} className="text-muted" /> 글자 크기
-          </span>
-          <div className="flex overflow-hidden rounded-lg border border-line-strong">
-            {([['normal', '보통'], ['large', '크게'], ['xlarge', '더 크게']] as const).map(([v, label]) => (
-              <button
-                key={v}
-                onClick={() => setTextScale(v)}
-                aria-pressed={textScale === v}
-                className={`min-h-[44px] px-3 text-[13px] ${textScale === v ? 'bg-clay-deep text-sand-raised' : 'text-muted'}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 테마 — "밤의 순례길 · 등불" 토큰은 처음부터 다 정의돼 있었는데 켜지는 곳이
-            러닝 화면 한 군데뿐이었다. 새벽 5시에 열어도 크림색이었다는 뜻이다.
-            기본은 '기기 설정'이라 아무것도 안 만져도 밤에는 밤이 된다. */}
-        <div className="mt-3 flex items-center justify-between rounded-xl border border-line bg-sand-raised/30 px-4 py-3">
-          <span className="flex items-center gap-2.5 text-[14px] text-ink-soft">
-            <IconLamp size={18} className="text-muted" /> 화면
-          </span>
-          <div className="flex overflow-hidden rounded-lg border border-line-strong">
-            {([['system', '기기'], ['light', '낮'], ['dark', '밤']] as const).map(([v, label]) => (
-              <button
-                key={v}
-                onClick={() => setTheme(v)}
-                aria-pressed={theme === v}
-                className={`min-h-[44px] px-3 text-[13px] ${theme === v ? 'bg-clay-deep text-sand-raised' : 'text-muted'}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 경로 기록 — 기본 꺼짐. 켜야 지도에 오늘 달린 길이 그려진다.
-            켜면 실좌표를 다루므로, 왜 안전한지를 여기서 밝힌다. */}
-        <SettingSwitch
-          label="경로 기록"
-          hint="달린 길을 지도에 그립니다. 시작·끝 200m는 잘라내 집 위치가 드러나지 않고, 좌표는 이 기기에만 남습니다."
-          checked={pilgrim.traceRoute}
-          onChange={pilgrim.setTraceRoute}
-        />
-
-        <button onClick={() => { if (confirm('모든 순례 기록을 지울까요?')) resetAll() }} className="mt-4 w-full rounded-xl border border-line py-3.5 text-center text-[13px] text-muted transition active:scale-[0.99]">
-          기록 초기화
+      <div className="px-6 pb-4">
+        <button onClick={() => go('settings')} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-line py-3.5 font-serif text-[15px] text-ink-soft transition active:scale-[0.99]">
+          <IconSettings size={16} /> 설정
         </button>
-
-        {/* 시연·개발 도구 — 접어 둔다. 일반 사용자의 설정 목록에 "전체 해금"이 나란히 있으면
-            진행의 의미가 스스로 무너진다(전문가 검토 지적). 필요할 때만 펼친다. */}
-        <details className="mt-6 rounded-xl border border-dashed border-line px-4 py-2">
-          <summary className="cursor-pointer py-1.5 text-[12px] text-muted">시연·개발 도구</summary>
-          <div className="pb-2">
-            <SettingSwitch
-              label="전체 해금"
-              hint="모든 자리를 도달한 것으로 봅니다(개발·시연용)."
-              checked={pilgrim.admin}
-              onChange={pilgrim.setAdmin}
-            />
-            <button onClick={() => { if (confirm('다섯 여정과 예수 사역의 모든 자리를 완주한 상태로 채웁니다(시연용). 실제 러닝 기록은 만들지 않아요. 계속할까요?')) pilgrim.completeAll() }} className="mt-3 w-full rounded-xl border border-line-strong bg-sand-raised/50 py-3 text-center text-[13px] text-ink-soft transition active:scale-[0.99]">
-              모든 여정 완주 처리 (시연)
-            </button>
-            <button onClick={() => { if (confirm('지금까지의 기록이 데모 데이터로 바뀝니다. 되돌릴 수 없어요. 계속할까요?')) pilgrim.loadDemo() }} className="mt-2 w-full rounded-xl border border-line py-3 text-center text-[13px] text-muted transition active:scale-[0.99]">
-              데모 데이터 넣기
-            </button>
-          </div>
-        </details>
       </div>
 
       <TabBar active="profile" />

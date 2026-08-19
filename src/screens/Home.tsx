@@ -1,6 +1,7 @@
 import { useNav } from '../store'
 import { usePilgrim, journeyKmOf, daysThisWeek, pilgrimTotals } from '../state/pilgrim'
 import { useRun } from '../state/run'
+import { primeVoice } from '../lib/voice'
 import { STATIONS, JESUS_ORDER, type PassageSlug } from '../data/journey'
 import { featuredVerse } from '../data/scripture'
 import TabBar from '../components/TabBar'
@@ -71,6 +72,7 @@ export default function Home() {
    * 매번 설정 화면을 통과해야 하면 그 행위는 의식이 아니라 서류가 된다. 기본값으로 바로 뛰고,
    * 고르고 싶은 사람만 아래 작은 링크로 들어간다(모드·목표·품은 사람은 거기 그대로 있다). */
   const runNow = () => {
+    primeVoice()
     configure({ mode: 'guided', courseId: activeCourseId, journeyId: activeJourneyId })
     go('run')
   }

@@ -24,7 +24,6 @@ export default function JourneyMap() {
   const go = useNav((s) => s.go)
   const journeyId = useNav((s) => s.journeyId)
   const openEpisode = useNav((s) => s.openEpisode)
-  const openJourney = useNav((s) => s.openJourney)
   const configure = useRun((s) => s.configure)
   const pilgrim = usePilgrim()
 
@@ -42,6 +41,42 @@ export default function JourneyMap() {
   const didCenter = useRef(false)
 
   const onBoard = useCallback((board: Board, scale: number) => setLayout({ board, scale }), [])
+
+  /* 핀치 줌 — 네이티브 touch 리스너(passive:false)로 두 손가락 거리 비율을 읽는다 */
+  const [zoom, setZoom] = useState(1)
+  useEffect(() => {
+    const el = boardRef.current
+    if (!el) return
+    let startDist = 0
+    let startZoom = 1
+    const dist = (t: TouchList) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY)
+    const onStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        startDist = dist(e.touches)
+        startZoom = zoom
+      }
+    }
+    const onMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && startDist > 0) {
+        e.preventDefault()
+        const z = Math.max(1, Math.min(2, startZoom * (dist(e.touches) / startDist)))
+        setZoom(Math.round(z * 100) / 100)
+      }
+    }
+    const onEnd = () => {
+      startDist = 0
+    }
+    el.addEventListener('touchstart', onStart, { passive: true })
+    el.addEventListener('touchmove', onMove, { passive: false })
+    el.addEventListener('touchend', onEnd)
+    el.addEventListener('touchcancel', onEnd)
+    return () => {
+      el.removeEventListener('touchstart', onStart)
+      el.removeEventListener('touchmove', onMove)
+      el.removeEventListener('touchend', onEnd)
+      el.removeEventListener('touchcancel', onEnd)
+    }
+  }, [zoom])
 
   /** 보드 좌표(논리 px) → 문서 y */
   const docY = (boardY: number) => {
@@ -180,9 +215,19 @@ export default function JourneyMap() {
       </header>
 
       {/* ── 보드 ─────────────────────────────────────────────────────── */}
-      <div ref={boardRef} className="-mt-3">
-        <QuestBoard journey={journey} journeyKm={km} onSelectNode={setSelected} selectedId={selected?.ep.id} onBoard={onBoard} />
+      {/* 두 손가락으로 벌리면 보드가 커진다(1~2배). 커진 만큼 옆으로 끌어서 본다. 페이지 자체는 안 커진다. */}
+      <div ref={boardRef} className="-mt-3 overflow-x-auto overflow-y-hidden" style={{ touchAction: 'pan-x pan-y', scrollbarWidth: 'none' }}>
+        <QuestBoard journey={journey} journeyKm={km} onSelectNode={setSelected} selectedId={selected?.ep.id} onBoard={onBoard} zoom={zoom} />
       </div>
+      {zoom > 1 && (
+        <button
+          onClick={() => setZoom(1)}
+          className="fixed right-4 z-30 rounded-full px-3 py-2 text-[12px] text-ink shadow-[0_6px_18px_rgba(40,25,10,.3)] transition active:scale-95"
+          style={{ bottom: 'max(4.6rem, calc(env(safe-area-inset-bottom) + 3.6rem))', background: 'rgba(251,241,220,.95)' }}
+        >
+          원래 크기
+        </button>
+      )}
 
       {/* 길의 끝 — 보드 아래 한 문단 */}
       <div className="px-7 pb-10 pt-6 text-center" style={{ paddingBottom: 'max(3.5rem, env(safe-area-inset-bottom))' }}>
@@ -195,12 +240,6 @@ export default function JourneyMap() {
           {pilgrim.units}
         </p>
         {q.done && <p className="mt-3 font-serif text-[14px] text-clay-deep">이 길을 끝까지 걸었습니다.</p>}
-        <button
-          onClick={() => openJourney(journey.id)}
-          className="mx-auto mt-5 flex items-center gap-1.5 rounded-full border border-line-strong px-4 py-2 text-[12.5px] text-ink-soft transition active:scale-95"
-        >
-          자리 목록으로 보기 <IconArrow size={12} />
-        </button>
       </div>
 
       {/* 지금 자리로 */}

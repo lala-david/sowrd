@@ -1,17 +1,21 @@
 import { create } from 'zustand'
 import type { PassageSlug } from './data/journey'
+import { JOURNEYS } from './data/geo/journeys'
+
+const JESUS_EPISODE_IDS = new Set((JOURNEYS.find((j) => j.id === 'jesus')?.episodes ?? []).map((e) => e.id))
 
 export type Screen =
-  | 'home' | 'courses' | 'setup' | 'run' | 'reveal' | 'collection' | 'profile' | 'detail'
+  | 'home' | 'setup' | 'run' | 'reveal' | 'collection' | 'profile' | 'detail'
   | 'journeys' // 여정 선택(5종 카드)
   | 'journey' // 여정 상세(등급별 에피소드)
   | 'episode' // 에피소드 상세(말씀 읽기)
   | 'map' // 지도만 보는 화면 — 길 전체
   | 'stats' // 기록 — 주·월·년
+  | 'settings' // 설정(프로필에서 분리)
 
 const SCREENS: Screen[] = [
-  'home', 'courses', 'setup', 'run', 'reveal', 'collection', 'profile', 'detail',
-  'journeys', 'journey', 'episode', 'map', 'stats',
+  'home', 'setup', 'run', 'reveal', 'collection', 'profile', 'detail',
+  'journeys', 'journey', 'episode', 'map', 'stats', 'settings',
 ]
 
 /* 화면과 인자를 전부 해시에 담는다.
@@ -51,7 +55,7 @@ const decode = (hash: string): Route => {
 }
 
 /** 뒤로가기로 앱을 벗어나면 안 되는 최상위 화면들 */
-const ROOTS: Screen[] = ['home', 'journeys', 'courses', 'profile']
+const ROOTS: Screen[] = ['home', 'journeys', 'profile']
 
 interface NavState extends Route {
   go: (s: Screen) => void
@@ -86,15 +90,21 @@ export const useNav = create<NavState>((set) => ({
     set({ ...r, detailId: undefined, journeyId: undefined, episodeId: undefined })
   },
   openDetail: (detailId, from) => {
-    /* 어디서 열었는지를 들고 간다. 예전엔 Detail의 뒤로가기가 무조건 collection이라,
-     * 심플 모드에서 "오늘의 말씀"만 읽으려던 사람이 존재도 모르던 37자리 목록에,
-     * 그것도 어떤 탭도 켜지지 않은 상태로 떨어졌다. */
+    /* 예수 자리는 이제 예수 **여정**의 자리다(geo/journeys/jesus.ts) — 읽기 화면은 하나(episode)면 된다.
+     * 여정에 없는 자리(로마 '땅 끝' 같은 상징 좌표)만 옛 Detail로 연다. */
+    if (JESUS_EPISODE_IDS.has(detailId)) {
+      const r: Route = { screen: 'episode', journeyId: 'jesus', episodeId: detailId, from }
+      push(r)
+      set(r)
+      return
+    }
     const r: Route = { screen: 'detail', detailId, from }
     push(r)
     set(r)
   },
+  /* 여정 "상세"는 지도다 — 목록 화면(JourneyDetail)은 지도의 재진술이라 없앴다 */
   openJourney: (journeyId) => {
-    const r: Route = { screen: 'journey', journeyId }
+    const r: Route = { screen: 'map', journeyId }
     push(r)
     set(r)
   },

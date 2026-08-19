@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useNav } from './store'
 import { usePilgrim } from './state/pilgrim'
 import Home from './screens/Home'
-import Courses from './screens/Courses'
 import Setup from './screens/Setup'
 import Run from './screens/Run'
 import Reveal from './screens/Reveal'
@@ -10,15 +9,14 @@ import Collection from './screens/Collection'
 import Profile from './screens/Profile'
 import Detail from './screens/Detail'
 import Journeys from './screens/Journeys'
-import JourneyDetail from './screens/JourneyDetail'
 import EpisodeDetail from './screens/EpisodeDetail'
 import JourneyMap from './screens/JourneyMap'
 import Intro from './screens/Intro'
 import Stats from './screens/Stats'
+import Settings from './screens/Settings'
 
 const SCREENS = {
   home: Home,
-  courses: Courses,
   setup: Setup,
   run: Run,
   reveal: Reveal,
@@ -26,10 +24,11 @@ const SCREENS = {
   profile: Profile,
   detail: Detail,
   journeys: Journeys,
-  journey: JourneyDetail,
+  journey: JourneyMap, // 옛 링크 호환 — 여정 상세 = 지도
   episode: EpisodeDetail,
   map: JourneyMap,
   stats: Stats,
+  settings: Settings,
 } as const
 
 export default function App() {

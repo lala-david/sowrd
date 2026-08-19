@@ -8,6 +8,11 @@ import { toneOf } from '../lib/mood'
 import { LAMP_VERSE } from '../data/scripture'
 import { journeyById, journeyProgress, toJourneyKm, toRealKm } from '../data/geo/journeys'
 import { haptic } from '../lib/haptics'
+import { speak } from '../lib/voice'
+
+/* 1초짜리 무음 WAV(8kHz·8bit) — 잠금화면 미디어 세션을 살려 두는 용도 */
+const SILENT_WAV =
+  'data:audio/wav;base64,UklGRiQfAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAfAAA' + 'gA'.repeat(2666)
 import { watchDistance, geoSupported, geoBlockedReason, type GeoStatus } from '../lib/geo'
 import { IconCairn, IconLocked, IconHeld, IconPause, IconPlay } from '../components/icons'
 import LiveMap from '../components/LiveMap'
@@ -50,6 +55,7 @@ export default function Run() {
     [kmMark],
   )
 
+  const voiceCue = usePilgrim((s) => s.voiceCue)
   const [locked, setLocked] = useState(false)
   const unlockTimer = useRef<number | null>(null)
   const clearUnlock = () => {
@@ -78,19 +84,34 @@ export default function Run() {
    * 'tracking'만 GPS로 친다. */
   const usingGps = geo === 'tracking'
 
+  /* 자동 멈춤 — 신호등 앞에서 20초 넘게 서 있으면 시간을 세지 않는다(평균 페이스가 기다린 시간에 망가지지 않게).
+     다시 움직이면 스스로 이어 간다. 손으로 멈춘 것과는 구분한다(autoPausedRef). GPS로 재는 동안에만. */
+  const autoPausedRef = useRef(false)
+  const lastMoveAtRef = useRef(Date.now())
+  const watchActive = status === 'running' || (status === 'paused' && autoPausedRef.current)
   useEffect(() => {
-    if (status !== 'running') return
+    if (!watchActive) return
     if (!geoSupported()) {
       setGeo('unavailable')
       return
     }
+    lastMoveAtRef.current = Date.now()
     return watchDistance(
       ({ deltaKm, paceSecPerKm, point, accMedian, acceptRate }) => {
-        if (accMedian !== undefined && acceptRate !== undefined) {
-          useRun.getState().setSignal(accMedian, acceptRate)
+        const st = useRun.getState()
+        if (accMedian !== undefined && acceptRate !== undefined) st.setSignal(accMedian, acceptRate)
+        if (deltaKm > 0.002) lastMoveAtRef.current = Date.now()
+        if (st.status !== 'running') {
+          // 자동으로 멈춘 상태에서 다시 움직였다 — 스스로 이어 간다
+          if (autoPausedRef.current && deltaKm > 0.004) {
+            autoPausedRef.current = false
+            st.resume()
+            haptic('resume')
+          }
+          return
         }
         // GPS로 잰 거리를 따로 누적한다 — 기록의 gps/sim 판정에 쓴다
-        useRun.getState().addGpsKm(deltaKm)
+        st.addGpsKm(deltaKm)
         // tick은 (경과초, 페이스)를 받아 거리를 되계산한다 → 실측 거리를 그대로 넣기 위해 역산
         const pace = paceSecPerKm ?? BASE_PACE
         useRun.getState().tick(deltaKm * pace, pace)
@@ -105,7 +126,65 @@ export default function Run() {
       // 좌표는 늘 받는다 — 실시간 지도를 그려야 하니까. 저장은 finish()에서 「경로 기록」으로 가른다.
       true,
     )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchActive])
+
+  /* 잠금화면 컨트롤(Media Session) — 화면을 꺼도 거리·다음 자리가 잠금화면에 남고, 거기서 멈춤/이어가기.
+     브라우저는 소리가 나는 동안만 세션을 보여 주므로 무음 트랙을 아주 작게 돌린다(best-effort,
+     안 되는 기기에선 조용히 넘어간다). */
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return
+    if (status !== 'running' && status !== 'paused') return
+    try {
+      if (!audioRef.current) {
+        const a = new Audio(SILENT_WAV)
+        a.loop = true
+        a.volume = 0.01
+        audioRef.current = a
+      }
+      audioRef.current.play().catch(() => undefined)
+      const ms = navigator.mediaSession
+      ms.setActionHandler('pause', () => {
+        autoPausedRef.current = false
+        useRun.getState().pause()
+      })
+      ms.setActionHandler('play', () => {
+        autoPausedRef.current = false
+        useRun.getState().resume()
+      })
+      ms.playbackState = status === 'running' ? 'playing' : 'paused'
+    } catch {
+      /* noop */
+    }
   }, [status])
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: `${fmtDistance(distanceKm, units)} ${unitLabel(units)} · ${fmtDuration(elapsedSec)}`,
+        artist: jProg?.next ? `${jProg.next.place}까지 ${fmtDistance(jNextRealKm, units)}${unitLabel(units).toLowerCase()}` : journey?.name ?? 'THE WAY',
+        album: 'THE WAY',
+      })
+    } catch {
+      /* noop */
+    }
+  }, [Math.floor(distanceKm * 10), Math.floor(elapsedSec / 5)]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => audioRef.current?.pause(), [])
+
+  /* 20초 정지 감시 — 설정에서 껐으면 아무 일도 없다 */
+  const autoPause = usePilgrim((s) => s.autoPause)
+  useEffect(() => {
+    if (status !== 'running' || !usingGps || !autoPause) return
+    const id = window.setInterval(() => {
+      if (Date.now() - lastMoveAtRef.current > 20000 && useRun.getState().status === 'running') {
+        autoPausedRef.current = true
+        useRun.getState().pause()
+        haptic('pause')
+      }
+    }, 1000)
+    return () => window.clearInterval(id)
+  }, [status, usingGps, autoPause])
 
   /* GPS를 못 쓸 때의 시뮬레이션.
    * 개발 빌드이거나 관리자 모드일 때만 돈다 — 일반 사용자에게 위치 권한 거부는
@@ -198,6 +277,12 @@ export default function Run() {
     if (km > lastSplitRef.current) {
       lastSplitRef.current = km
       haptic('split')
+      if (voiceCue) {
+        const p = useRun.getState().recentPaceSecPerKm || paceSecPerKm(distanceKm, elapsedSec)
+        const mm = Math.floor(p / 60)
+        const ss = Math.round(p % 60)
+        speak(`${km}킬로미터. ${p > 0 && p < 1800 ? `${mm}분 ${ss}초 페이스` : ''}`)
+      }
       setVerseOn(true)
       const id = window.setTimeout(() => setVerseOn(false), 3200)
       return () => window.clearTimeout(id)
@@ -227,6 +312,7 @@ export default function Run() {
       })
     } else if (place) {
       setFlash({ kind: 'place', text: `${place}에 닿았습니다`, sub: '멈추면 함께 읽습니다' })
+      if (voiceCue) speak(`${place}에 닿았습니다`)
     }
     const id = window.setTimeout(() => setFlash(null), 2600)
     return () => window.clearTimeout(id)
@@ -339,7 +425,7 @@ export default function Run() {
             어절 단위로만 끊겨 3~4줄 계단이 되고 좌측 지명과 서로 밀어냈다. */}
         <div className="flex shrink-0 items-center gap-2 text-[12px] text-muted">
           <span className="h-1.5 w-1.5 rounded-full bg-sun" style={{ animation: status === 'running' ? 'glow 2s ease-in-out infinite' : 'none' }} />
-          {status === 'paused' ? '멈춤' : '달리는 중'}
+          {status === 'paused' ? (autoPausedRef.current ? '잠시 멈춤 · 움직이면 이어갑니다' : '멈춤') : '달리는 중'}
         </div>
       </div>
 
@@ -578,6 +664,7 @@ export default function Run() {
           onClick={() => {
             const paused = status === 'paused'
             haptic(paused ? 'resume' : 'pause')
+            autoPausedRef.current = false
             paused ? useRun.getState().resume() : useRun.getState().pause()
           }}
           disabled={locked}

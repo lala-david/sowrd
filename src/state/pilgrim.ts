@@ -127,6 +127,10 @@ export interface PilgrimState {
   theme: 'system' | 'light' | 'dark'
   /** 보드 위의 내 말(순례자 토큰) — figures/pilgrim*.svg 키 */
   avatar: 'pilgrim' | 'pilgrim-2' | 'pilgrim-3' | 'pilgrim-4'
+  /** 러닝 중 음성 안내(1km·자리 도달) */
+  voiceCue: boolean
+  /** 멈춰 있으면 시간을 세지 않는다(자동 멈춤) */
+  autoPause: boolean
   /* 첫 실행 안내를 봤는가.
    * 예전엔 처음 켠 사람이 보는 화면이 "오늘의 말씀 + 0.0km + 달리기 시작"뿐이라,
    * 이게 GPS로 달린 거리를 재는 앱이라는 사실을 알려주는 문장이 한 줄도 없었다. */
@@ -144,6 +148,8 @@ export interface PilgrimState {
   setTextScale: (v: 'normal' | 'large' | 'xlarge') => void
   setTheme: (v: 'system' | 'light' | 'dark') => void
   setAvatar: (v: PilgrimState['avatar']) => void
+  setVoiceCue: (v: boolean) => void
+  setAutoPause: (v: boolean) => void
   setSeenIntro: (v: boolean) => void
   setActiveJourney: (id: string) => void
   addIntercession: (alias: string, note?: string) => void
@@ -317,6 +323,8 @@ export const usePilgrim = create<PilgrimState>()(
       textScale: 'normal',
       theme: 'system',
       avatar: 'pilgrim',
+      voiceCue: true,
+      autoPause: true,
       seenIntro: false,
       /* 기본 여정 = 예수님의 사역 길.
        * DECISIONS.md의 출시 범위가 "예수 단일 여정"인데도 기본값이 'peter'였다 —
@@ -383,6 +391,8 @@ export const usePilgrim = create<PilgrimState>()(
       setTextScale: (textScale) => set({ textScale }),
       setTheme: (theme) => set({ theme }),
       setAvatar: (avatar) => set({ avatar }),
+      setVoiceCue: (voiceCue) => set({ voiceCue }),
+      setAutoPause: (autoPause) => set({ autoPause }),
       setSeenIntro: (seenIntro) => set({ seenIntro }),
 
       commitRun: (r) => {
@@ -517,6 +527,8 @@ export const usePilgrim = create<PilgrimState>()(
         textScale: s.textScale,
         theme: s.theme,
         avatar: s.avatar,
+        voiceCue: s.voiceCue,
+        autoPause: s.autoPause,
         seenIntro: s.seenIntro,
       }) as PilgrimState,
       /* 용량 초과에 대한 방어층.

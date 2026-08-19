@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { useNav } from '../store'
 import { usePilgrim, journeyKmOf } from '../state/pilgrim'
 import { journeyById, journeyProgress, tierOfEpisode, JOURNEY_CHROME, toJourneyKm, toRealKm } from '../data/geo/journeys'
-import { journeyPassage, loadJourneyPassages, GRACE_NOTE, SCRIPTURE_ATTRIBUTION, type JourneyPassage } from '../data/scripture'
+import { journeyPassage, loadJourneyPassages, passageOf, GRACE_NOTE, SCRIPTURE_ATTRIBUTION, type JourneyPassage } from '../data/scripture'
+import { STATIONS, type PassageSlug } from '../data/journey'
+import { peopleOf } from '../data/people'
 import { sceneArt, episodeArt } from '../assets/art'
 import { sceneFocus, sceneForEpisode } from '../lib/scene'
 import { SectionLabel } from '../components/ui'
-import { IconArrow, IconHeld, IconSeal, IconScroll } from '../components/icons'
+import { IconArrow, IconHeld, IconSeal, IconScroll, IconPilgrim } from '../components/icons'
 
 /* 에피소드 상세 = 말씀 읽기.
  * 아직 닿지 않은 자리에서도 본문은 그대로 열린다 — 거리로 열리는 것은 도달 인장뿐이다.
@@ -38,6 +40,7 @@ export default function EpisodeDetail() {
     }
   }, [journeyId, episodeId])
 
+  const [lang, setLang] = useState<'kr' | 'en'>('kr')
   const journey = journeyId ? journeyById(journeyId) : undefined
   const ep = journey?.episodes.find((e) => e.id === episodeId)
 
@@ -61,6 +64,10 @@ export default function EpisodeDetail() {
   const reached = journey.episodes.indexOf(ep) < prog.reachedCount
   const tier = tierOfEpisode(journey, ep)
   const toGo = Math.max(0, ep.cumulativeKm - km)
+  /* 예수 자리는 본문이 passages.json(개역한글·KJV 전 절)에 있다 — 옛 Detail 화면이 하던 일을 여기로 */
+  const isJesus = journey.id === 'jesus' && !!(STATIONS as Record<string, unknown>)[ep.id]
+  const jp = isJesus ? passageOf(ep.id as PassageSlug) : undefined
+  const people = isJesus ? peopleOf(ep.id as PassageSlug) : []
 
   return (
     <div className="relative flex flex-1 flex-col overflow-y-auto bg-sand text-ink">
@@ -110,8 +117,37 @@ export default function EpisodeDetail() {
           </div>
         )}
 
+        {/* 예수 자리 — 개역한글 / KJV 전 절 */}
+        {jp && (
+          <div className="mt-7">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="font-display text-[12px] uppercase tracking-[0.18em] text-clay-deep">{jp.refLatin}</p>
+              <div className="flex overflow-hidden rounded-lg border border-line-strong">
+                {(['kr', 'en'] as const).map((l) => (
+                  <button key={l} onClick={() => setLang(l)} className={`min-h-[36px] px-3 text-[11px] uppercase ${lang === l ? 'bg-clay-deep text-sand-raised' : 'text-muted'}`}>
+                    {l === 'kr' ? '개역한글' : 'KJV'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className={`max-w-[34ch] text-ink ${lang === 'kr' ? 'font-serif text-[17px] leading-[2]' : 'font-display text-[15.5px] leading-[1.8]'}`}>
+              {(lang === 'kr' ? jp.kr : jp.en).map((line, i) => (
+                <span key={line.v}>
+                  {i === 0 && lang === 'kr' ? (
+                    <span className="versal" style={{ color: chrome.accent }}>{line.text.slice(0, 1)}</span>
+                  ) : (
+                    <sup className="mr-0.5 align-super font-display text-[10px] text-muted" style={{ fontFeatureSettings: "'lnum' 1" }}>{line.v}</sup>
+                  )}
+                  {i === 0 && lang === 'kr' ? line.text.slice(1) : line.text}{' '}
+                </span>
+              ))}
+            </div>
+            <p className="mt-4 text-[10.5px] tracking-[0.04em] text-muted">{lang === 'kr' ? SCRIPTURE_ATTRIBUTION : 'King James Version · 퍼블릭 도메인'}</p>
+          </div>
+        )}
+
         {/* 성경 본문 — 개역한글 원문 그대로 */}
-        {passage && (
+        {!jp && passage && (
           /* 본문은 상자에 가두지 않는다 — 성경이 앱에서 가장 좁은 칼럼이 되면 안 된다 */
           <div className="mt-7">
             <div className="mb-3 flex items-center justify-between">
@@ -135,7 +171,7 @@ export default function EpisodeDetail() {
         )}
 
         {/* 본문이 없는 자리에서만 요약을 본문 자리에 둔다(있으면 시트가 이미 보여 준 문장이다) */}
-        {!passage && (
+        {!passage && !jp && (
           <div className="mt-6 border-l-2 border-line-strong pl-4">
             <SectionLabel>한 줄 요약 · 의역</SectionLabel>
             <p className="mt-1.5 font-serif text-[16px] leading-[1.8] text-ink">{ep.verseKrShort}</p>
@@ -165,6 +201,25 @@ export default function EpisodeDetail() {
 
         {/* 은혜 고지 — 거리가 말씀을 여는 열쇠로 읽히지 않게 */}
         <p className="mt-8 text-[12px] leading-[1.8] text-muted">{GRACE_NOTE}</p>
+
+        {people.length > 0 && (
+          <details className="mt-3">
+            <summary className="cursor-pointer py-1 text-[12.5px] text-muted">이 자리의 사람들 ▾</summary>
+            <div className="mt-2 flex flex-col gap-2">
+              {people.map((f) => (
+                <div key={f.name} className="flex gap-3 rounded-xl border border-line bg-sand-raised/30 px-4 py-3">
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-sand-sunk)', color: chrome.accent }}>
+                    <IconPilgrim size={17} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-serif text-[15px] text-ink">{f.name}</p>
+                    <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted">{f.note}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </details>
+        )}
 
         <button onClick={back} className="mt-6 w-full rounded-2xl border border-line py-3.5 text-center font-serif text-[15px] text-ink-soft transition active:scale-[0.99]">
           돌아가기

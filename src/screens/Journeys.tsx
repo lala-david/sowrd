@@ -15,7 +15,6 @@ import { ROMAN } from '../lib/board'
  * 왔는지 한 줄. 누르면 그 길의 지도(월드)가 열린다. */
 export default function Journeys() {
   const openMap = useNav((s) => s.openMap)
-  const openJourney = useNav((s) => s.openJourney)
   const pilgrim = usePilgrim()
   const setActiveJourney = usePilgrim((s) => s.setActiveJourney)
 
@@ -127,10 +126,10 @@ export default function Journeys() {
 
       <div className="flex flex-col gap-2 px-6 pb-2">
         <button
-          onClick={() => openJourney(pilgrim.activeJourneyId)}
+          onClick={() => openMap(pilgrim.activeJourneyId)}
           className="flex w-full items-center justify-center gap-2 rounded-2xl border border-line py-3.5 font-serif text-[15px] text-ink-soft transition active:scale-[0.99]"
         >
-          지금 걷는 길의 자리 목록 <IconArrow size={15} />
+          지금 걷는 길의 지도 <IconArrow size={15} />
         </button>
       </div>
 
