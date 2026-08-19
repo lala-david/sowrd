@@ -3,32 +3,50 @@
 /* THE WAY — "따뜻한 순례길 / The Pilgrim Road"
    golden-hour earth: warm sand + terracotta clay road + olive sage + sun-gold light */
 @theme {
-  --color-sand-sunk: #ebe0cd;
-  --color-sand: #f4ead7; /* warm sand base */
-  --color-sand-raised: #fbf4e7;
-  --color-ink: #2c2118; /* warm umber-black */
-  --color-ink-soft: #5f4f3f;
-  --color-muted: #736349; /* 2.88:1 → 4.87:1 on sand */
-  --color-line: #e6d9c2;
-  --color-line-strong: #d6c4a6;
+  /* ── 채도 ─────────────────────────────────────────────────────────────────
+     실측: 앱 7화면의 평균 채도가 0.12~0.15였다(러닝 화면만 0.25). 그 숫자대로 화면은
+     거의 회색이었고, "따뜻하다"기보다 **바래 보였다**. 온기는 채도에서 나오지 색상환의
+     위치에서만 나오지 않는다 — 같은 주황이라도 채도가 낮으면 흙먼지가 된다.
+     그래서 계열은 그대로 두고 채도만 한 단씩 올린다. 네온으로 가지 않는다:
+     DESIGN-PHILOSOPHY가 금지한 것은 스트라바식 형광이지 생기가 아니다.
+     아래 값은 전부 sand 위 대비 AA를 다시 통과한 값이다(scripts/check-contrast.mjs). */
+  --color-sand-sunk: #eddfc4;
+  --color-sand: #f7ecd5; /* warm sand base */
+  --color-sand-raised: #fffaef; /* 카드가 페이지에서 떠오르도록 한 단 밝게 */
+  --color-ink: #2a1d12; /* warm umber-black */
+  --color-ink-soft: #5d4a36;
+  --color-muted: #75603f; /* 4.9:1 on sand */
+  --color-line: #e8d9bd;
+  --color-line-strong: #c3a678;
 
-  --color-clay: #c05a30; /* terracotta — THE road / primary */
-  --color-clay-deep: #9c4522; /* clay text (AA on sand) */
-  --color-clay-bright: #dd7748;
+  --color-clay: #d0552a; /* terracotta — THE road / primary */
+  --color-clay-deep: #a63c14; /* clay text (AA on sand) */
+  --color-clay-bright: #ee7a3c;
 
-  --color-olive: #6e7a4c; /* sage — growth / rest / secondary */
-  --color-olive-deep: #55603a;
+  --color-olive: #5f8646; /* sage → 살아 있는 올리브 그린 — 성장·쉼 */
+  --color-olive-deep: #46662f;
 
-  --color-sun: #e0a53f; /* golden hour highlight */
-  --color-sun-deep: #8a5f18; /* 3.47:1 → 4.72:1 */
-  --color-sun-bright: #f0c368;
+  --color-sun: #f0a81f; /* golden hour highlight */
+  --color-sun-deep: #8a5a0c; /* 텍스트용 — AA 유지 */
+  --color-sun-bright: #ffcb52;
 
-  --color-rubric: #a8382c; /* warm red — prayer / held emphasis */
+  --color-rubric: #b8322a; /* warm red — prayer / held emphasis */
 
   /* ★ the Way — 경로선·진행·이정표에만. 화면에서 유일한 찬 색이라 따뜻한 땅 위에서 눈이 먼저 잡는다.
      아트에 굽지 않고 UI가 그린다: 선은 달린 거리에 따라 차오르는 데이터이기 때문. */
-  --color-lapis: #2e3f8f;
-  --color-lapis-deep: #263573;
+  --color-lapis: #2b3ea8;
+  --color-lapis-deep: #22317f;
+
+  /* 바다·항해 — 다섯 여정이 전부 흙빛 계열이라 카드가 서로 구별되지 않았다.
+     바울의 항해와 갈릴리 호수에 쓸 청록 하나를 들인다. 찬 색이지만 채도를 낮춰
+     양피지 위에서 겉돌지 않는다(형광 아님). */
+  --color-sea: #156b63;
+  --color-sea-bright: #34a99b;
+
+  /* 자두 — 아브라함의 길.
+     사막 금(sun-deep)을 쓰면 예수의 주홍(clay-deep)과 RGB 거리가 42라 목록에서 두 카드가
+     같은 색으로 읽힌다(색약에서는 더 붙는다). 우르의 밤과 별을 세는 언약(창 15)의 색으로 가른다. */
+  --color-plum: #7d2f5f;
 
   /* ── 게임 레이어 — "게임의 뼈, 순례의 살"(DECISIONS D3) ───────────────────
      어휘는 순례(자리·인장·봉인)로 두되, 상태는 게임처럼 한눈에 갈리게 만든다.
@@ -41,13 +59,13 @@
   --color-lapis-bright: #6478d8; /* 아직 가지 않은 길의 점선 */
 
   /* 인장 — 도달한 자리에 찍힌다. 금은 "보상"이 아니라 "다녀왔다는 표"다. */
-  --color-seal: #cf9a34;
-  --color-seal-bright: #f7d074;
+  --color-seal: #dfa022;
+  --color-seal-bright: #ffd868;
 
-  /* 유쾌한 주홍 — 오늘의 목표·축하에만. 클레이보다 한 뼘 밝고 채도가 높다.
-     기존 팔레트의 평균 채도는 0.12였다(러닝 화면만 0.25). 한 점을 튀게 둔다. */
-  --color-joy: #e5673a;
-  --color-joy-soft: #fbe3d6;
+  /* 유쾌한 주홍 — 오늘의 목표·내 토큰·축하에만. 화면에서 가장 채도가 높은 한 점.
+     전부를 밝히면 아무것도 안 밝은 것과 같아서, 이 색은 한 화면에 한 번만 쓴다. */
+  --color-joy: #ff6a30;
+  --color-joy-soft: #ffe2d2;
 
   /* ── 러닝 데이터 색 ────────────────────────────────────────────────────
      기존 5존(올리브2 + 선골드 + 클레이2)은 검증기에서 양쪽 테마 전부 실패했다:
@@ -100,21 +118,28 @@ body {
   --color-line: #5e4a2e; /* 게이지 트랙이 보이도록 1.31:1 → 2.22:1 */
   --color-line-strong: #7a6444; /* 러닝 컨트롤 외곽선 1.70:1 → 3.32:1 (WCAG 1.4.11) */
 
-  --color-clay: #db7a4a;
-  --color-clay-deep: #e08a5c;
-  --color-clay-bright: #ec9968;
+  /* 라이트에서 채도를 올렸으므로 밤에도 같은 만큼 올린다 — 안 그러면 밤에만 앱이 바래 보인다.
+     다만 어두운 바탕에서는 명도를 함께 올려야 색이 살아난다(어두운 위의 고채도는 탁해진다). */
+  --color-clay: #ef8347;
+  --color-clay-deep: #f5975c;
+  --color-clay-bright: #ffa970;
 
-  --color-olive: #9aa66d;
-  --color-olive-deep: #b0bb82;
+  --color-olive: #a8c471;
+  --color-olive-deep: #bcd487;
 
-  --color-sun: #ecc069; /* the lamp glow */
-  --color-sun-deep: #ecc069;
-  --color-sun-bright: #f6d891;
+  --color-sun: #f5c65c; /* the lamp glow */
+  --color-sun-deep: #f5c65c;
+  --color-sun-bright: #ffdf94;
 
-  --color-rubric: #d9695a;
+  --color-rubric: #f0705c;
+
+  --color-sea: #3fbcab;
+  --color-sea-bright: #63d6c6;
+
+  --color-plum: #e893c3;
 
   /* 밤에는 라피스를 발광 톤으로 올린다 — 어두운 흙빛 위에서 #2e3f8f는 묻힌다. */
-  --color-lapis: #7488db;
+  --color-lapis: #8b9dea;
   --color-lapis-deep: #8e9ee6;
 
   /* 밤에는 라피스 면이 배경과 붙어버린다 — 한 단 올려 "깊은 밤"으로 유지한다. */
@@ -123,11 +148,11 @@ body {
   --color-lapis-veil: #5669c4;
   --color-lapis-bright: #8497e4;
 
-  --color-seal: #e2b25a;
-  --color-seal-bright: #f9dc96;
+  --color-seal: #eab944;
+  --color-seal-bright: #ffe08c;
 
-  --color-joy: #f0805a;
-  --color-joy-soft: #3a2015;
+  --color-joy: #ff8352;
+  --color-joy-soft: #3d2114;
 
   /* 다크에서는 램프 방향이 뒤집힌다(어두움 → 밝음). 같은 데이터가 두 테마에서
      반대로 읽히지 않게 순서를 유지하려면 값 자체를 뒤집어야 한다. */

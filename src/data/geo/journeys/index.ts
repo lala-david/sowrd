@@ -64,12 +64,16 @@ export interface JourneyChrome {
 }
 /* 여정마다 씬을 겹치지 않게 배정한다 — 같은 씬을 쓰면 선택 화면에서 카드가 중복으로 보이고,
  * 색만으로는 구별되지 않는다(색약·썸네일에서 붕괴한다는 검증 결과). */
+/* 다섯 갈래에 다섯 색.
+ * 예전엔 아브라함과 베드로가 같은 sun-deep이었고 나머지도 전부 흙빛 계열이라, 목록에서
+ * 카드가 서로 구별되지 않았다(색약에서는 더 붕괴한다). 색상환에서 충분히 떨어진 다섯 개로
+ * 가른다 — 주홍 / 사막 금 / 라피스 / 바다 청록 / 올리브 그린. 전부 sand 위 AA를 통과한다. */
 export const JOURNEY_CHROME: Record<string, JourneyChrome> = {
-  abraham: { scene: 'desert', accent: 'var(--color-sun-deep)', hero: 'dawn-road' }, // 우르→가나안 사막길
-  exodus: { scene: 'mountain', accent: 'var(--color-clay-deep)', hero: 'pilgrim-trail' }, // 시내산
-  jesus: { scene: 'sea', accent: 'var(--color-clay)', hero: 'galilee-water' }, // 갈릴리
-  paul: { scene: 'road', accent: 'var(--color-olive-deep)', hero: 'dawn-road' }, // 로마 가도
-  peter: { scene: 'city', accent: 'var(--color-sun-deep)', hero: 'jerusalem-dusk' }, // 예루살렘→로마
+  jesus: { scene: 'sea', accent: 'var(--color-clay-deep)', hero: 'galilee-water' }, // 갈릴리 — 주홍
+  abraham: { scene: 'desert', accent: 'var(--color-plum)', hero: 'dawn-road' }, // 우르→가나안 — 밤과 언약의 자두
+  exodus: { scene: 'mountain', accent: 'var(--color-lapis)', hero: 'pilgrim-trail' }, // 홍해·시내산 — 라피스
+  paul: { scene: 'road', accent: 'var(--color-sea)', hero: 'dawn-road' }, // 지중해 항해 — 바다 청록
+  peter: { scene: 'city', accent: 'var(--color-olive-deep)', hero: 'jerusalem-dusk' }, // 예루살렘→로마 — 올리브
 }
 
 /* ── 실제 거리 ↔ 여정 거리 ────────────────────────────────────────────────
