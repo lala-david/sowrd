@@ -483,3 +483,13 @@ body::after {
     transition-property: opacity, background-color, color, border-color, box-shadow, fill, stroke;
   }
 }
+
+/* 아직 가지 않은 길이 목적지 쪽으로 천천히 흐른다.
+   지도를 보고 있는 동안 화면에서 유일하게 움직이는 것 — "길은 이어져 있다"를
+   글자 없이 말한다. 아주 느리게(6초에 한 칸) 둔다. 빠르면 로딩 표시로 읽힌다. */
+@keyframes road-flow {
+  to { stroke-dashoffset: -13; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .road-flow { animation: none !important; }
+}

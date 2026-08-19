@@ -50,17 +50,6 @@ export default function JourneyMap() {
   const tier = showAll ? undefined : journey.tiers[tierIndex]
   const stops = showAll ? questAll(journey, km) : questChapterStops(journey, km, tierIndex)
 
-  /* 월드맵에 세울 장 표식 — 각 장이 시작되는 자리가 stops 안에서 몇 번째인가.
-     같은 자리에 두 장이 겹치면(장 경계가 맞닿는 여정) 앞의 장을 남긴다 — 표식이 포개지지 않게. */
-  const chapterMarks = showAll
-    ? journey.tiers
-        .map((_, i) => {
-          const first = questChapterStops(journey, km, i)[0]
-          return first ? { tier: i, stopIndex: stops.findIndex((s) => s.ep.id === first.ep.id) } : undefined
-        })
-        .filter((m): m is { tier: number; stopIndex: number } => !!m && m.stopIndex >= 0)
-        .filter((m, i, arr) => arr.findIndex((o) => o.stopIndex === m.stopIndex) === i)
-    : undefined
 
   /* 그 장이 통째로 봉인됐는가 — 첫 자리에도 아직 못 닿았으면 미리보기다.
      본문은 언제나 열리므로(신학 요구사항) 자리를 누르는 것은 막지 않는다. */
@@ -122,11 +111,9 @@ export default function JourneyMap() {
           atStart={prog.reachedCount === 0}
           units={pilgrim.units}
           journeyId={journey.id}
-          height={showAll ? 300 : 300}
+          height={340}
           world={showAll}
-          chapterMarks={chapterMarks}
-          onSelectChapter={(i) => setTab(i)}
-          onSelectStop={(id) => openEpisode(journey.id, id)}
+          onSelectStop={showAll ? undefined : (id) => openEpisode(journey.id, id)}
         />
 
         {/* 전체 보기일 때는 여정 전체를 요약한다 */}
@@ -140,6 +127,13 @@ export default function JourneyMap() {
             </div>
             <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
               {journey.who} · {journey.era} · 장 {journey.tiers.length}개
+            </p>
+            {/* 어디서 어디까지인가 — 지도 위에 이름표를 얹으면 인장을 덮으므로 글로 말한다 */}
+            <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">
+              <span className="font-serif text-ink">{journey.episodes[0]?.place}</span>
+              {'에서 '}
+              <span className="font-serif text-ink">{journey.episodes[journey.episodes.length - 1]?.place}</span>
+              {'까지'}
             </p>
             {q.next && (
               <p className="mt-2 text-[12.5px] leading-relaxed text-ink-soft">
@@ -160,9 +154,7 @@ export default function JourneyMap() {
               </span>
               {pilgrim.units}
             </p>
-            <p className="mt-3 text-[12px] text-muted">
-              번호 표식을 누르면 그 장의 지도로 들어갑니다
-            </p>
+
           </div>
         )}
 
@@ -185,7 +177,7 @@ export default function JourneyMap() {
               </span>
               {pilgrim.units}
             </p>
-            <p className="mt-3 text-[12px] text-muted">자리를 누르면 그곳의 말씀과 이야기가 열립니다</p>
+
           </div>
         )}
 
