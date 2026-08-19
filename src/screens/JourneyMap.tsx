@@ -1,18 +1,30 @@
+import { useState } from 'react'
 import { useNav } from '../store'
 import { usePilgrim, journeyKmOf } from '../state/pilgrim'
-import { journeyById, JOURNEYS, toJourneyKm } from '../data/geo/journeys'
-import { questAll, questNow } from '../lib/quest'
+import { journeyById, JOURNEYS, toJourneyKm, toRealKm, journeyProgress } from '../data/geo/journeys'
+import { questChapterStops, questAll, currentTierIndex, questNow, stopStateAt } from '../lib/quest'
 import QuestMap from '../components/QuestMap'
-import { IconArrow } from '../components/icons'
+import { IconArrow, IconSeal, IconLocked, IconCompass } from '../components/icons'
 
-/* ── 지도만 보는 화면 ──────────────────────────────────────────────────────
+/* ── 지도 화면 ─────────────────────────────────────────────────────────────
  *
- * 홈의 지도는 지금 걷는 구간만 크게 보여 준다(자리 여섯). 그건 "다음 한 걸음"을 위한
- * 창이지 그 길 전체가 아니다. 길 전체를 보고 싶을 때가 있다 — 어디서 시작해서 어디로 가는지,
- * 내가 그중 어디쯤인지.
+ * 펼친 지도는 **두 가지 축척**으로 본다. 게임의 지도가 그렇다 — 월드맵과 지역맵.
  *
- * 이 화면에는 지도 말고 아무것도 없다. 진행바도, 카운터도, 목록도 없다.
- * 지도를 누르면 지도가 나온다 — 그게 전부다. */
+ *   전체 지도(월드맵) — 이 길이 어디서 어디까지인지 한 장에. 자리는 점이고,
+ *     장이 시작되는 자리에만 번호 표식이 선다. 표식을 누르면 그 장으로 들어간다.
+ *   장 지도          — 자리가 크고 하나하나가 퀘스트 입구다. 누르면 그 자리의 말씀이 열린다.
+ *
+ * 전체를 장과 같은 규칙으로 그려 봤고, 안 됐다: 예수님의 사역 길은 자리 33개가 갈릴리·유대의
+ * 좁은 지역에서 수십 번 겹쳐 지나가서, 종횡비를 지키는 한(지켜야 한다 — 그게 이 제품의
+ * 근거다) 메달리온을 아무리 줄여도 금 동전 한 덩어리가 됐다. 그래서 월드맵은 **자리의
+ * 지도가 아니라 구역의 지도**로 그린다. 자세한 것은 QuestMap의 world 모드.
+ *
+ * 열자마자 보이는 것은 **내가 선 장**이다 — 이 앱을 여는 이유가 "내가 어디쯤 왔나"이므로,
+ * 첫 화면이 대답해야 할 것은 전체 조망이 아니라 지금 서 있는 자리다.
+ *
+ * 홈의 지도와도 이렇게 갈린다:
+ *   홈   — 지금 구간 여섯 자리. 지도 전체가 버튼 하나(작은 창에 버튼을 겹치면 오탭만 는다)
+ */
 export default function JourneyMap() {
   const go = useNav((s) => s.go)
   const journeyId = useNav((s) => s.journeyId)
@@ -20,41 +32,44 @@ export default function JourneyMap() {
   const openEpisode = useNav((s) => s.openEpisode)
   const pilgrim = usePilgrim()
 
-  const journey = (journeyId ? journeyById(journeyId) : undefined) ?? journeyById(pilgrim.activeJourneyId) ?? JOURNEYS[0]
+  const journey =
+    (journeyId ? journeyById(journeyId) : undefined) ?? journeyById(pilgrim.activeJourneyId) ?? JOURNEYS[0]
   const km = toJourneyKm(journey.id, journeyKmOf(pilgrim, journey.id))
   const q = questNow(journey, km)
+  const prog = journeyProgress(journey, km)
 
-  /* 카드 높이를 길의 모양에서 구한다.
-     실좌표를 회전시켜도 종횡비는 안 바꾸므로(그래야 진짜 지도다), 길이 가로로 누우면
-     세로 여백이 남는다. 430 고정이었을 때 카드 절반이 빈 종이였다. */
-  const mapHeight = (() => {
-    const eps = journey.episodes
-    if (eps.length < 2) return 300
-    const lats = eps.map((e) => e.lat)
-    const lngs = eps.map((e) => e.lng)
-    const midLat = (Math.min(...lats) + Math.max(...lats)) / 2
-    const k = Math.cos((midLat * Math.PI) / 180)
-    const raw = lngs.map((lng, i) => [lng * k, -lats[i]] as [number, number])
-    const n = raw.length
-    const mx = raw.reduce((a, p) => a + p[0], 0) / n
-    const my = raw.reduce((a, p) => a + p[1], 0) / n
-    let sxx = 0, syy = 0, sxy = 0
-    for (const [x, y] of raw) { sxx += (x - mx) ** 2; syy += (y - my) ** 2; sxy += (x - mx) * (y - my) }
-    const th = 0.5 * Math.atan2(2 * sxy, sxx - syy)
-    const c = Math.cos(-th), sn = Math.sin(-th)
-    const rot = raw.map(([x, y]) => [(x - mx) * c - (y - my) * sn, (x - mx) * sn + (y - my) * c])
-    const spanX = Math.max(...rot.map((p) => p[0])) - Math.min(...rot.map((p) => p[0]))
-    const spanY = Math.max(...rot.map((p) => p[1])) - Math.min(...rot.map((p) => p[1]))
-    const ratio = spanX > 1e-9 ? spanY / spanX : 1
-    return Math.round(Math.min(440, Math.max(230, 60 + (340 - 60) * ratio + 90)))
-  })()
+  /* 보기는 둘이다.
+   *   'all' — 여정 전체(월드맵). 이 길이 어디서 어디까지인지 한눈에.
+   *   숫자   — 그 장 하나. 자리가 크고 하나씩 누를 수 있다.
+   * 열자마자 내가 선 장에서 시작한다 — 처음 보이는 것은 "지금 내가 선 자리"여야 한다.
+   * 전체는 한 번 눌러서 본다(예수님의 사역 길처럼 자리가 서른셋인 여정에서는 전체가
+   * 빽빽해질 수밖에 없다 — 지리가 그렇기 때문이다. 그래서 기본값이 아니라 선택지다). */
+  const [tab, setTab] = useState<number | 'all'>(() => currentTierIndex(journey, km))
+  const showAll = tab === 'all'
+  const tierIndex = showAll ? -1 : (tab as number)
+  const tier = showAll ? undefined : journey.tiers[tierIndex]
+  const stops = showAll ? questAll(journey, km) : questChapterStops(journey, km, tierIndex)
+
+  /* 월드맵에 세울 장 표식 — 각 장이 시작되는 자리가 stops 안에서 몇 번째인가.
+     같은 자리에 두 장이 겹치면(장 경계가 맞닿는 여정) 앞의 장을 남긴다 — 표식이 포개지지 않게. */
+  const chapterMarks = showAll
+    ? journey.tiers
+        .map((_, i) => {
+          const first = questChapterStops(journey, km, i)[0]
+          return first ? { tier: i, stopIndex: stops.findIndex((s) => s.ep.id === first.ep.id) } : undefined
+        })
+        .filter((m): m is { tier: number; stopIndex: number } => !!m && m.stopIndex >= 0)
+        .filter((m, i, arr) => arr.findIndex((o) => o.stopIndex === m.stopIndex) === i)
+    : undefined
+
+  /* 그 장이 통째로 봉인됐는가 — 첫 자리에도 아직 못 닿았으면 미리보기다.
+     본문은 언제나 열리므로(신학 요구사항) 자리를 누르는 것은 막지 않는다. */
+  const chapterLocked = stops.length ? stopStateAt(stops[0].index, prog.reachedCount) === 'sealed' : true
+  const chapterDone = stops.length ? stops[stops.length - 1].index < prog.reachedCount - 1 : false
 
   return (
     <div className="relative flex flex-1 flex-col">
-      <header
-        className="flex items-center gap-3 px-5"
-        style={{ paddingTop: 'max(2.4rem, env(safe-area-inset-top))' }}
-      >
+      <header className="flex items-center gap-3 px-5" style={{ paddingTop: 'max(2.4rem, env(safe-area-inset-top))' }}>
         <button
           onClick={() => go('home')}
           aria-label="뒤로"
@@ -62,33 +77,121 @@ export default function JourneyMap() {
         >
           <IconArrow size={17} className="rotate-180" />
         </button>
-        <p className="min-w-0 flex-1 truncate font-serif text-[18px] font-bold leading-tight text-ink">
-          {journey.name}
-        </p>
+        <p className="min-w-0 flex-1 truncate font-serif text-[18px] font-bold leading-tight text-ink">{journey.name}</p>
       </header>
 
-      {/* 길 전체. 자리 서른셋이 한 장에 들어가므로 세로로 넉넉히 준다. */}
-      <div className="flex flex-1 flex-col justify-center px-4 pb-6 pt-3">
-        <div>
-          {/* 카드 높이를 **길의 모양**에 맞춘다.
-              430으로 고정했더니 길이 가로로 누운 여정에서 위아래가 통째로 비었다(카드 절반이 여백).
-              종횡비를 왜곡하지 않는 것이 원칙이므로, 늘릴 수 없으면 카드를 줄이는 쪽이 맞다. */}
-          <QuestMap
-            stops={questAll(journey, km)}
-            segProgress={q.segProgress}
-            atStart={q.reachedCount === 0}
-            units={pilgrim.units}
-            journeyId={journey.id}
-            height={mapHeight}
-            onSelectStop={(id) => openEpisode(journey.id, id)}
-          />
-        </div>
-        <p className="mt-3 px-2 text-center text-[12px] text-muted">
-          자리를 누르면 그곳의 말씀과 이야기가 열립니다
-        </p>
+      {/* 보기 고르기 — 전체 월드맵 하나 + 장 하나씩.
+          걸어온 장에는 인장이, 아직 못 간 장에는 자물쇠가 붙는다 */}
+      <div className="mt-3 flex gap-2 overflow-x-auto px-5 pb-1" style={{ scrollbarWidth: 'none' }}>
+        <button
+          onClick={() => setTab('all')}
+          aria-current={showAll ? 'true' : undefined}
+          className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-[12.5px] transition active:scale-95 ${
+            showAll ? 'border-clay-deep bg-clay-deep text-sand-raised' : 'border-line text-ink-soft'
+          }`}
+        >
+          <IconCompass size={13} />
+          전체 지도
+        </button>
+        {journey.tiers.map((t, i) => {
+          const on = i === tab
+          const first = questChapterStops(journey, km, i)[0]
+          const locked = first ? stopStateAt(first.index, prog.reachedCount) === 'sealed' : true
+          return (
+            <button
+              key={t.id}
+              onClick={() => setTab(i)}
+              aria-current={on ? 'true' : undefined}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-[12.5px] transition active:scale-95 ${
+                on ? 'border-clay-deep bg-clay-deep text-sand-raised' : 'border-line text-ink-soft'
+              }`}
+            >
+              {locked ? <IconLocked size={12} /> : <IconSeal size={12} />}
+              {i + 1}장 · {t.name}
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="flex flex-1 flex-col px-4 pb-6 pt-3">
+        {/* 장을 바꾸면 지도가 새로 그려져야 한다 — key로 다시 마운트해 경로 드로우를 재생한다 */}
+        <QuestMap
+          key={`${journey.id}-${String(tab)}`}
+          stops={stops}
+          segProgress={q.segProgress}
+          atStart={prog.reachedCount === 0}
+          units={pilgrim.units}
+          journeyId={journey.id}
+          height={showAll ? 300 : 300}
+          world={showAll}
+          chapterMarks={chapterMarks}
+          onSelectChapter={(i) => setTab(i)}
+          onSelectStop={(id) => openEpisode(journey.id, id)}
+        />
+
+        {/* 전체 보기일 때는 여정 전체를 요약한다 */}
+        {showAll && (
+          <div className="stagger mt-4 px-1.5">
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="font-serif text-[16px] font-bold leading-tight text-ink">{journey.name} 전체</p>
+              <span className="shrink-0 text-[11.5px] text-muted">
+                자리 {prog.reachedCount}/{prog.total}
+              </span>
+            </div>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
+              {journey.who} · {journey.era} · 장 {journey.tiers.length}개
+            </p>
+            {q.next && (
+              <p className="mt-2 text-[12.5px] leading-relaxed text-ink-soft">
+                지금 <span className="font-serif text-ink">{q.current?.place ?? '길의 첫머리'}</span>
+                {' · 다음은 '}
+                <span className="font-serif text-ink">{q.next.place}</span>
+                {'까지 '}
+                <span className="font-display text-clay-deep" style={{ fontFeatureSettings: "'lnum' 1" }}>
+                  {q.toRealKm < 10 ? q.toRealKm.toFixed(1) : Math.round(q.toRealKm)}
+                </span>
+                {pilgrim.units}
+              </p>
+            )}
+            <p className="mt-2 text-[12px] text-muted">
+              끝까지 내가 달릴 거리{' '}
+              <span className="font-display text-clay-deep" style={{ fontFeatureSettings: "'lnum' 1" }}>
+                {Math.round(toRealKm(journey.id, journey.totalKm)).toLocaleString()}
+              </span>
+              {pilgrim.units}
+            </p>
+            <p className="mt-3 text-[12px] text-muted">
+              번호 표식을 누르면 그 장의 지도로 들어갑니다
+            </p>
+          </div>
+        )}
+
+        {/* 이 장이 무엇인가 — 지도 아래 한 문단. 장마다 다른 이야기가 붙는다 */}
+        {tier && (
+          <div className="stagger mt-4 px-1.5">
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="font-serif text-[16px] font-bold leading-tight text-ink">
+                {tierIndex + 1}장 · {tier.name}
+              </p>
+              <span className="shrink-0 text-[11.5px] text-muted">
+                {chapterDone ? '다 걸었습니다' : chapterLocked ? '아직 봉인' : '걷는 중'}
+              </span>
+            </div>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{tier.note}</p>
+            <p className="mt-2 text-[12px] text-muted">
+              자리 {stops.length}곳 · 이 장에 내가 달릴 거리{' '}
+              <span className="font-display text-clay-deep" style={{ fontFeatureSettings: "'lnum' 1" }}>
+                {toRealKm(journey.id, tier.km).toFixed(1)}
+              </span>
+              {pilgrim.units}
+            </p>
+            <p className="mt-3 text-[12px] text-muted">자리를 누르면 그곳의 말씀과 이야기가 열립니다</p>
+          </div>
+        )}
+
         <button
           onClick={() => openJourney(journey.id)}
-          className="mx-auto mt-3 rounded-full border border-line px-4 py-2 text-[12.5px] text-ink-soft transition active:scale-95"
+          className="mx-auto mt-5 rounded-full border border-line px-4 py-2 text-[12.5px] text-ink-soft transition active:scale-95"
         >
           자리 목록으로 보기
         </button>

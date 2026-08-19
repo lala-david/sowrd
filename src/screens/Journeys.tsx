@@ -1,7 +1,7 @@
 import { useNav } from '../store'
 import { usePilgrim, journeyKmOf } from '../state/pilgrim'
 import { JOURNEYS, JOURNEY_CHROME, journeyProgress, toJourneyKm, toRealKm } from '../data/geo/journeys'
-import { sceneArt, crestArt, propArt } from '../assets/art'
+import { sceneArt, crestArt, terrainArt } from '../assets/art'
 import { sceneFocus } from '../lib/scene'
 import { SectionLabel } from '../components/ui'
 import TabBar from '../components/TabBar'
@@ -58,22 +58,30 @@ export default function Journeys() {
               {/* 그 길의 그림 — recraft 컷페이퍼 벡터. 없으면 지역 씬으로 폴백한다.
                   예전엔 다섯 카드가 씬 8종을 돌려 써서 아브라함과 바울이 같은 새벽길이었다.
                   카드는 132px로 **큰 자리**라 생성 아트의 결이 살아난다(20px 노드와 다르다). */}
-              {propArt(j.id) ? (
-                <img
-                  src={propArt(j.id)}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                  className="h-[132px] w-full object-cover"
-                  style={{ objectPosition: 'center 45%' }}
-                />
-              ) : (
-                <img src={sceneArt(chrome.scene)} alt="" loading="lazy" decoding="async" className="h-[132px] w-full object-cover" style={{ objectPosition: sceneFocus(chrome.scene, 'card') }} />
-              )}
+              {/* 카드 그림은 **그 땅**이지 물건이 아니다.
+                  전에는 여정 상징 오브젝트(배·성벽·두루마리)를 깔았는데, 카드가 가로로 길어
+                  object-cover가 물건을 반으로 잘랐다 — 뱃머리만 남은 배, 절반만 남은 성벽.
+                  누끼를 딴다고 해결될 문제가 아니라 **자를 수 없는 그림을 자르고 있던 것**이었다.
+                  지도에 쓰는 지형 그림은 가장자리까지 지형이라 어디를 잘라도 자연스럽다.
+                  덤으로 카드와 그 여정의 지도가 같은 땅을 보여 준다.
+
+                  그림은 **배경**이고 카드 높이는 **글**이 정한다.
+                  예전엔 반대였다: 그림이 높이 132px를 정하고 글 영역이 absolute였는데,
+                  라틴명이 두 줄이 되는 여정(THE JOURNEY OF PETER)에서 글이 카드보다 길어져
+                  위아래가 통째로 잘렸다 — "지금 걷는 길" 칩이 반만 보이고 장 이름이 사라졌다.
+                  글을 흐름에 두면 카드가 글에 맞춰 자란다. 잘릴 것이 없어진다. */}
+              <img
+                src={terrainArt(j.id) ?? sceneArt(chrome.scene)}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                className="absolute inset-0 h-full w-full object-cover"
+                style={{ objectPosition: terrainArt(j.id) ? 'center 45%' : sceneFocus(chrome.scene, 'card') }}
+              />
               <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to right, var(--color-sand) 0%, var(--color-sand) 44%, transparent 82%)' }} />
 
-              <div className="absolute inset-y-0 left-0 flex w-[62%] flex-col justify-center px-5">
-                <span className="flex items-center gap-1.5">
+              <div className="relative flex min-h-[132px] w-[64%] flex-col justify-center px-5 py-4">
+                <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
                   <span className="font-display text-[10.5px] uppercase tracking-[0.2em]" style={{ color: chrome.accent }}>
                     {j.nameLatin}
                   </span>

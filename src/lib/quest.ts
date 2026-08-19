@@ -127,6 +127,44 @@ export function questAll(journey: Journey, journeyKm: number): QuestStop[] {
   }))
 }
 
+/* 한 **장(tier)**의 자리들.
+ *
+ * 전체 지도를 한 장에 그리는 것은 여정에 따라 불가능하다: 예수님의 사역 길은 자리 33개가
+ * 갈릴리·유대의 좁은 지역에서 수십 번 서로 겹쳐 지나간다. 종횡비를 지키는 한(지켜야 한다 —
+ * 그게 이 제품의 근거다) 어떤 노드 크기로도 낙서가 된다.
+ *
+ * 그래서 펼친 지도는 **장 단위**로 본다. 한 장은 자리 두셋에서 아홉 정도이고 지리적으로도
+ * 한 덩어리라 지도가 읽힌다. 게임으로 치면 장이 곧 월드다 — 월드맵을 한 장에 다 그리는
+ * 게임은 없다. */
+export function questChapterStops(journey: Journey, journeyKm: number, tierIndex: number): QuestStop[] {
+  const p = journeyProgress(journey, journeyKm)
+  const tier = journey.tiers[tierIndex]
+  if (!tier) return questAll(journey, journeyKm)
+  const at = (key: string) => journey.episodes.findIndex((e) => e.id === key || e.place === key)
+  const from = at(tier.fromEpisode)
+  const to = at(tier.toEpisode)
+  if (from < 0 || to < 0) return questAll(journey, journeyKm)
+  return journey.episodes.slice(from, to + 1).map((ep, i) => {
+    const index = from + i
+    return {
+      ep,
+      index,
+      state: stopStateAt(index, p.reachedCount),
+      realKmAway: index < p.reachedCount ? 0 : toRealKm(journey.id, Math.max(0, ep.cumulativeKm - journeyKm)),
+    }
+  })
+}
+
+/** 지금 걷고 있는 장의 번호(0-based) */
+export function currentTierIndex(journey: Journey, journeyKm: number): number {
+  const p = journeyProgress(journey, journeyKm)
+  const anchor = p.next ?? p.current
+  if (!anchor) return 0
+  const t = tierOfEpisode(journey, anchor)
+  const i = t ? journey.tiers.findIndex((x) => x.id === t.id) : 0
+  return Math.max(0, i)
+}
+
 /* ── 오늘 한 걸음 ───────────────────────────────────────────────────────────
  * "아직 없음" 대신 **지금 할 수 있는 다음 것**을 말한다. 빈 상태를 장부가 아니라
  * 초대로 바꾸는 문장들이다. 과장하지 않는다 — 유쾌하되 호들갑스럽지 않게. */

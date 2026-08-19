@@ -114,3 +114,63 @@ export default function MapNode({ x, y, state, scale = 1, order, uid }: MapNodeP
     </g>
   )
 }
+
+/* ── 장 표식 ───────────────────────────────────────────────────────────────
+ *
+ * 월드맵에만 선다. 자리 서른셋을 전부 메달리온으로 세우면 덩어리가 되므로,
+ * 월드맵에서는 **장이 시작되는 자리**에만 이 표식을 세우고 나머지는 점으로 둔다.
+ * 게임의 월드맵에 지역 아이콘이 찍히는 것과 같다 — 누르면 그 지역 안으로 들어간다.
+ *
+ * 형태를 자리 메달리온(원)과 일부러 다르게 잡았다. 같은 원이면 "여기도 자리인가"로 읽힌다.
+ * 땅에 꽂아 세운 **깃발 방패**다: 아래가 뾰족해 한 점을 가리키고, 안에 장 번호가 있다. */
+export function ChapterMark({
+  x,
+  y,
+  n,
+  sealed,
+  scale = 1,
+  uid,
+}: {
+  x: number
+  y: number
+  /** 장 번호(1-based) */
+  n: number
+  /** 아직 못 간 장인가 — 있다는 것만 알리고 조용히 둔다 */
+  sealed: boolean
+  scale?: number
+  uid: string
+}) {
+  const s = scale
+  const w = 13 * s
+  const h = 15 * s
+  const tip = 7 * s
+  // 뾰족한 끝이 실제 좌표를 가리키게 위로 띄운다 — 지리가 어긋나면 안 된다
+  const at = `translate(${x.toFixed(1)} ${(y - h - tip * 0.5).toFixed(1)})`
+  const shield = `M${-w},${-h} L${w},${-h} L${w},${h * 0.35} L0,${h + tip} L${-w},${h * 0.35} Z`
+
+  return (
+    <g transform={at} opacity={sealed ? 0.72 : 1}>
+      <path d={shield} transform={`translate(1.4 ${2.2 * s})`} fill="#000" opacity="0.15" />
+      <path d={shield} fill={sealed ? `url(#face-lock-${uid})` : `url(#face-gold-${uid})`} />
+      <path
+        d={shield}
+        fill="none"
+        stroke={sealed ? MAP_INK.seal : MAP_INK.sealRing}
+        strokeOpacity={sealed ? 0.7 : 1}
+        strokeWidth={1.8 * s}
+        strokeLinejoin="round"
+      />
+      <text
+        y={h * 0.05}
+        textAnchor="middle"
+        fontSize={13 * s}
+        fontWeight="700"
+        fill={sealed ? MAP_INK.seal : MAP_INK.sealRing}
+        fontFamily="var(--font-display)"
+        style={{ fontFeatureSettings: "'lnum' 1" }}
+      >
+        {n}
+      </text>
+    </g>
+  )
+}

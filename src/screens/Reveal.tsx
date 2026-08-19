@@ -15,7 +15,7 @@ import { renderShareCard, shareCardBlob } from '../lib/shareCard'
 import { APP_URL, APP_URL_LABEL } from '../config'
 import { SummaryTriple, SplitBars, SectionLabel } from '../components/ui'
 import { IconShare, IconReached, IconCairn, IconSeal } from '../components/icons'
-import { heroArt, sceneArt, episodeArt, stationArt } from '../assets/art'
+import { heroArt, sceneArt, episodeArt, stationArt, sealArt } from '../assets/art'
 import { sceneForEpisode } from '../lib/scene'
 import Celebration from '../components/Celebration'
 
@@ -256,21 +256,37 @@ export default function Reveal() {
         {moment && moment.celebrate !== false && (
           <motion.div
             key={moment.key}
-            className="pointer-events-none absolute bottom-6 right-6 flex h-[74px] w-[74px] items-center justify-center rounded-full"
-            style={{
-              background: 'var(--color-seal)',
-              color: 'var(--color-sand-raised)',
-              boxShadow: '0 10px 30px -10px rgba(0,0,0,.45), inset 0 0 0 2px rgba(255,255,255,.25)',
-            }}
+            className="pointer-events-none absolute bottom-6 right-6 flex h-[84px] w-[84px] items-center justify-center"
             initial={sealReduce ? false : { opacity: 0, scale: 2.1, rotate: -18 }}
             animate={{ opacity: 1, scale: 1, rotate: -7 }}
             transition={{ delay: sealReduce ? 0 : 0.55, type: 'spring', stiffness: 380, damping: 15 }}
             aria-hidden
           >
-            <span className="flex flex-col items-center leading-none">
-              <IconSeal size={26} strokeWidth={1.6} />
-              <span className="mt-1 font-display text-[9px] uppercase tracking-[0.14em]">닿음</span>
-            </span>
+            {/* 인장은 recraft로 뽑은 벡터 문양을 쓴다.
+                여기는 84px — 문양의 결이 살아나는 **큰 자리**다. 같은 그림을 지도의 20px 노드에
+                넣으면 뭉개져서 거기엔 안 쓴다. 그림이 없으면 코드로 그린 인장으로 떨어진다. */}
+            {sealArt() ? (
+              <img
+                src={sealArt()}
+                alt=""
+                className="h-full w-full"
+                style={{ filter: 'drop-shadow(0 8px 18px rgba(0,0,0,.35))' }}
+              />
+            ) : (
+              <span
+                className="flex h-[74px] w-[74px] items-center justify-center rounded-full"
+                style={{
+                  background: 'var(--color-seal)',
+                  color: 'var(--color-sand-raised)',
+                  boxShadow: '0 10px 30px -10px rgba(0,0,0,.45), inset 0 0 0 2px rgba(255,255,255,.25)',
+                }}
+              >
+                <span className="flex flex-col items-center leading-none">
+                  <IconSeal size={26} strokeWidth={1.6} />
+                  <span className="mt-1 font-display text-[9px] uppercase tracking-[0.14em]">닿음</span>
+                </span>
+              </span>
+            )}
           </motion.div>
         )}
       </div>

@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useNav } from '../store'
 import { usePilgrim, journeyKmOf } from '../state/pilgrim'
 import { journeyById, journeyProgress, JOURNEY_CHROME, toJourneyKm, toRealKm, type JourneyEpisode } from '../data/geo/journeys'
-import { sceneArt, crestArt } from '../assets/art'
+import { sceneArt, crestArt, terrainArt } from '../assets/art'
 import { SectionLabel } from '../components/ui'
 import { episodeArt } from '../assets/art'
 import { MILESTONES, milestonesPassed } from '../data/geo/journeys/milestones'
@@ -76,7 +76,16 @@ export default function JourneyDetail() {
     <div className="relative flex flex-1 flex-col overflow-y-auto bg-sand text-ink">
       {/* 히어로 — 지역 씬 */}
       <div className="relative h-[210px] w-full overflow-hidden">
-        <img src={sceneArt(chrome.scene)} alt="" className="h-full w-full object-cover" style={{ objectPosition: sceneFocus(chrome.scene, 'hero') }} />
+        {/* 히어로도 **그 땅**이다. 씬 일러스트(나무 한 그루, 배 한 척)를 넓은 띠로 자르면
+            물건이 반토막 난다 — 베드로의 길 머리에 밑동 잘린 나무 두 그루가 서 있었다.
+            지형 그림은 가장자리까지 지형이라 어떤 비율로 잘라도 성립하고,
+            카드·지도·상세가 같은 땅을 보여 준다. */}
+        <img
+          src={terrainArt(journey.id) ?? sceneArt(chrome.scene)}
+          alt=""
+          className="h-full w-full object-cover"
+          style={{ objectPosition: terrainArt(journey.id) ? 'center 40%' : sceneFocus(chrome.scene, 'hero') }}
+        />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28" style={{ background: 'linear-gradient(to top, var(--color-sand), transparent)' }} />
         <button onClick={() => go('journeys')} className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))] flex h-11 w-11 items-center justify-center rounded-full bg-[#201C15]/85 text-sand-raised transition active:scale-90" aria-label="뒤로">
           <IconArrow size={17} className="rotate-180" />

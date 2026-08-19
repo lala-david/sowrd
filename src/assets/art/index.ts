@@ -201,3 +201,24 @@ export const propArt = (journeyId: string): string | undefined => PROP_MAP[journ
 export const mapGroundArt = (): string | undefined => PROP_MAP['_ground']
 /** 도달 인장 — 리빌처럼 **큰 자리**에서만 쓴다. 20px 노드로 줄이면 문양이 뭉갠다. */
 export const sealArt = (): string | undefined => PROP_MAP['_seal']
+
+/* ── 지도의 지형 ───────────────────────────────────────────────────────────
+ * 여정마다 그 땅을 위에서 내려다본 **게임 월드맵**. recraft 벡터 일러스트 스타일로 생성해
+ * 카드에 꽉 차게 깐다 — 액자도 두루마리도 없는 지형 그 자체다.
+ *
+ * 예전에 생성 아트를 지도에서 걷어낸 적이 있는데, 그건 정사각 오브젝트 그림이라
+ * 하드 엣지가 보이고 길을 가렸기 때문이었다. 이건 다르다: 가장자리까지 지형이고,
+ * 채도가 낮아 그 위의 길(라피스)과 자리(금)를 밀어내지 않는다.
+ * 지도가 빈 종이가 아니라 **땅**이 되는 것이 이 한 장의 일이다. */
+const TERRAIN_URLS = import.meta.glob('./terrain/*.webp', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>
+const TERRAIN_MAP: Record<string, string> = Object.fromEntries(
+  Object.entries(TERRAIN_URLS).map(([file, url]) => [
+    file.replace(/^\.\/terrain\//, '').replace(/\.webp$/, ''),
+    url,
+  ]),
+)
+export const terrainArt = (journeyId: string): string | undefined => TERRAIN_MAP[journeyId]
