@@ -494,6 +494,95 @@ body::after {
   text-decoration: none;
 }
 
+/* ── 대적 — 살아 있는 대치 그림 (components/AdversaryBanner) ─────────────────
+   kind마다 그 위협의 숨. 전부 keyframe이라 reduced-motion 전역 규칙이 통째로 끈다.
+   색은 고정 rgba — 이 배너는 러닝 화면(다크 고정)과 미리보기에서만 살고,
+   그림 위에 앉으므로 테마 토큰을 쓰면 안 된다(journeySkin 잉크와 같은 규칙). */
+.adv-live > img {
+  animation: advDrift 18s ease-in-out infinite alternate;
+}
+@keyframes advDrift {
+  from { transform: scale(1.06) translateY(-2%); }
+  to { transform: scale(1.14) translateY(2.5%); }
+}
+.adv-fx { position: absolute; inset: 0; pointer-events: none; }
+/* 바다 — 어두운 물이 숨쉬듯 부풀었다 가라앉는다 */
+.adv-fx-sea::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(24, 17, 8, 0.5), transparent 55%);
+  animation: advSwell 6.5s ease-in-out infinite alternate;
+}
+@keyframes advSwell {
+  from { transform: translateY(7%); opacity: 0.5; }
+  to { transform: translateY(-4%); opacity: 0.95; }
+}
+/* 폭풍 — 사선 비가 내리치고, 이따금 번쩍인다 */
+.adv-fx-storm::before {
+  content: ''; position: absolute; inset: -35%;
+  background: repeating-linear-gradient(115deg, transparent 0 9px, rgba(240, 230, 212, 0.17) 9px 10px);
+  animation: advRain 0.9s linear infinite;
+}
+@keyframes advRain {
+  from { transform: translate3d(0, -42px, 0); }
+  to { transform: translate3d(-30px, 42px, 0); }
+}
+.adv-fx-storm::after {
+  content: ''; position: absolute; inset: 0;
+  background: rgba(240, 230, 212, 0.9); opacity: 0;
+  animation: advFlash 8s linear infinite;
+}
+@keyframes advFlash {
+  0%, 90.9%, 94.2%, 100% { opacity: 0; }
+  91.6% { opacity: 0.3; }
+  92.6% { opacity: 0.06; }
+  93.4% { opacity: 0.2; }
+}
+/* 위협 — 문지방의 등불이 흔들린다(행 12:5, 기도하는 교회의 불) */
+.adv-fx-threat::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(30% 48% at 16% 82%, rgba(240, 168, 31, 0.55), transparent 70%);
+  animation: advFlicker 3.4s ease-in-out infinite;
+}
+@keyframes advFlicker {
+  0%, 100% { opacity: 0.55; }
+  13% { opacity: 0.9; }
+  29% { opacity: 0.6; }
+  47% { opacity: 1; }
+  64% { opacity: 0.7; }
+  82% { opacity: 0.92; }
+}
+/* 광야 — 지평선의 아지랑이가 느리게 오른다 */
+.adv-fx-wilderness::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(247, 236, 213, 0.22), transparent 55%);
+  animation: advHeat 5.5s ease-in-out infinite alternate;
+}
+@keyframes advHeat {
+  from { opacity: 0.35; transform: translateY(3%); }
+  to { opacity: 0.85; transform: translateY(-2%); }
+}
+/* 기근 — 마른 먼지가 가로로 흐른다 */
+.adv-fx-famine::after {
+  content: ''; position: absolute; inset: -20%;
+  background: repeating-linear-gradient(93deg, transparent 0 14px, rgba(169, 138, 86, 0.14) 14px 17px, transparent 17px 34px);
+  animation: advDust 7s linear infinite;
+}
+@keyframes advDust {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(68px, -4px, 0); }
+}
+/* 승리 — 갈라지는 틈의 빛(components/AdversaryVictory). 벌어지며 스러진다 */
+.adv-seam {
+  background: #fff6e2;
+  filter: blur(2px);
+  animation: advSeam 1.6s ease-out forwards;
+}
+@keyframes advSeam {
+  0% { opacity: 0; }
+  18% { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

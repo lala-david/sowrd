@@ -8,7 +8,7 @@ import { toneOf } from '../lib/mood'
 import { LAMP_VERSE } from '../data/scripture'
 import { journeyById, journeyProgress, toJourneyKm, toRealKm } from '../data/geo/journeys'
 import { adversaryOf, adversaryPhase } from '../lib/adversary'
-import { adversaryArt } from '../assets/art'
+import AdversaryBanner from '../components/AdversaryBanner'
 import { haptic } from '../lib/haptics'
 import { speak } from '../lib/voice'
 
@@ -591,21 +591,9 @@ export default function Run() {
 
         {/* 다음 자리 게이지 — 그 구간에 대적이 살면 대치가 된다 */}
         <div className="mt-9 w-full max-w-[300px]">
-          {adv && (
-            /* 대치 배너 — 막아선 것의 이름과 얼굴(scripts/adversary-art.mjs).
-               그림은 assets/st/ 몫이라 처음 볼 때 받아 캐시된다. 없으면 이름만 남는다.
-               이 화면은 다크 고정이라 text-ink가 밝은 잉크로 풀린다. */
-            <div className="relative mb-3 h-14 overflow-hidden rounded-xl ring-1 ring-line-strong">
-              {adversaryArt(adv.id) && (
-                <img src={adversaryArt(adv.id)} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
-              <div className="absolute inset-y-0 left-3 flex flex-col justify-center">
-                <p className="font-serif text-[15px] leading-tight text-ink">{adv.name}</p>
-                <p className="mt-0.5 text-[10.5px] text-muted">{adv.title}</p>
-              </div>
-            </div>
-          )}
+          {/* 대치 배너 — 살아 있는 그림(파도·비·등불이 움직인다). 이 화면은 다크 고정이라
+              배너의 text-ink가 밝은 잉크로 풀린다. 그림은 assets/st/ 몫 — 처음 볼 때 받아 캐시. */}
+          {adv && <AdversaryBanner adv={adv} className="mb-3" />}
           <div className="flex items-center justify-between text-[12px]">
             <span className="text-muted">{jProg?.next ?? prog.nextStation ? '다음 자리까지' : '완주까지'}</span>
             <span className="font-display text-sun" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>

@@ -21,6 +21,8 @@ import { sceneForEpisode } from '../lib/scene'
 import Celebration from '../components/Celebration'
 import BoardWindow from '../components/BoardWindow'
 import { adversaryOf } from '../lib/adversary'
+import type { Adversary } from '../data/adversaries'
+import AdversaryVictory from '../components/AdversaryVictory'
 
 /* 리빌의 한 '순간' — 여정 자리든 예수 코스 자리든 같은 형태로 렌더한다. */
 interface Moment {
@@ -39,6 +41,8 @@ interface Moment {
   reflection: string
   prayer: string
   onOpen: () => void
+  /** 이 자리로 들어오는 구간을 막아섰던 대적 — 있으면 히어로에서 대치 그림이 걷힌다 */
+  adv?: Adversary
 }
 
 export default function Reveal() {
@@ -115,6 +119,7 @@ export default function Reveal() {
           title: e.place,
           subtitle: `${e.placeLatin} · ${e.region}`,
           body: adv ? adv.victory : e.event,
+          adv,
           refLine: e.passageRef.replace(/\s*\(.*\)$/, ''),
           reflection: e.reflection,
           prayer: e.prayer,
@@ -260,6 +265,9 @@ export default function Reveal() {
           className="h-full w-full object-cover transition-all duration-[1400ms] ease-out"
           style={{ transform: shown ? 'scale(1)' : 'scale(1.08)', opacity: shown ? 1 : 0.2, filter: moment?.celebrate === false ? 'saturate(0.72)' : 'none' }}
         />
+        {/* 대적을 넘은 자리 — 대치 그림(막아선 바다)이 갈라지며 밑의 승리 그림이 드러난다.
+            key=moment.key: 페이저로 되돌아오면 다시 걷힌다(인장 스프링과 같은 규칙). */}
+        {moment?.adv && <AdversaryVictory key={moment.key} advId={moment.adv.id} kind={moment.adv.kind} />}
         <div className="pointer-events-none absolute inset-0" style={{ background: moment?.glow ? `radial-gradient(60% 50% at 50% 40%, ${moment.glow}, transparent)` : 'none' }} />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28" style={{ background: 'linear-gradient(to top, var(--color-sand), transparent)' }} />
 
