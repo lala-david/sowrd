@@ -478,6 +478,22 @@ body::after {
   animation: livePulse 1.8s ease-in-out infinite;
 }
 
+/* 실제 지도(MapLibre)의 저작자 표기 — ODbL 조건이라 숨기지 않는다.
+   다만 책의 판권 페이지처럼 조용하게: 지도 종이(mapStyle.ts)가 테마 무관 고정이므로
+   표기도 고정 톤이다(토큰 금지 — 다크에서 뒤집히면 지도 위에서 깨진다).
+   maplibre CSS가 나중에(동적 import) 로드되므로 셀렉터 특이도로 이긴다. */
+.maplibregl-map .maplibregl-ctrl.maplibregl-ctrl-attrib {
+  background: rgba(246, 236, 212, 0.85);
+  font: 9.5px/1.6 ui-sans-serif, system-ui, sans-serif;
+  color: #6d5939;
+  padding: 0 6px;
+  border-radius: 8px 0 0 0;
+}
+.maplibregl-map .maplibregl-ctrl.maplibregl-ctrl-attrib a {
+  color: #6d5939;
+  text-decoration: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

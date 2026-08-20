@@ -126,6 +126,19 @@
 
 ---
 
+## D10 — 실제 지도: **MapLibre + OpenFreeMap · 스타일은 우리 것** (2026-08-20)
+
+**문제:** 러닝 경로 지도(LiveMap·RouteMap)가 OSM 공식 raster 타일 위에 있었다. usage policy가 "heavy use 앱 배포는 사전 허가 없이 금지 · 예고 없는 차단 가능"을 명시하고, 기본 타일의 인상(실측 평균 채도 0.541 — 앱 화면의 3~4배)이 양피지 앱 속 이물질이었다. 무료 공급자 조사는 `PLATFORM-RESEARCH-2026-08-20.md`.
+
+**결정:** **MapLibre GL JS(BSD) + OpenFreeMap 벡터 타일**(키 없음·무제한·상업 허용) + **양피지 스타일 JSON을 직접 소유**(`src/lib/mapStyle.ts`). 로고 워터마크 0 — MapLibre도 OpenFreeMap도 로고를 강제하지 않는다. 저작자 표기는 ODbL 조건이라 유지하되 판권 페이지처럼 조용하게. 공급자가 사라지면 `sources`의 URL 한 줄만 OpenMapTiles 호환 타일(MapTiler 등)로 바꾼다 — 스타일은 그대로다. 완전 자체 호스팅(Protomaps/PMTiles + 외부 스토리지)은 그때 여는 폴백이지 지금 할 일이 아니다(GitHub Pages엔 플래닛 120GB가 못 올라간다).
+
+- **비용 정직성:** maplibre는 동적 청크 gz 257KB — 지도 화면에서만 받고, **프리캐시에서 뺀다**(D7 이미지 예산과 같은 논리 — 지도를 안 연 사람에게 설치 시점에 1MB를 안기지 않는다). 처음 지도를 열 때 받아 runtimeCaching이 보관한다.
+- **지도는 테마 무관 고정 팔레트**(`MAP_PAPER`·`ROUTE_INK`) — journeySkin의 MAP_INK와 같은 규칙("종이가 고정이면 잉크도 고정"). `check-contrast.mjs`가 이 파일을 파싱해 경로 밴드×종이/케이싱, 글자 잉크×종이 9조합을 검사한다.
+- **실측(전후, 지도 상자만):** 평균 채도 0.196→0.194 · 명도 폭 120→102(유지 — 예전 "양피지화로 22→9 붕괴" 재발 없음) · 유채색 중 찬 색 45.1%→**9.9%**(물과 빠름 밴드에만 남음).
+- **함정 기록:** Vite dev 프리번들이 maplibre 워커를 조용히 깨뜨려 타일 요청이 영원히 안 나간다 → `optimizeDeps.exclude`(vite.config.ts). dev 미리보기 페이지 `dev/map.html`(배포물에 안 들어감).
+
+---
+
 ## 바뀌지 않는 것 (재확인)
 
 아래는 **모든 문서에서 이미 일관**했고, 이 결정들도 침범하지 않는다:

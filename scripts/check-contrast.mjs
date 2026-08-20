@@ -96,7 +96,11 @@ for (let i = 0; i < JOURNEY_ACCENTS.length; i++) {
  * 밝은 하늘색이 되어 대비 1.41:1로 사라졌다. 종이가 고정이면 잉크도 고정이어야 하고,
  * 그 조합은 여기서 검사해야 한다. */
 const skinSrc = fs.readFileSync('src/lib/journeySkin.ts', 'utf8')
-const papers = [...skinSrc.matchAll(/(\w+):\s*\{\s*\/\/[^\n]*\n\s*from:\s*'(#[0-9a-fA-F]{6})'/g)].map((m) => [m[1], m[2]])
+/* 주석 유무와 무관하게 `id: { … from: '#…' }`를 잡는다 — 예전 정규식은 여는 중괄호
+ * 뒤에 // 주석이 있는 형태만 매칭해서, 주석이 없는 실제 파일에서 0건이 매칭됐고
+ * 이 섹션 전체가 빈 출력으로 조용히 건너뛰어지고 있었다(검사가 죽은 줄도 몰랐다). */
+const papers = [...skinSrc.matchAll(/(\w+):\s*\{\s*(?:\/\/[^\n]*\s*)?from:\s*'(#[0-9a-fA-F]{6})'/g)].map((m) => [m[1], m[2]])
+if (papers.length === 0) { fail++; console.log('  ✘ journeySkin 종이를 하나도 못 읽음 — 파서 확인') }
 const ink = Object.fromEntries(
   [...skinSrc.matchAll(/^\s{2}(\w+):\s*'(#[0-9a-fA-F]{6})',/gm)].map((m) => [m[1], m[2]]),
 )
@@ -109,6 +113,45 @@ for (const [journey, paper] of papers) {
     if (!ok) fail++
     console.log(`  ${ok ? '✔' : '✘'} ${journey.padEnd(9)} ${name.padEnd(6)} ${r.toFixed(2)}:1 (필요 ${min})`)
   }
+}
+
+/* 실제 지도(러닝 경로)의 양피지 스타일 — lib/mapStyle.ts.
+ *
+ * 이 지도도 journeySkin처럼 테마 무관 고정 팔레트라 토큰 검사 밖에 있다.
+ * 경로 밴드 3색은 케이싱(종이색 한 겹) 위에 앉고, 케이싱이 벌어진 곳에서는
+ * 지도 종이 위에 바로 앉는다 — 두 바탕 모두에서 그래픽 기준(3:1)을 지켜야 한다.
+ * 글자 잉크는 halo가 있어도 본문 기준(4.5:1)으로 본다. */
+const mapSrc = fs.readFileSync('src/lib/mapStyle.ts', 'utf8')
+const hexBlock = (marker) => {
+  const i = mapSrc.indexOf(marker)
+  const body = mapSrc.slice(i, mapSrc.indexOf('\n} as const', i) + 1 || undefined)
+  return Object.fromEntries([...body.matchAll(/(\w+):\s*'(#[0-9a-fA-F]{6})'/g)].map((m) => [m[1], m[2]]))
+}
+const paper = hexBlock('export const MAP_PAPER')
+const route = hexBlock('export const ROUTE_INK')
+console.log('\n── 실제 지도(mapStyle) — 경로·글자 × 종이 ──')
+for (const [fg, bg, min, label] of [
+  ['slow', 'casing', 3, '느림 밴드/케이싱'],
+  ['even', 'casing', 3, '평소 밴드/케이싱'],
+  ['fast', 'casing', 3, '빠름 밴드/케이싱'],
+  ['slow', 'paper', 3, '느림 밴드/종이'],
+  ['even', 'paper', 3, '평소 밴드/종이'],
+  ['fast', 'paper', 3, '빠름 밴드/종이'],
+]) {
+  const r = ratio(route[fg], fg === bg || bg === 'casing' ? route.casing : paper.paper)
+  const ok = r >= min
+  if (!ok) fail++
+  console.log(`  ${ok ? '✔' : '✘'} ${label.padEnd(14)} ${r.toFixed(2)}:1 (필요 ${min})`)
+}
+for (const [fg, bg, min, label] of [
+  ['labelInk', 'paper', 4.5, '지명 잉크/종이'],
+  ['labelSoft', 'paper', 4.5, '길 이름/종이'],
+  ['labelWater', 'water', 3, '물 이름/물'],
+]) {
+  const r = ratio(paper[fg], paper[bg])
+  const ok = r >= min
+  if (!ok) fail++
+  console.log(`  ${ok ? '✔' : '✘'} ${label.padEnd(14)} ${r.toFixed(2)}:1 (필요 ${min})`)
 }
 
 console.log(fail === 0 ? '\n전부 통과' : `\n실패 ${fail}건`)

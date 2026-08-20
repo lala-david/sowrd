@@ -43,7 +43,10 @@ export default defineConfig(({ command }) => ({
            한 번 본 자리는 그 뒤로 오프라인에서도 열린다. 셸·히어로·씬·문장은 그대로 프리캐시. */
       workbox: {
         globPatterns: ['**/*.{js,css,html,webp,svg,woff2}'],
-        globIgnores: ['**/assets/st/**', '**/assets/world/**'],
+        /* maplibre 청크(raw 983KB)도 자리 그림과 같은 논리로 프리캐시에서 뺀다 —
+           지도를 한 번도 안 연 사람에게 설치 시점에 1MB를 안기지 않는다.
+           처음 지도를 열 때 받아 runtimeCaching(map-lib)이 보관한다. */
+        globIgnores: ['**/assets/st/**', '**/assets/world/**', '**/maplibre-gl-*.{js,css}'],
         /* 세 폰트가 전부 외부 CDN에서 온다. 프리캐시는 빌드 산출물만 담으므로 그대로 두면
            오프라인에서 글꼴이 시스템 폰트로 떨어진다 — 세리프 목소리가 이 앱의 정체성인데.
            한 번 받은 뒤에는 캐시에서 쓴다(러너는 신호가 끊기는 곳에서 달린다). */
@@ -76,13 +79,37 @@ export default defineConfig(({ command }) => ({
             },
           },
           {
-            /* 지도 타일 — 같은 기록을 다시 열 때마다 150~500KB를 새로 받고 있었다.
-               OSM 타일 이용 정책상으로도 재요청을 줄이는 편이 옳다. */
-            urlPattern: ({ url }) => url.origin === 'https://tile.openstreetmap.org',
+            // 지도 라이브러리 청크 — 프리캐시에서 뺀 몫. 한 번 지도를 연 뒤엔 오프라인에서도 열린다
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && /\/maplibre-gl-[^/]+\.(js|css)$/.test(url.pathname),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'map-lib',
+              expiration: { maxEntries: 4, maxAgeSeconds: 60 * 60 * 24 * 180 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            /* 지도 타일·글리프(.pbf) — 같은 기록을 다시 열 때마다 새로 받지 않는다.
+               벡터 타일 URL에는 릴리스 스탬프가 박혀 있어(예: /planet/20260816_.../z/x/y.pbf)
+               내용이 바뀌면 URL이 바뀐다 — CacheFirst가 안전하다. */
+            urlPattern: ({ url }) => url.origin === 'https://tiles.openfreemap.org' && url.pathname.endsWith('.pbf'),
             handler: 'CacheFirst',
             options: {
               cacheName: 'map-tiles',
               expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            /* TileJSON(/planet) — 릴리스가 갈리면 이 문서가 새 타일 URL을 가리킨다.
+               CacheFirst로 오래 박아두면 지워진 옛 릴리스를 가리켜 지도가 통째로 죽는다.
+               네트워크 우선, 오프라인일 때만 캐시 폴백. */
+            urlPattern: ({ url }) => url.origin === 'https://tiles.openfreemap.org' && !url.pathname.endsWith('.pbf'),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'map-meta',
+              networkTimeoutSeconds: 4,
+              expiration: { maxEntries: 8, maxAgeSeconds: 60 * 60 * 24 * 30 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },
@@ -139,6 +166,11 @@ export default defineConfig(({ command }) => ({
     },
   },
   esbuild: { supported: { 'regexp-lookbehind-assertions': false } },
+  /* maplibre-gl을 dev 프리번들(esbuild)에서 제외한다.
+   * 프리번들을 거치면 내장 워커가 조용히 깨져 — 에러 하나 없이 — 벡터 타일 요청이
+   * 영원히 나가지 않는다(실측: TileJSON만 받고 load 이벤트가 오지 않음. 공식 liberty
+   * 스타일도 동일하게 멈춤). 프로덕션 빌드(rollup)는 영향 없다. */
+  optimizeDeps: { exclude: ['maplibre-gl'] },
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },
