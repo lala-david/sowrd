@@ -79,8 +79,10 @@ export default defineConfig(({ command }) => ({
             },
           },
           {
-            // 지도 라이브러리 청크 — 프리캐시에서 뺀 몫. 한 번 지도를 연 뒤엔 오프라인에서도 열린다
-            urlPattern: ({ url, sameOrigin }) => sameOrigin && /\/maplibre-gl-[^/]+\.(js|css)$/.test(url.pathname),
+            /* 지도 라이브러리 — 프리캐시에서 뺀 몫(mjs는 globPatterns에 없고 css는 globIgnores).
+               public/maplibre/의 원형 3파일 + 번들된 css. 한 번 지도를 연 뒤엔 오프라인에서도 열린다 */
+            urlPattern: ({ url, sameOrigin }) =>
+              sameOrigin && (url.pathname.includes('/maplibre/') || /\/maplibre-gl-[^/]+\.(js|css)$/.test(url.pathname)),
             handler: 'CacheFirst',
             options: {
               cacheName: 'map-lib',
@@ -150,8 +152,19 @@ export default defineConfig(({ command }) => ({
      다운레벨하지 않으므로, 메인 청크에 하나만 섞여도 앱 전체가 백지가 된다.
      아래 두 줄이 그런 코드가 다시 들어오면 빌드를 깨뜨린다. */
   build: {
-    target: ['es2020', 'safari15'],
+    // VITE_TARGET: 번들 문제 격리용 임시 스위치(예: VITE_TARGET=esnext) — 평소엔 안 쓴다
+    target: process.env.VITE_TARGET ? [process.env.VITE_TARGET] : ['es2020', 'safari15'],
     rollupOptions: {
+      /* VITE_DEV_PAGES=1 이면 dev 미리보기 페이지를 함께 빌드한다 — **프로덕션 번들에서**
+         지도·연출을 검증하기 위한 스위치다(dev 서버는 프리번들이 달라 증거가 안 된다.
+         실제로 dev에서만 잡히는 워커 고장이 있었다). 배포 빌드에는 절대 켜지 않는다. */
+      input: process.env.VITE_DEV_PAGES
+        ? {
+            main: path.resolve(__dirname, 'index.html'),
+            map: path.resolve(__dirname, 'dev/map.html'),
+            adv: path.resolve(__dirname, 'dev/adv.html'),
+          }
+        : undefined,
       output: {
         /* 자리 그림만 assets/st/ 로 모은다 — SW가 프리캐시에서 골라낼 수 있어야 하는데,
            기본 설정은 모든 에셋을 assets/ 에 평평하게 쏟아서 구분할 방법이 없다. */

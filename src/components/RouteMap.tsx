@@ -50,10 +50,8 @@ export default function RouteMap({
 
     ;(async () => {
       try {
-        const [ml] = await Promise.all([
-          import('maplibre-gl'),
-          import('maplibre-gl/dist/maplibre-gl.css'),
-        ])
+        // 워커 URL을 명시하는 로더로만 연다 — 기본 부트스트랩은 번들 후 조용히 죽는다(lib/mapLibre.ts)
+        const ml = await (await import('../lib/mapLibre')).loadMapLibre()
         if (disposed || !boxRef.current) return
 
         /* 시야를 **먼저** 자기 동네에 고정한다 — 첫 좌표 + z16으로 시작하고,

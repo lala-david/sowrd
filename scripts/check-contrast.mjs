@@ -147,6 +147,8 @@ for (const [fg, bg, min, label] of [
   ['labelInk', 'paper', 4.5, '지명 잉크/종이'],
   ['labelSoft', 'paper', 4.5, '길 이름/종이'],
   ['labelWater', 'water', 3, '물 이름/물'],
+  ['labelPark', 'park', 3, '공원 이름/공원'],
+  ['labelPark', 'paper', 4.5, '공원 이름/종이'],
 ]) {
   const r = ratio(paper[fg], paper[bg])
   const ok = r >= min

@@ -1,4 +1,4 @@
-/* ── 실제 지도(러닝 경로용)의 양피지 스타일 — 우리가 소유하는 스타일 ──────────
+﻿/* ── 실제 지도(러닝 경로용)의 양피지 스타일 — 우리가 소유하는 스타일 ──────────
  *
  * 2026-08-20, OSM 라스터 타일 → MapLibre + OpenFreeMap 벡터로 교체하며 만들었다.
  * 이유 셋:
@@ -8,6 +8,11 @@
  *      차단 가능"을 명시한다. OpenFreeMap은 무제한·상업 허용·키 없음(등록조차 없음).
  *   3) 벡터라 스타일 JSON을 우리가 소유한다. 공급자가 사라져도 sources의 URL 한 줄만
  *      다른 OpenMapTiles 호환 타일(MapTiler 등)로 바꾸면 이 지도는 그대로다.
+ *
+ * 같은 날 저녁, 디테일 판으로 한 번 더 개정 — 러닝 줌(16~17)에서 옛 지도의 밀도가 나게:
+ * 물가 잉크선(해안선), 강 이름·공원 이름, 다리·터널 구분, 계단 점선, 고전 철길(이중선),
+ * 활주로, 경기장·트랙(러너의 장소다). 원칙은 그대로 — 디테일은 지형·사물로만 늘리고
+ * 아이콘·POI 마커는 넣지 않는다(스프라이트 0, 소음 0).
  *
  * 워터마크는 없다. MapLibre(BSD)도 OpenFreeMap도 로고를 강제하지 않는다.
  * 남는 것은 구석의 저작자 표기 한 줄 — 이것은 워터마크가 아니라 OSM 데이터
@@ -22,7 +27,7 @@
  * 차게 — 대비는 바탕이 아니라 잉크에서 만든다(journeySkin.ts 원칙).
  * 색을 만졌으면: node scripts/check-contrast.mjs (이 파일도 파싱한다)
  */
-import type { StyleSpecification } from 'maplibre-gl'
+import type { StyleSpecification, FilterSpecification } from 'maplibre-gl'
 import type { Feature, FeatureCollection, LineString } from 'geojson'
 import type { TracePoint } from './geo'
 import { bandOf, type PaceBand } from './runAnalysis'
@@ -36,24 +41,33 @@ export const MAP_PAPER = {
   /** 물 — 바랜 청록. 이 지도에서 유일하게 차가운 면이라 명도 폭과 찬 색을 책임진다 */
   water: '#a5c4ba',
   waterLine: '#8fb3a7',
-  /** 공원·풀밭 / 숲 — 올리브 쪽으로 바랜 초록 두 단 */
+  /** 공원·풀밭 / 숲 / 습지 — 올리브 쪽으로 바랜 초록들 */
   park: '#dde2b2',
   wood: '#cbd59d',
+  wetland: '#d2dcbc',
+  /** 경기장·트랙·놀이터 — 러너의 장소라 공원보다 반 단 진하게 */
+  pitch: '#d5dfa4',
   sand: '#f0e3bf',
+  rock: '#e8dbbd',
+  ice: '#f4f0e3',
   /** 건물 — 종이 위 옅은 도장. 러너가 도시에서 방향을 잡는 실마리 */
   building: '#e9dab7',
   buildingLine: '#d9c497',
   /** 길 — 종이보다 밝은 리본 + 가장자리 선. 보드의 roadBed/roadEdge와 같은 문법 */
   road: '#fffaea',
   roadCase: '#c9ac7c',
+  /** 다리 — 가장자리를 한 단 더 눌러 물·계곡 위를 지나는 것이 보이게 */
+  bridgeCase: '#b2905c',
   /** 보행로·오솔길 — 러너가 실제로 달리는 길이라 점선으로 살려 둔다 */
   path: '#a98a56',
-  rail: '#c4a97d',
+  rail: '#b9a072',
+  aeroway: '#efe4c4',
   boundary: '#b39a72',
-  /** 글자 잉크 — 진하게(지명), 옅게(길 이름·동네), 물 이름 */
+  /** 글자 잉크 — 진하게(지명), 옅게(길 이름·동네), 물 이름, 공원 이름 */
   labelInk: '#463522',
   labelSoft: '#6d5939',
   labelWater: '#3d6f64',
+  labelPark: '#55683a',
   halo: '#f6ecd4',
 } as const
 
@@ -90,6 +104,19 @@ const NAME = ['coalesce', ['get', 'name:ko'], ['get', 'name']]
 const wide = (z13: number, z17: number) =>
   ['interpolate', ['exponential', 1.6], ['zoom'], 13, z13, 17, z17] as unknown as number
 
+/* 도로 계급 필터 — 옛 지도의 문법은 "큰길·길·골목"이지 행정 등급이 아니다.
+ * 터널은 별도 레이어(점선)로 빼므로 지상 도로 필터에 !tunnel을 함께 건다. */
+const CLS = (classes: string[]) =>
+  ['match', ['get', 'class'], classes, true, false] as unknown as FilterSpecification
+const notTunnel = ['!=', ['get', 'brunnel'], 'tunnel'] as unknown as FilterSpecification
+const ALL = (...fs: FilterSpecification[]) => ['all', ...fs] as unknown as FilterSpecification
+const EQ = (prop: string, v: string) => ['==', ['get', prop], v] as unknown as FilterSpecification
+const NEQ = (prop: string, v: string) => ['!=', ['get', prop], v] as unknown as FilterSpecification
+const ROAD_MAJOR = ['motorway', 'trunk', 'primary']
+const ROAD_MID = ['secondary', 'tertiary']
+const ROAD_MINOR = ['minor', 'service', 'track']
+const ROAD_ALL = [...ROAD_MAJOR, ...ROAD_MID, ...ROAD_MINOR]
+
 export function parchmentStyle(): StyleSpecification {
   return {
     version: 8,
@@ -105,23 +132,49 @@ export function parchmentStyle(): StyleSpecification {
         type: 'fill',
         source: 'omt',
         'source-layer': 'landuse',
-        filter: ['match', ['get', 'class'], ['residential', 'suburbs', 'neighbourhood'], true, false],
+        filter: CLS(['residential', 'suburbs', 'neighbourhood']),
         paint: { 'fill-color': MAP_PAPER.paperShade, 'fill-opacity': 0.55 },
+      },
+      {
+        /* 학교·병원 등 큰 부지 — 도시에서 방향을 잡는 덩어리. 주거지보다 옅게 */
+        id: 'campus',
+        type: 'fill',
+        source: 'omt',
+        'source-layer': 'landuse',
+        minzoom: 13,
+        filter: CLS(['school', 'university', 'college', 'hospital', 'kindergarten']),
+        paint: { 'fill-color': MAP_PAPER.paperShade, 'fill-opacity': 0.4 },
       },
       {
         id: 'landcover',
         type: 'fill',
         source: 'omt',
         'source-layer': 'landcover',
-        filter: ['match', ['get', 'class'], ['wood', 'grass', 'sand'], true, false],
+        filter: CLS(['wood', 'grass', 'sand', 'wetland', 'rock', 'ice']),
         paint: {
           'fill-color': [
             'match', ['get', 'class'],
             'wood', MAP_PAPER.wood,
             'sand', MAP_PAPER.sand,
+            'wetland', MAP_PAPER.wetland,
+            'rock', MAP_PAPER.rock,
+            'ice', MAP_PAPER.ice,
             MAP_PAPER.park,
           ],
           'fill-opacity': 0.6,
+        },
+      },
+      {
+        /* 경기장·트랙·놀이터 — 러너의 장소. 묘지는 조용한 초록으로 */
+        id: 'pitch',
+        type: 'fill',
+        source: 'omt',
+        'source-layer': 'landuse',
+        minzoom: 13,
+        filter: CLS(['pitch', 'stadium', 'playground', 'track', 'cemetery', 'garden']),
+        paint: {
+          'fill-color': ['match', ['get', 'class'], 'cemetery', MAP_PAPER.park, MAP_PAPER.pitch],
+          'fill-opacity': ['match', ['get', 'class'], 'cemetery', 0.4, 0.55],
         },
       },
       {
@@ -132,6 +185,15 @@ export function parchmentStyle(): StyleSpecification {
         paint: { 'fill-color': MAP_PAPER.park, 'fill-opacity': 0.55 },
       },
       {
+        /* 공원 경계 — 옛 지도의 점선 울타리. 면색만으로는 종이와 경계가 뭉갠다 */
+        id: 'park-outline',
+        type: 'line',
+        source: 'omt',
+        'source-layer': 'park',
+        minzoom: 13,
+        paint: { 'line-color': '#b6c186', 'line-width': 1, 'line-dasharray': [2, 2], 'line-opacity': 0.75 },
+      },
+      {
         id: 'water',
         type: 'fill',
         source: 'omt',
@@ -140,34 +202,92 @@ export function parchmentStyle(): StyleSpecification {
         paint: { 'fill-color': MAP_PAPER.water },
       },
       {
+        /* 물가 잉크선 — 옛 지도는 해안선을 반드시 그었다. 물과 종이의 경계가 단단해진다 */
+        id: 'water-shore',
+        type: 'line',
+        source: 'omt',
+        'source-layer': 'water',
+        filter: ['!=', ['get', 'brunnel'], 'tunnel'],
+        paint: { 'line-color': MAP_PAPER.waterLine, 'line-width': wide(0.6, 1.6), 'line-opacity': 0.85 },
+      },
+      {
+        /* 물길 — 강은 굵게, 개천·수로는 가늘게 */
         id: 'waterway',
         type: 'line',
         source: 'omt',
         'source-layer': 'waterway',
-        paint: { 'line-color': MAP_PAPER.waterLine, 'line-width': wide(1, 3) },
+        layout: { 'line-cap': 'round' },
+        paint: {
+          'line-color': MAP_PAPER.waterLine,
+          'line-width': [
+            'interpolate', ['exponential', 1.6], ['zoom'],
+            13, ['match', ['get', 'class'], 'river', 1.4, 0.7],
+            17, ['match', ['get', 'class'], 'river', 5, 2.2],
+          ] as unknown as number,
+        },
       },
       {
-        /* 건물은 z15부터만 — 러닝 줌에서 방향 잡는 실마리로 쓰되, 멀리서는 소음 */
+        /* 활주로·유도로 — 도시 러너에게 공항은 큰 랜드마크다 */
+        id: 'aeroway',
+        type: 'line',
+        source: 'omt',
+        'source-layer': 'aeroway',
+        minzoom: 11,
+        filter: CLS(['runway', 'taxiway']),
+        paint: {
+          'line-color': MAP_PAPER.aeroway,
+          'line-width': [
+            'interpolate', ['exponential', 1.6], ['zoom'],
+            13, ['match', ['get', 'class'], 'runway', 4, 1],
+            17, ['match', ['get', 'class'], 'runway', 26, 4],
+          ] as unknown as number,
+        },
+      },
+      {
+        /* 건물은 z14부터 — 러닝 줌에서 방향 잡는 실마리로 쓰되, 멀리서는 소음 */
         id: 'building',
         type: 'fill',
         source: 'omt',
         'source-layer': 'building',
-        minzoom: 15,
+        minzoom: 14,
         paint: {
           'fill-color': MAP_PAPER.building,
           'fill-outline-color': MAP_PAPER.buildingLine,
-          'fill-opacity': 0.55,
+          'fill-opacity': 0.6,
         },
       },
-      /* 길 — 가장자리(case)를 먼저 깔고 리본(fill)을 얹는다. 세 급으로만 나눈다:
-       * 옛 지도의 문법은 "큰길·길·골목"이지 도로 행정 등급이 아니다. */
+      {
+        /* 터널 — 땅 밑을 지나는 길은 점선으로. 지상 도로 레이어들은 !tunnel */
+        id: 'road-tunnel',
+        type: 'line',
+        source: 'omt',
+        'source-layer': 'transportation',
+        minzoom: 13,
+        filter: ALL(CLS(ROAD_ALL), EQ('brunnel', 'tunnel')),
+        paint: {
+          'line-color': MAP_PAPER.road,
+          'line-width': wide(1.5, 9),
+          'line-dasharray': [1.4, 1],
+          'line-opacity': 0.6,
+        },
+      },
+      {
+        /* 다리 밑판 — 케이싱보다 한 단 어두운 가장자리가 물 위의 다리를 만든다 */
+        id: 'bridge-case',
+        type: 'line',
+        source: 'omt',
+        'source-layer': 'transportation',
+        minzoom: 13,
+        filter: ALL(CLS(ROAD_ALL), EQ('brunnel', 'bridge')),
+        paint: { 'line-color': MAP_PAPER.bridgeCase, 'line-width': wide(3.6, 16) },
+      },
       {
         id: 'road-minor-case',
         type: 'line',
         source: 'omt',
         'source-layer': 'transportation',
         minzoom: 13,
-        filter: ['match', ['get', 'class'], ['minor', 'service', 'track'], true, false],
+        filter: ALL(CLS(ROAD_MINOR), notTunnel),
         layout: { 'line-join': 'round' },
         paint: { 'line-color': MAP_PAPER.roadCase, 'line-width': wide(1.4, 9.5) },
       },
@@ -176,7 +296,7 @@ export function parchmentStyle(): StyleSpecification {
         type: 'line',
         source: 'omt',
         'source-layer': 'transportation',
-        filter: ['match', ['get', 'class'], ['secondary', 'tertiary'], true, false],
+        filter: ALL(CLS(ROAD_MID), notTunnel),
         layout: { 'line-join': 'round' },
         paint: { 'line-color': MAP_PAPER.roadCase, 'line-width': wide(2.6, 12) },
       },
@@ -185,7 +305,7 @@ export function parchmentStyle(): StyleSpecification {
         type: 'line',
         source: 'omt',
         'source-layer': 'transportation',
-        filter: ['match', ['get', 'class'], ['motorway', 'trunk', 'primary'], true, false],
+        filter: ALL(CLS(ROAD_MAJOR), notTunnel),
         layout: { 'line-join': 'round' },
         paint: { 'line-color': MAP_PAPER.roadCase, 'line-width': wide(3.4, 14.5) },
       },
@@ -195,7 +315,7 @@ export function parchmentStyle(): StyleSpecification {
         source: 'omt',
         'source-layer': 'transportation',
         minzoom: 13,
-        filter: ['match', ['get', 'class'], ['minor', 'service', 'track'], true, false],
+        filter: ALL(CLS(ROAD_MINOR), notTunnel),
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: { 'line-color': MAP_PAPER.road, 'line-width': wide(0.7, 7.5) },
       },
@@ -205,7 +325,7 @@ export function parchmentStyle(): StyleSpecification {
         source: 'omt',
         'source-layer': 'transportation',
         layout: { 'line-join': 'round', 'line-cap': 'round' },
-        filter: ['match', ['get', 'class'], ['secondary', 'tertiary'], true, false],
+        filter: ALL(CLS(ROAD_MID), notTunnel),
         paint: { 'line-color': MAP_PAPER.road, 'line-width': wide(1.7, 9.5) },
       },
       {
@@ -214,7 +334,7 @@ export function parchmentStyle(): StyleSpecification {
         source: 'omt',
         'source-layer': 'transportation',
         layout: { 'line-join': 'round', 'line-cap': 'round' },
-        filter: ['match', ['get', 'class'], ['motorway', 'trunk', 'primary'], true, false],
+        filter: ALL(CLS(ROAD_MAJOR), notTunnel),
         paint: { 'line-color': MAP_PAPER.road, 'line-width': wide(2.3, 12) },
       },
       {
@@ -224,7 +344,7 @@ export function parchmentStyle(): StyleSpecification {
         source: 'omt',
         'source-layer': 'transportation',
         minzoom: 14,
-        filter: ['==', ['get', 'class'], 'path'],
+        filter: ALL(EQ('class', 'path'), NEQ('subclass', 'steps')),
         paint: {
           'line-color': MAP_PAPER.path,
           'line-width': wide(0.8, 2.2),
@@ -233,17 +353,56 @@ export function parchmentStyle(): StyleSpecification {
         },
       },
       {
-        id: 'rail',
+        /* 계단 — 촘촘한 눈금. 러너에게 계단은 정보다(피해 가거나, 훈련하거나) */
+        id: 'steps',
+        type: 'line',
+        source: 'omt',
+        'source-layer': 'transportation',
+        minzoom: 15,
+        filter: ALL(EQ('class', 'path'), EQ('subclass', 'steps')),
+        paint: {
+          'line-color': MAP_PAPER.path,
+          'line-width': wide(1.6, 3.2),
+          'line-dasharray': [0.25, 0.45],
+          'line-opacity': 0.85,
+        },
+      },
+      {
+        /* 철길 — 고전 지도 문법: 실선 위에 종이색 눈금을 얹어 침목처럼 */
+        id: 'rail-base',
         type: 'line',
         source: 'omt',
         'source-layer': 'transportation',
         minzoom: 13,
-        filter: ['match', ['get', 'class'], ['rail', 'transit'], true, false],
+        filter: ALL(EQ('class', 'rail'), notTunnel),
+        paint: { 'line-color': MAP_PAPER.rail, 'line-width': wide(1, 2.6), 'line-opacity': 0.85 },
+      },
+      {
+        id: 'rail-dash',
+        type: 'line',
+        source: 'omt',
+        'source-layer': 'transportation',
+        minzoom: 13,
+        filter: ALL(EQ('class', 'rail'), notTunnel),
+        paint: {
+          'line-color': MAP_PAPER.paper,
+          'line-width': wide(0.5, 1.4),
+          'line-dasharray': [3.2, 3.2],
+        },
+      },
+      {
+        /* 지상 전철 — 지하 구간(brunnel=tunnel)은 그리지 않는다. 러너 위 세계만 */
+        id: 'transit',
+        type: 'line',
+        source: 'omt',
+        'source-layer': 'transportation',
+        minzoom: 14,
+        filter: ALL(EQ('class', 'transit'), notTunnel),
         paint: {
           'line-color': MAP_PAPER.rail,
-          'line-width': wide(0.8, 2),
-          'line-dasharray': [4, 2.5],
-          'line-opacity': 0.7,
+          'line-width': wide(0.8, 1.8),
+          'line-dasharray': [1.5, 2],
+          'line-opacity': 0.4,
         },
       },
       {
@@ -277,6 +436,45 @@ export function parchmentStyle(): StyleSpecification {
         },
       },
       {
+        /* 강 이름 — 물길을 따라 흘려 쓴다. 한강을 달리는 러너가 한강의 이름을 본다 */
+        id: 'river-name',
+        type: 'symbol',
+        source: 'omt',
+        'source-layer': 'waterway',
+        minzoom: 13,
+        layout: {
+          'text-field': NAME as unknown as string,
+          'text-font': ['Noto Sans Italic'],
+          'text-size': 11.5,
+          'symbol-placement': 'line',
+          'text-letter-spacing': 0.05,
+        },
+        paint: {
+          'text-color': MAP_PAPER.labelWater,
+          'text-halo-color': MAP_PAPER.halo,
+          'text-halo-width': 1.1,
+        },
+      },
+      {
+        /* 공원 이름 — 러너가 실제로 달리는 곳의 이름 */
+        id: 'park-name',
+        type: 'symbol',
+        source: 'omt',
+        'source-layer': 'park',
+        minzoom: 14.5,
+        layout: {
+          'text-field': NAME as unknown as string,
+          'text-font': ['Noto Sans Italic'],
+          'text-size': 11,
+          'text-max-width': 8,
+        },
+        paint: {
+          'text-color': MAP_PAPER.labelPark,
+          'text-halo-color': MAP_PAPER.halo,
+          'text-halo-width': 1.1,
+        },
+      },
+      {
         id: 'road-name',
         type: 'symbol',
         source: 'omt',
@@ -299,7 +497,7 @@ export function parchmentStyle(): StyleSpecification {
         type: 'symbol',
         source: 'omt',
         'source-layer': 'place',
-        filter: ['match', ['get', 'class'], ['village', 'suburb', 'neighbourhood', 'quarter', 'hamlet'], true, false],
+        filter: CLS(['village', 'suburb', 'neighbourhood', 'quarter', 'hamlet']),
         layout: {
           'text-field': NAME as unknown as string,
           'text-font': ['Noto Sans Regular'],

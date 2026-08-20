@@ -43,10 +43,8 @@ export default function LiveMap({
     let disposed = false
     ;(async () => {
       try {
-        const [ml] = await Promise.all([
-          import('maplibre-gl'),
-          import('maplibre-gl/dist/maplibre-gl.css'),
-        ])
+        // 워커 URL을 명시하는 로더로만 연다 — 기본 부트스트랩은 번들 후 조용히 죽는다(lib/mapLibre.ts)
+        const ml = await (await import('../lib/mapLibre')).loadMapLibre()
         if (disposed || !boxRef.current || mapRef.current) return
         const map = new ml.Map({
           container: boxRef.current,
