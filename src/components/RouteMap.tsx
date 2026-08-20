@@ -106,13 +106,24 @@ export default function RouteMap({
         const styleOf = (band: PaceBand) => ({
           /* 색 + 굵기 + 파선의 3중 인코딩.
            * 색만 쓰면 이 앱에서 유일하게 색약 사용자가 정보를 못 받는 곳이 된다.
-           * 하필 가장 약한 쌍(느림↔평소, protan ΔE 13.3)이 구불구불한 5px 선에 올라간다. */
+           * 하필 가장 약한 쌍(느림↔평소, protan ΔE 13.3)이 구불구불한 선에 올라간다. */
           color: cssVar(BAND_COLOR[band]),
-          weight: band === 'slow' ? 6 : band === 'fast' ? 5 : 4,
-          dashArray: band === 'slow' ? undefined : band === 'fast' ? '10 4' : '2 5',
+          /* OSM 타일의 도로가 이 줌에서 10~14px로 그려진다 — 그보다 얇으면 경로가
+           * 도로 위의 실처럼 보인다. 도로 폭에 맞춰 길로 읽히게 키운다. */
+          weight: band === 'slow' ? 10 : band === 'fast' ? 9 : 8,
+          dashArray: band === 'slow' ? undefined : band === 'fast' ? '14 6' : '3 7',
           opacity: 0.95,
           lineCap: 'round' as const,
         })
+        /* 케이싱 — 경로 전체 밑에 종이색 한 겹. 퀘스트 보드의 길과 같은 문법이라
+         * 두 지도가 한 앱으로 읽히고, 타일 위에서 색선의 대비도 벌어진다. */
+        L.polyline(points.map((p) => [p.lat, p.lng] as [number, number]), {
+          color: cssVar('var(--color-sand)'),
+          weight: 14,
+          opacity: 0.9,
+          lineCap: 'round',
+          lineJoin: 'round',
+        }).addTo(map)
         // 각 구간(i-1→i)의 밴드는 points[i].pace로 정한다(원래 동작과 동일).
         let segStart = 0
         let segBand = bandOf(points[1].pace ?? avgPaceSecPerKm, avgPaceSecPerKm)
@@ -129,14 +140,14 @@ export default function RouteMap({
         const start = points[0]
         const end = points[points.length - 1]
         L.circleMarker([start.lat, start.lng], {
-          radius: 5,
+          radius: 6,
           color: cssVar('var(--color-ink)'),
           weight: 2,
           fillColor: cssVar('var(--color-sand)'),
           fillOpacity: 1,
         }).addTo(map)
         L.circleMarker([end.lat, end.lng], {
-          radius: 7,
+          radius: 8,
           color: cssVar('var(--color-ink)'),
           weight: 2,
           fillColor: cssVar('var(--color-sun)'),

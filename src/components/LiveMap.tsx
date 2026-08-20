@@ -133,12 +133,23 @@ export default function LiveMap({
     linesRef.current.forEach((ln) => ln.remove())
     linesRef.current = []
     if (points.length >= 2) {
+      /* 케이싱 — 색선 밑에 종이색 한 겹. OSM 도로가 줌 17에서 10~14px라, 6px 단선은
+       * 도로 위의 실처럼 보였다. 도로 폭에 맞춰야 "내가 이 길을 왔다"로 읽힌다. */
+      linesRef.current.push(
+        L.polyline(points.map((p) => [p.lat, p.lng] as [number, number]), {
+          color: cssVar('var(--color-sand)'),
+          weight: 14,
+          opacity: 0.9,
+          lineCap: 'round',
+          lineJoin: 'round',
+        }).addTo(map),
+      )
       let segStart = 0
       let segBand = bandOf(points[1].pace ?? avgPaceSecPerKm, avgPaceSecPerKm)
       const draw = (from: number, to: number, band: 'slow' | 'even' | 'fast') => {
         const ln = L.polyline(
           points.slice(from, to + 1).map((p) => [p.lat, p.lng] as [number, number]),
-          { color: cssVar(BAND_COLOR[band]), weight: 6, opacity: 0.95, lineCap: 'round', lineJoin: 'round' },
+          { color: cssVar(BAND_COLOR[band]), weight: 10, opacity: 0.95, lineCap: 'round', lineJoin: 'round' },
         ).addTo(map)
         linesRef.current.push(ln)
       }
