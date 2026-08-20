@@ -282,15 +282,18 @@ export default function QuestBoard({ journey, journeyKm, onSelectNode, selectedI
         {/* 분위기 — 구름 그림자·새·빛 조각·별. 땅과 길 사이에 깔린다 */}
         <Ambient journeyId={journey.id} height={board.height} panels={board.panels} />
 
-        {/* ── 길 ───────────────────────────────────────────────────────── */}
+        {/* ── 길 ─────────────────────────────────────────────────────────
+            폭은 패널에 **그려진 도로**에 맞춘다(월드 그림의 길이 대략 24~30px).
+            16px였을 때는 그림 위의 실처럼 보여서 길이 아니라 장식으로 읽혔다 —
+            코드가 그리는 길이 곧 그 땅의 길이라는 것이 폭에서 느껴져야 한다. */}
         <svg className="pointer-events-none absolute left-0 top-0" width={BOARD_W} height={board.height} viewBox={`0 0 ${BOARD_W} ${board.height}`} aria-hidden>
-          <path d={d} fill="none" stroke={INK.casingShadow} strokeWidth={19} strokeLinecap="round" strokeLinejoin="round" transform="translate(0 3)" />
-          <path d={d} fill="none" stroke={INK.casing} strokeWidth={16} strokeLinecap="round" strokeLinejoin="round" />
+          <path d={d} fill="none" stroke={INK.casingShadow} strokeWidth={30} strokeLinecap="round" strokeLinejoin="round" transform="translate(0 3.5)" />
+          <path d={d} fill="none" stroke={INK.casing} strokeWidth={26} strokeLinecap="round" strokeLinejoin="round" />
           {/* 아직 갈 길 — 발자국 점선 */}
-          <path d={d} fill="none" stroke={INK.path} strokeOpacity={0.42} strokeWidth={4.2} strokeLinecap="round" strokeDasharray="0.1 10" />
+          <path d={d} fill="none" stroke={INK.path} strokeOpacity={0.42} strokeWidth={5.6} strokeLinecap="round" strokeDasharray="0.1 12" />
           <path ref={roadRef} d={d} fill="none" stroke="none" />
           {/* 걸어온 길 — 라피스 실선, 앞에서부터 차오른다 */}
-          <path ref={walkedRef} d={d} fill="none" stroke={INK.path} strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" />
+          <path ref={walkedRef} d={d} fill="none" stroke={INK.path} strokeWidth={8} strokeLinecap="round" strokeLinejoin="round" />
           {segs.map((sd, i) => (
             <path
               key={`seg${i}`}
@@ -304,7 +307,7 @@ export default function QuestBoard({ journey, journeyKm, onSelectNode, selectedI
           ))}
           {/* 이정표 — 지난 것은 라피스로 채워지고, 아직인 것은 종이색 점 */}
           {mileDots.map((m, i) => (
-            <circle key={`ms${i}`} cx={m.x} cy={m.y} r={3.2} fill={m.passed ? INK.path : INK.paper} stroke={m.passed ? INK.paper : INK.path} strokeWidth={1.2} strokeOpacity={m.passed ? 0.95 : 0.6} />
+            <circle key={`ms${i}`} cx={m.x} cy={m.y} r={4.2} fill={m.passed ? INK.path : INK.paper} stroke={m.passed ? INK.paper : INK.path} strokeWidth={1.4} strokeOpacity={m.passed ? 0.95 : 0.6} />
           ))}
           {/* 길 위를 지나가는 것들 — 양 떼·낙타·구름 기둥. 길을 그대로 따라간다 */}
           {walker !== 'none' && !reduce && d && (
