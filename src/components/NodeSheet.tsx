@@ -3,6 +3,7 @@ import type { Journey } from '../data/geo/journeys'
 import { scaleOf } from '../data/geo/journeys'
 import type { BoardNode } from '../lib/board'
 import { celebrationAllowed } from '../lib/quest'
+import { adversaryOf } from '../lib/adversary'
 import { episodeArt, sealArt } from '../assets/art'
 import { IconArrow, IconLocked, IconScroll, IconSeal, IconStep } from './icons'
 
@@ -164,6 +165,16 @@ export default function NodeSheet({
 
         {/* 사건 */}
         <p className="mt-4 line-clamp-2 px-6 text-[13.5px] leading-relaxed text-ink-soft">{ep.event}</p>
+        {/* 이 자리로 들어오는 구간의 대적 — 아직 못 닿았을 때만 말한다.
+            닿은 뒤에는 지나간 위협을 다시 세우지 않는다(위 사건·말씀이 그 몫). */}
+        {!reached && (() => {
+          const adv = adversaryOf(journey.id, ep.id)
+          return adv ? (
+            <p className="mt-2 px-6 text-[11.5px] font-medium text-clay-deep">
+              이 구간을 막아선 것 — {adv.name} · {adv.title}
+            </p>
+          ) : null
+        })()}
         {/* 거리 — 실측과 내 걸음을 나란히. 걸음을 고른 거리로 진행하되(pace.ts) 실측은 숨기지 않는다 */}
         {ep.measuredSegmentKm != null && ep.measuredSegmentKm > 0 && (
           <p className="mt-2 px-6 text-[11.5px] text-muted">

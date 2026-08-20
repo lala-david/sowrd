@@ -119,5 +119,42 @@ for (const [jid, j] of Object.entries(journeys)) {
 }
 if (!moodBad) ok('moods.ts가 가리키는 자리 전부 실존')
 
+/* 6. 대적(src/data/adversaries.ts) — 보스전 메커니즘의 신학 가드를 기계로 지킨다.
+ *    · 가리키는 자리가 실존하는가 — 오타 나면 대적이 조용히 사라진다(에러 없이)
+ *    · lament 자리 금지 — "십자가=보스전 금지"의 기계적 연장. 수난·애곡 구간에는
+ *      대적을 두지 않는다. moods가 바뀌어도 여기서 걸린다.
+ *    · 첫 자리 금지 — cumulativeKm 0이라 막아설 구간이 없다
+ *    · 사용자 문장(따옴표 문자열)에 금지어 없음 — 주석의 "보스"는 개발 어휘라 허용 */
+const advSrc = fs.readFileSync(path.join(ROOT, 'src/data/adversaries.ts'), 'utf8')
+console.log('\n── 대적(adversaries.ts) ──')
+let advBad = 0
+const advEntries = [...advSrc.matchAll(/\{\s*id:\s*'([\w-]+)',\s*journeyId:\s*'(\w+)',\s*episodeId:\s*'([\w-]+)',/g)]
+if (advEntries.length === 0) { fail('대적을 하나도 못 읽음 — 파서 확인'); advBad++ }
+const jesusSrc = fs.readFileSync(path.join(ROOT, 'src/data/journey.ts'), 'utf8')
+for (const [, advId, jid, epId] of advEntries) {
+  if (jid === 'jesus') {
+    // 예수 자리는 journey.ts STATIONS — id와 그 블록의 mood를 본다
+    const st = jesusSrc.match(new RegExp(`id: '${epId}'[\\s\\S]{0,200}?mood: '(\\w+)'`))
+    if (!st) { fail(`대적 ${advId}: 예수 자리 "${epId}" 없음(journey.ts)`); advBad++ }
+    else if (st[1] === 'lament') { fail(`대적 ${advId}: lament 자리 "${epId}"에 대적 금지`); advBad++ }
+    continue
+  }
+  const j = journeys[jid]
+  if (!j) { fail(`대적 ${advId}: 여정 "${jid}" 없음`); advBad++; continue }
+  const idx = j.episodes.findIndex((e) => e.id === epId)
+  if (idx < 0) { fail(`대적 ${advId}: 자리 "${epId}"가 ${jid}.json에 없음`); advBad++; continue }
+  if (idx === 0) { fail(`대적 ${advId}: 첫 자리에는 막아설 구간이 없음`); advBad++ }
+  const moodM = moodsSrc.match(new RegExp(`${jid}:\\s*\\{([\\s\\S]*?)\\n  \\}`))?.[1]?.match(new RegExp(`'?${epId}'?:\\s*'(\\w+)'`))
+  if (moodM?.[1] === 'lament') { fail(`대적 ${advId}: lament 자리 "${epId}"에 대적 금지`); advBad++ }
+}
+// 금지어 — 문자열 리터럴만 본다(주석 제외). phases가 3문장인지도 함께.
+for (const m of advSrc.matchAll(/'([^'\n]{2,})'/g)) {
+  for (const w of BANNED) if (m[1].includes(w)) { fail(`adversaries 문장에 금지어 "${w}" — "${m[1].slice(0, 40)}…"`); advBad++ }
+}
+// 따옴표로 시작하는 것만 — 인터페이스의 타입 표기(phases: [string, …])는 데이터가 아니다
+const phasesCount = [...advSrc.matchAll(/phases:\s*\[\s*'/g)].length
+if (phasesCount !== advEntries.length) { fail(`phases 블록 ${phasesCount}개 ≠ 대적 ${advEntries.length}개`); advBad++ }
+if (!advBad) ok(`대적 ${advEntries.length}곳 — 자리 실존 · lament 아님 · 금지어 없음`)
+
 console.log(`\n${fails ? `✘ 실패 ${fails}건` : '전부 통과'}${warns ? ` · 경고 ${warns}건` : ''}`)
 process.exit(fails ? 1 : 0)

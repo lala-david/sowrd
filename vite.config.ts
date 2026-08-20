@@ -158,7 +158,7 @@ export default defineConfig(({ command }) => ({
         assetFileNames: (info) => {
           // 파일명(arrest.webp)에는 경로가 없다 — 원본 경로로 판별해야 한다
           const src = (info.originalFileNames ?? []).join('|').replace(/\\/g, '/')
-          if (src.includes('/art/stations/') || src.includes('/art/episodes/')) return 'assets/st/[name]-[hash][extname]'
+          if (src.includes('/art/stations/') || src.includes('/art/episodes/') || src.includes('/art/adversaries/')) return 'assets/st/[name]-[hash][extname]'
           if (src.includes('/art/world/')) return 'assets/world/[name]-[hash][extname]'
           return 'assets/[name]-[hash][extname]'
         },

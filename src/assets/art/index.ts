@@ -187,6 +187,16 @@ const EPISODE_MAP: Record<string, string> = Object.fromEntries(
 export const episodeArt = (journeyId: string, episodeId: string): string | undefined =>
   EPISODE_MAP[`${journeyId}-${episodeId}`] ?? (journeyId === 'jesus' ? stationArt(episodeId as never) : undefined)
 
+/* ── 대적의 대치 그림 ──────────────────────────────────────────────────────
+ * 막아선 상태를 그린다 — 승리 장면은 그 자리의 episode 그림이 이미 갖고 있다
+ * (예: exodus-pihahiroth.webp가 갈라진 홍해). 러닝 중엔 막아선 것을, 닿으면 열린 것을.
+ * scripts/adversary-art.mjs로 생성. 키 = data/adversaries.ts의 Adversary.id. */
+const ADVERSARY_URLS = import.meta.glob('./adversaries/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+const ADVERSARY_MAP: Record<string, string> = Object.fromEntries(
+  Object.entries(ADVERSARY_URLS).map(([file, url]) => [file.replace(/^\.\/adversaries\//, '').replace(/\.webp$/, ''), url]),
+)
+export const adversaryArt = (id: string): string | undefined => ADVERSARY_MAP[id]
+
 /* ── 지도의 지형 그림 ──────────────────────────────────────────────────────
  * recraft로 뽑은 컷페이퍼 벡터(SVG). 여정마다 그 땅의 상징 하나.
  * 지도의 **빈 사분면**에 옅게 깔아 여백을 지형으로 채운다 — 길을 가리지 않는 자리에만 놓는다.

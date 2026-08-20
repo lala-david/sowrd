@@ -7,6 +7,8 @@ import { fmtDistance, fmtDuration, fmtPace, unitLabel, paceSecPerKm } from '../l
 import { toneOf } from '../lib/mood'
 import { LAMP_VERSE } from '../data/scripture'
 import { journeyById, journeyProgress, toJourneyKm, toRealKm } from '../data/geo/journeys'
+import { adversaryOf, adversaryPhase } from '../lib/adversary'
+import { adversaryArt } from '../assets/art'
 import { haptic } from '../lib/haptics'
 import { speak } from '../lib/voice'
 
@@ -336,6 +338,10 @@ export default function Run() {
     ? journeyProgress(journey, toJourneyKm(journeyId, journeyStartRealKm + distanceKm))
     : undefined
   const jNextRealKm = journey && jProg ? toRealKm(journeyId, jProg.toNextKm) : 0
+  /* 대적 — 다음 자리로 들어가는 구간에 대적이 살면 아래 게이지가 대치(對峙)가 된다.
+   * 진행은 따로 저장하지 않는다(journeyKm에서 파생 — lib/adversary.ts). */
+  const adv = jProg?.next ? adversaryOf(journeyId, jProg.next.id) : undefined
+  const advPhase = adversaryPhase(jProg?.segProgress ?? 0)
   /* 현재 페이스는 최근 창 기준(run.ts). 전체 평균은 따로 보여준다.
    * 표시는 5초 단위로 반올림한다 — GPS 현재 페이스의 실제 불확실성이 ±20~35초라,
    * 초 단위까지 찍으면 측정 정밀도보다 한 자릿수 높은 정밀함을 가장하게 된다.
@@ -550,7 +556,9 @@ export default function Run() {
           className="mt-6 max-w-[24ch] text-center font-serif text-[13.5px] leading-[1.7] text-ink-soft transition-opacity duration-700"
           style={{ opacity: verseOn ? 1 : 0, minHeight: 46 }}
         >
-          {LAMP_VERSE.kr}
+          {/* 대적과 대치 중이면 등불 구절이 그 사건의 본문으로 바뀐다 —
+              홍해 앞에서는 "너희는 가만히 있을지니라"가 뜬다. 리듬(km마다 잠깐)은 동일. */}
+          {adv ? adv.verseKr : LAMP_VERSE.kr}
         </p>
 
         {/* 목표 게이지 — 목표 거리/시간을 골랐으면 그 진행을 보여준다.
@@ -581,8 +589,23 @@ export default function Run() {
           })()
         ) : null}
 
-        {/* 다음 자리 게이지 */}
+        {/* 다음 자리 게이지 — 그 구간에 대적이 살면 대치가 된다 */}
         <div className="mt-9 w-full max-w-[300px]">
+          {adv && (
+            /* 대치 배너 — 막아선 것의 이름과 얼굴(scripts/adversary-art.mjs).
+               그림은 assets/st/ 몫이라 처음 볼 때 받아 캐시된다. 없으면 이름만 남는다.
+               이 화면은 다크 고정이라 text-ink가 밝은 잉크로 풀린다. */
+            <div className="relative mb-3 h-14 overflow-hidden rounded-xl ring-1 ring-line-strong">
+              {adversaryArt(adv.id) && (
+                <img src={adversaryArt(adv.id)} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
+              <div className="absolute inset-y-0 left-3 flex flex-col justify-center">
+                <p className="font-serif text-[15px] leading-tight text-ink">{adv.name}</p>
+                <p className="mt-0.5 text-[10.5px] text-muted">{adv.title}</p>
+              </div>
+            </div>
+          )}
           <div className="flex items-center justify-between text-[12px]">
             <span className="text-muted">{jProg?.next ?? prog.nextStation ? '다음 자리까지' : '완주까지'}</span>
             <span className="font-display text-sun" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>
@@ -592,9 +615,19 @@ export default function Run() {
           <div className="mt-2 h-[3px] w-full overflow-hidden rounded-full bg-line-strong">
             <div
               className="h-full rounded-full transition-[width] duration-300"
-              style={{ width: `${(jProg?.segProgress ?? prog.segProgress) * 100}%`, background: 'var(--color-lapis-bright)' }}
+              style={{
+                width: `${(jProg?.segProgress ?? prog.segProgress) * 100}%`,
+                // 대치 중에는 길이 아니라 대결의 색 — 점토(clay)가 차오른다
+                background: adv ? 'var(--color-clay-bright)' : 'var(--color-lapis-bright)',
+              }}
             />
           </div>
+          {/* 대치 서사 — 구간 1/3마다 한 문장. 채근이 아니라 관찰(runAnalysis 원칙과 동일) */}
+          {adv && (
+            <p className="mt-2 text-center font-serif text-[11.5px] leading-relaxed text-muted">
+              {adv.phases[advPhase]}
+            </p>
+          )}
           {/* 표식 — 자리 사이가 멀어도 매 km 무언가를 지난다 */}
           {mileCount > 0 && (
             /* "표식 3"은 3이 무엇인지 알 수 없는 숫자였다. 이정표는 어디를 지나고 있는지를 말한다. */

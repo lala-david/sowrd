@@ -20,6 +20,7 @@ import { currentTierIndex } from '../lib/quest'
 import { sceneForEpisode } from '../lib/scene'
 import Celebration from '../components/Celebration'
 import BoardWindow from '../components/BoardWindow'
+import { adversaryOf } from '../lib/adversary'
 
 /* 리빌의 한 '순간' — 여정 자리든 예수 코스 자리든 같은 형태로 렌더한다. */
 interface Moment {
@@ -98,15 +99,22 @@ export default function Reveal() {
          * 끄는 것은 기획서의 절대 원칙인데(PLANNING §4.3 · CONTENT-UX §수난),
          * 그 가드가 예수 자리에만 걸려 있고 여정 68자리에는 통째로 비어 있었다. */
         const et = toneOf(e.mood)
+        /* 이 자리로 들어오는 구간에 대적이 살았으면(홍해·유라굴로…) 그 순간의 문장은
+         * 사건 요약이 아니라 승리 서사다 — 주어는 하나님, 동사는 건넜다/지났다
+         * (data/adversaries.ts). 그림은 그대로 자리 그림 — 갈라진 바다가 이미 거기 있다. */
+        const adv = adversaryOf(journeyId, e.id)
         return {
           key: `ep-${e.id}`,
           art: episodeArt(journeyId, e.id) ?? sceneArt(sceneForEpisode(e)),
           accent: et.celebrate ? 'var(--color-lapis)' : et.accent,
           celebrate: et.celebrate,
-          topLabel: et.celebrate ? `${journey?.name ?? '여정'} · 닿았습니다` : `${journey?.name ?? '여정'} · 이 자리를 지나며`,
+          topLabel: adv
+            ? /* 조사(을/를)를 붙이지 않는 표현을 쓴다 — 이름이 데이터에서 오므로 받침을 모른다 */
+              `${journey?.name ?? '여정'} · ${adv.name} 너머`
+            : et.celebrate ? `${journey?.name ?? '여정'} · 닿았습니다` : `${journey?.name ?? '여정'} · 이 자리를 지나며`,
           title: e.place,
           subtitle: `${e.placeLatin} · ${e.region}`,
-          body: e.event,
+          body: adv ? adv.victory : e.event,
           refLine: e.passageRef.replace(/\s*\(.*\)$/, ''),
           reflection: e.reflection,
           prayer: e.prayer,
