@@ -1,7 +1,9 @@
+import { useRef, useState } from 'react'
 import { useNav } from '../store'
 import { usePilgrim } from '../state/pilgrim'
+import { downloadBackup, restoreBackup } from '../lib/backup'
 import { SectionLabel, SettingSwitch } from '../components/ui'
-import { IconArrow, IconSettings, IconLamp } from '../components/icons'
+import { IconArrow, IconSettings, IconLamp, IconScroll } from '../components/icons'
 
 /* ── 설정 ───────────────────────────────────────────────────────────────────
  * 프로필("나의 순례")에서 분리했다 — 설정이 화면 절반을 먹어 '나'가 설정 목록이 되어 있었다.
@@ -10,6 +12,8 @@ export default function Settings() {
   const go = useNav((s) => s.go)
   const pilgrim = usePilgrim()
   const { units, setUnits, textScale, setTextScale, theme, setTheme, resetAll } = pilgrim
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [restoreMsg, setRestoreMsg] = useState<string | null>(null)
 
   const back = () => {
     if (window.history.length > 1) window.history.back()
@@ -85,7 +89,47 @@ export default function Settings() {
           onChange={pilgrim.setTraceRoute}
         />
 
-        <button onClick={() => { if (confirm('모든 순례 기록을 지울까요?')) resetAll() }} className="mt-8 w-full rounded-xl border border-line py-3.5 text-center text-[13px] text-muted transition active:scale-[0.99]">
+        {/* ── 기록의 생존 (D8) ─────────────────────────────────────────────
+            기록은 이 기기의 localStorage에만 산다(프라이버시 약속). 그 약속을 지키면서
+            폰이 바뀌어도 길이 살아남는 유일한 방법은 사용자가 손에 쥐는 파일이다. */}
+        <div className="mt-7">
+          <SectionLabel>기록</SectionLabel>
+        </div>
+        <p className="mt-2 text-[12px] leading-relaxed text-muted">
+          기록은 이 기기에만 저장됩니다. 폰을 바꾸기 전에 파일로 내보내 두면, 새 기기에서 그대로 이어 걸을 수 있어요.
+        </p>
+        <div className="mt-3 flex gap-2">
+          <button
+            onClick={downloadBackup}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-line-strong bg-sand-raised/50 py-3 text-[13px] text-ink-soft transition active:scale-[0.99]"
+          >
+            <IconScroll size={14} /> 기록 내보내기
+          </button>
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-line py-3 text-[13px] text-muted transition active:scale-[0.99]"
+          >
+            가져오기
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={async (e) => {
+              const f = e.target.files?.[0]
+              e.target.value = '' // 같은 파일을 다시 골라도 change가 다시 오게
+              if (!f) return
+              if (!confirm('가져오면 이 기기의 현재 기록이 파일의 기록으로 바뀝니다. 계속할까요?')) return
+              const res = restoreBackup(await f.text())
+              setRestoreMsg(res.ok ? `가져왔습니다 — 러닝 ${res.runs}회 · ${res.km}km` : res.why)
+              window.setTimeout(() => setRestoreMsg(null), 4000)
+            }}
+          />
+        </div>
+        {restoreMsg && <p className="mt-2 text-[12px] text-clay-deep">{restoreMsg}</p>}
+
+        <button onClick={() => { if (confirm('모든 순례 기록을 지울까요?')) resetAll() }} className="mt-6 w-full rounded-xl border border-line py-3.5 text-center text-[13px] text-muted transition active:scale-[0.99]">
           기록 초기화
         </button>
 

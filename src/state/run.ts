@@ -85,6 +85,10 @@ interface RunState {
   splits: number[] // km 경계별 누적초 → 구간초
   _lastKmMark: number
   _splitStartSec: number
+  /* configure()를 거쳤는가 — #run으로 바로 들어오면(새로고침·딥링크) 이 플래그가 false다.
+   * 그때 스토어 기본값(peter)으로 달리면 지금 걷는 길이 아닌 여정에 거리가 쌓인다(실제 발생).
+   * Run 화면이 이 플래그를 보고 활성 여정으로 다시 설정한다. */
+  _configured: boolean
   // actions
   configure: (opts: { mode: RunMode; courseId: string; journeyId?: string; goalKm?: number; goalSec?: number; prayerFor?: string }) => void
   start: () => void
@@ -124,13 +128,14 @@ export const useRun = create<RunState>((set, get) => ({
   splits: [],
   _lastKmMark: 0,
   _splitStartSec: 0,
+  _configured: false,
 
   configure: ({ mode, courseId, journeyId, goalKm, goalSec, prayerFor }) => {
     const p = usePilgrim.getState()
     const startKm = progressFor(p, courseId).cumulativeKm
     const jid = journeyId ?? p.activeJourneyId
     set({
-      status: 'idle', mode, courseId, goalKm, goalSec, prayerFor,
+      status: 'idle', mode, courseId, goalKm, goalSec, prayerFor, _configured: true,
       journeyId: jid, journeyStartRealKm: journeyKmOf(p, jid), reachedEpisodes: [],
       lastEpisodePlace: undefined, passedWaypoints: 0, reachedMilestones: [], lastMilestone: undefined,
       trace: [], gpsKm: 0, simKm: 0, signalAccM: undefined, signalRate: undefined,
@@ -322,6 +327,9 @@ export const useRun = create<RunState>((set, get) => ({
       /* 5%만 지어낸 거리여도 'gps'라고 부르지 않는다. 개인 최고기록이 걸린 판정이라
        * 애매하면 sim 쪽으로 기운다 — 없는 기록이 있는 기록보다 낫다. */
       source: st.simKm / Math.max(1e-9, st.gpsKm + st.simKm) > 0.05 ? 'sim' : 'gps',
+      /* GPS로 실측한 몫을 따로 남긴다 — 연습(sim) 런은 이 값만 여정을 민다(D6).
+       * 터널·지하도로 일부만 시뮬이 섞인 런도 실측한 만큼은 정직하게 나아간다. */
+      gpsKm: st.gpsKm,
       signalAccM: st.signalAccM,
       signalRate: st.signalRate,
     }
@@ -336,7 +344,7 @@ export const useRun = create<RunState>((set, get) => ({
     reachedMilestones: [], lastMilestone: undefined,
     recentPaceSecPerKm: 0, _recent: [],
     status: 'idle', distanceKm: 0, elapsedSec: 0, reachedThisRun: [], lastReached: undefined,
-    flashAt: 0, splits: [], _lastKmMark: 0, _splitStartSec: 0,
+    flashAt: 0, splits: [], _lastKmMark: 0, _splitStartSec: 0, _configured: false,
   }),
 }))
 

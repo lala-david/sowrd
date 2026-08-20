@@ -129,6 +129,14 @@ const EXTRAS = {
     'scattered trees, gentle morning light. The left half of the picture is calm open land with very little detail ' +
     'so that writing can be laid over it later. Warm cream, ochre, sage, a thread of deep blue for a stream. ' +
     'No people, no text, no border, edge to edge.',
+  /* 완주 의식(리빌 D9) — 길이 도착하는 그림. 축하이되 경건하게: 트로피가 아니라 열린 문. */
+  'journey-complete':
+    'Hand-painted storybook map banner in the same soft gouache watercolour style, wide horizontal composition: ' +
+    'a long pale road coming over gentle olive and ochre hills and arriving at an open ancient stone gate, ' +
+    'olive branches growing over the gate arch, warm golden evening light spilling through the open gate onto the road, ' +
+    'small terracotta oil lamps with tiny flames set along the last stretch of the road, a simple woven olive wreath ' +
+    'resting on a flat stone beside the gate, and behind everything the whole travelled way fading softly into warm distance. ' +
+    'Calm, festive and reverent at once. Warm cream, ochre, sage, deep gold. No people, no text, no border, edge to edge.',
 }
 
 const FIGURES = {

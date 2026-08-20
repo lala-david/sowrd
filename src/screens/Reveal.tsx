@@ -15,7 +15,7 @@ import { renderShareCard, shareCardBlob } from '../lib/shareCard'
 import { APP_URL, APP_URL_LABEL } from '../config'
 import { SummaryTriple, SplitBars, SectionLabel } from '../components/ui'
 import { IconShare, IconReached, IconCairn, IconSeal } from '../components/icons'
-import { heroArt, sceneArt, episodeArt, stationArt, sealArt, worldArt } from '../assets/art'
+import { heroArt, sceneArt, episodeArt, stationArt, sealArt, worldArt, extraArt } from '../assets/art'
 import { currentTierIndex } from '../lib/quest'
 import { sceneForEpisode } from '../lib/scene'
 import Celebration from '../components/Celebration'
@@ -82,8 +82,11 @@ export default function Reveal() {
   /* 이 런에 닿은 **모든** 자리를 순간(Moment)으로 모은다.
    * 예전엔 마지막 하나만 히어로였고 나머지는 12px 칩이었다 — 첫 러닝에 예수 코스 3자리를
    * 밟으면 두 자리는 온전한 순간(그림·성구·묵상·기도)을 못 받았다.
-   * 여러 자리에 닿았으면 넘겨 볼 수 있게 페이저로 만든다. */
-  const moments: Moment[] = [
+   * 여러 자리에 닿았으면 넘겨 볼 수 있게 페이저로 만든다.
+   *
+   * 연습(sim) 런에는 순간이 없다(D6). 시계가 만든 도달에 "닿았습니다"와 인장을 주면
+   * 진짜 도달의 무게가 사라진다 — commitRun도 같은 판정으로 아무것도 쌓지 않는다. */
+  const moments: Moment[] = wasSim ? [] : [
     ...(reachedEpisodes ?? [])
       .map((id) => journey?.episodes.find((e) => e.id === id))
       .filter(Boolean)
@@ -144,6 +147,11 @@ export default function Reveal() {
   const jProg = journey ? journeyProgress(journey, jKm) : undefined
   const jNext = jProg?.next
   const jToNextRealKm = jProg ? toRealKm(journeyId, jProg.toNextKm) : 0
+
+  /* 완주 — **이 런으로** 여정의 끝을 넘었는가. 출발할 때 총거리 아래였고 지금 끝(done)이면
+   * 오늘이 그 날이다. 145km를 걸어 온 사람의 마지막 리빌이 평소와 같으면 안 된다. */
+  const realTotal = journey ? toRealKm(journeyId, journey.totalKm) : Infinity
+  const completedNow = !wasSim && !!journey && !!jProg?.done && run.journeyStartRealKm < realTotal
 
   const avgPace = distanceKm > 0 ? elapsedSec / distanceKm : 0
   const analysis = analyzeRun(splits, distanceKm, elapsedSec)
@@ -351,6 +359,16 @@ export default function Reveal() {
               <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted">{moment.prayer}</p>
             </details>
           </>
+        ) : wasSim ? (
+          /* 연습 런 — 과장 없이, 죄책감 없이. 무엇이 기록되고 무엇이 안 되는지 한 번에 말한다. */
+          <>
+            <SectionLabel>오늘의 길</SectionLabel>
+            <h1 className="mt-2.5 font-serif text-[32px] font-bold leading-[1.1]">오늘은 연습이었습니다</h1>
+            <p className="mt-4 max-w-[30ch] text-[14px] leading-relaxed text-ink-soft">
+              위치 신호 없이 시계로 잰 러닝이라, 여정과 인장은 그대로예요. 지도 위의 길은{' '}
+              <span className="text-ink">실제 걸음</span>으로만 나아갑니다 — 다음엔 밖에서 만나요.
+            </p>
+          </>
         ) : (
           <>
             <SectionLabel>오늘의 길</SectionLabel>
@@ -390,10 +408,46 @@ export default function Reveal() {
           <p className="mt-5 rounded-xl bg-sand-raised/60 px-4 py-3 text-[13px] text-ink-soft">오늘 <span className="text-rubric">{prayerFor}</span>를 품고 {fmtDistance(distanceKm, units)}{units}를 걸었습니다.</p>
         )}
 
+        {/* ── 완주 의식 (D9) ─────────────────────────────────────────────
+            여정의 끝을 넘은 바로 그 리빌에서만 한 번 뜬다. 보상은 문장과 날짜다 —
+            "이 길을 끝까지 걸었습니다"는 여권(인장 화면)에 날짜로 남는다. */}
+        {completedNow && journey && (
+          <section
+            className="mt-7 overflow-hidden rounded-[24px]"
+            style={{ boxShadow: '0 0 0 1.5px var(--color-seal), 0 1px 2px rgba(80,60,30,.15), 0 20px 44px -22px rgba(80,60,30,.6)' }}
+          >
+            {extraArt('journey-complete') && (
+              <div className="relative h-[150px]">
+                <img src={extraArt('journey-complete')} alt="" className="h-full w-full object-cover" />
+                <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(43,30,12,.5), transparent 55%)' }} />
+              </div>
+            )}
+            <div className="px-6 py-5" style={{ background: 'var(--color-sand-raised)' }}>
+              <p className="font-display text-[11px] uppercase tracking-[0.24em]" style={{ color: 'var(--color-seal)' }}>
+                {journey.nameLatin}
+              </p>
+              <h2 className="mt-1.5 font-serif text-[24px] font-bold leading-tight text-ink">이 길을 끝까지 걸었습니다</h2>
+              <p className="mt-2.5 text-[13px] leading-relaxed text-ink-soft">
+                {journey.episodes[0]?.place}에서 {journey.episodes[journey.episodes.length - 1]?.place}까지 — 자리{' '}
+                {journey.episodes.length}곳을 내 걸음 {Math.round(realTotal)}
+                {units}로 지났습니다. 여권에 오늘 날짜가 남습니다.
+              </p>
+              <button
+                onClick={() => go('journeys')}
+                className="mt-4 w-full rounded-xl py-3 text-center font-serif text-[15px] transition active:scale-[0.99]"
+                style={{ background: 'var(--color-seal)', color: '#2a1d12' }}
+              >
+                다음 길 고르기
+              </button>
+            </div>
+          </section>
+        )}
+
         {/* 길 위에서 오늘 — 보드 위의 말이 오늘 달린 만큼 앞으로 걸어간다.
             자리에 닿지 못한 날(열 번 중 여덟아홉 번)에도 **무언가 움직였다**는 것이 눈에 보여야
-            다음 한 번을 기다릴 이유가 생긴다. 거리는 말씀으로 가는 길이다. */}
-        {journey && distanceKm > 0.05 && (
+            다음 한 번을 기다릴 이유가 생긴다. 거리는 말씀으로 가는 길이다.
+            연습 런에는 그리지 않는다 — 여정이 나아가지 않았는데 말이 걸어가면 그림이 거짓말을 한다. */}
+        {journey && distanceKm > 0.05 && !wasSim && (
           <section className="mt-7">
             <div className="mb-2.5 flex items-baseline justify-between">
               <SectionLabel>길 위에서 오늘</SectionLabel>

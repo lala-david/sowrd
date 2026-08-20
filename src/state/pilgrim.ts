@@ -48,6 +48,8 @@ export interface RunRecord {
   signalAccM?: number
   /** 받은 표본 중 거리로 반영된 비율(0~1) */
   signalRate?: number
+  /** GPS로 실측한 거리(km). sim 런에서 여정을 밀 수 있는 것은 이 몫뿐이다(D6) */
+  gpsKm?: number
 }
 
 /* 생애 누적 — runs[]는 100건에서 잘리므로 여기서 따로 센다.
@@ -92,6 +94,8 @@ export interface PilgrimState {
   /* 여정별 누적 거리. 주행거리계 하나를 네 여정이 공유하면 3km 달렸을 때 아브라함·출애굽·
    * 바울·베드로가 동시에 전진해서 "고른다"는 말이 무의미해진다. */
   journeyKm: Record<string, number>
+  /** 여정 완주 시각 — 여권의 날짜와 완주 의식이 읽는다. 지나간 순간은 복원할 수 없어 여기 새긴다 */
+  journeyCompletedAt: Record<string, number>
   /* 품고 달리는 사람들. 응답·성취·누적 필드는 의도적으로 없다(data/prayer.ts 참고). */
   intercessions: Intercession[]
   units: Units
@@ -332,6 +336,7 @@ export const usePilgrim = create<PilgrimState>()(
        * 이제는 홈과 Setup이 같은 길을 말한다. 첫 보상도 가깝다(첫 구간 10.7km ÷ 축척 3 = 실제 3.6km). */
       activeJourneyId: 'jesus',
       journeyKm: {},
+      journeyCompletedAt: {},
       intercessions: [],
 
       setActiveCourse: (id) => set({ activeCourseId: id }),
@@ -385,7 +390,9 @@ export const usePilgrim = create<PilgrimState>()(
             }
           }
           const collectedVerses = Array.from(new Set([...s.collectedVerses, ...(Object.keys(STATIONS) as PassageSlug[])]))
-          return { journeyKm, progress, collectedVerses, collectedEpisodes: Array.from(collectedEpisodes), lifetime: { ...lt, episodeReachedAt } }
+          const journeyCompletedAt = { ...s.journeyCompletedAt }
+          for (const j of JOURNEYS) if (!journeyCompletedAt[j.id]) journeyCompletedAt[j.id] = now
+          return { journeyKm, journeyCompletedAt, progress, collectedVerses, collectedEpisodes: Array.from(collectedEpisodes), lifetime: { ...lt, episodeReachedAt } }
         }),
       setTraceRoute: (traceRoute) => set({ traceRoute }),
       setTextScale: (textScale) => set({ textScale }),
@@ -416,30 +423,50 @@ export const usePilgrim = create<PilgrimState>()(
          * s.activeJourneyId를 보면, 러닝 중에 사용자가 다른 여정을 눌러본 순간
          * 방금 달린 거리가 엉뚱한 여정으로 들어간다(조용한 오배분). */
         const ranJourney = r.journeyId ?? s.activeJourneyId
+        /* 연습(sim) 런의 정직성 — D6.
+         * 시뮬 거리는 몸이 아니라 시계가 만든 숫자다. "달린 만큼 나아간다"는 약속을 지키려면
+         * 여정을 미는 것은 **실측한 걸음**뿐이어야 한다. sim 런은 GPS로 잰 몫(gpsKm)만 밀고,
+         * 순수 연습(실측 0)은 여정이 한 걸음도 나아가지 않는다. */
+        const sim = r.source === 'sim'
+        const walkedKm = sim ? Math.max(0, Math.min(r.gpsKm ?? 0, r.distanceKm)) : r.distanceKm
         const journeyKm = {
           ...s.journeyKm,
-          [ranJourney]: (s.journeyKm[ranJourney] ?? 0) + r.distanceKm,
+          [ranJourney]: (s.journeyKm[ranJourney] ?? 0) + walkedKm,
         }
+
+        /* 완주 시각 — 이 런으로 여정의 끝(실측 총거리)을 넘었으면 날짜를 새긴다.
+         * 완주는 여권과 지도의 의식(儀式)이 읽는 값이라, 지나간 뒤에 복원할 수 없다. */
+        const journeyDef = JOURNEYS.find((j) => j.id === ranJourney)
+        const realTotal = journeyDef ? toRealKm(ranJourney, journeyDef.totalKm) : Infinity
+        const journeyCompletedAt =
+          journeyDef && (s.journeyKm[ranJourney] ?? 0) < realTotal && journeyKm[ranJourney] >= realTotal && !s.journeyCompletedAt?.[ranJourney]
+            ? { ...(s.journeyCompletedAt ?? {}), [ranJourney]: r.endedAt }
+            : s.journeyCompletedAt ?? {}
 
         /* 여정 자리도 수집에 담는다.
          * 예전엔 예수 코스의 r.reached만 받아서, 바울의 28자리를 전부 밟아도 수집 탭이 0이었다.
-         * 68개 여정 자리가 영원히 수집 불가였다는 뜻이다. */
-        const collectedEpisodes = Array.from(
-          new Set([...(s.collectedEpisodes ?? []), ...(r.reachedEpisodes ?? []).map((id) => `${ranJourney}:${id}`)]),
-        )
+         * 68개 여정 자리가 영원히 수집 불가였다는 뜻이다.
+         * 단 sim 런의 도달은 담지 않는다 — 그 해금 거리는 실제로 걷지 않은 거리다(D6).
+         * 여정km가 실측만큼만 나아가므로, 실제 걸음이 그 자리를 지나는 날 다시 열린다. */
+        const collectedEpisodes = sim
+          ? (s.collectedEpisodes ?? [])
+          : Array.from(
+              new Set([...(s.collectedEpisodes ?? []), ...(r.reachedEpisodes ?? []).map((id) => `${ranJourney}:${id}`)]),
+            )
 
         /* 구절 수집.
          * 예전엔 예수 **코스**의 r.reached에서 채웠다. 코스 진행을 없앴으니 이제 예수 **여정**의
          * 자리에서 채운다 — 예수 여정은 자리 id가 곧 PassageSlug라 그대로 맞물린다
          * (geo/journeys/jesus.ts가 STATIONS와 같은 id로 조인하기 때문이다).
          * 다른 여정의 자리는 PassageSlug가 아니므로 여기 들어오지 않는다(collectedEpisodes가 받는다). */
-        const newVerses = ranJourney === 'jesus' ? ((r.reachedEpisodes ?? []) as PassageSlug[]) : []
-        const collectedVerses = Array.from(new Set([...s.collectedVerses, ...r.reached, ...newVerses]))
+        const newVerses = !sim && ranJourney === 'jesus' ? ((r.reachedEpisodes ?? []) as PassageSlug[]) : []
+        const collectedVerses = Array.from(new Set([...s.collectedVerses, ...(sim ? [] : r.reached), ...newVerses]))
 
         /* 누적치는 runs[] 상한과 무관하게 여기서 따로 센다.
          * 시뮬레이션 런은 개인 최고기록에 넣지 않는다 — 26배속으로 만든 3'00"/km가
          * 평생 안 깨지는 '내 기록'으로 앉아 있으면 실제 기록이 영원히 무의미해진다.
-         * 거리·시간·달린 날은 넣는다(사용자가 실제로 앱을 쓴 날이므로). */
+         * 시간·달린 날은 넣고(실제로 앱을 쓴 시간·날이므로), **거리는 실측한 몫만** 넣는다 —
+         * 시계가 만든 km가 "내가 달린 거리"에 앉으면 기록 화면 전체가 거짓이 된다(D6). */
         /* 개인 최고기록 후보 조건.
          * 시뮬이 아니어야 하고, **신호도 좋아야 한다**. 최고기록은 단조 최소값이라
          * 한 번 오염되면 영원히 남는다 — 신호가 나쁜 날의 잘못 측정된 1km가 개인 기록에
@@ -450,7 +477,7 @@ export const usePilgrim = create<PilgrimState>()(
         const runSplitBest = real && r.splits.length ? Math.min(...r.splits.filter((x) => x > 0)) : Infinity
         const lifetime: Lifetime = {
           runs: lt.runs + 1,
-          km: lt.km + r.distanceKm,
+          km: lt.km + walkedKm,
           sec: lt.sec + r.durationSec,
           fastest1kSec: isFinite(runSplitBest)
             ? Math.min(lt.fastest1kSec ?? Infinity, runSplitBest)
@@ -458,10 +485,10 @@ export const usePilgrim = create<PilgrimState>()(
           longestRunKm: real ? Math.max(lt.longestRunKm, r.distanceKm) : lt.longestRunKm,
           // 날짜당 1개. 최근 400일만 들고 간다(주간 차트가 보는 범위의 열 배)
           runDays: (lt.runDays.includes(today) ? lt.runDays : [...lt.runDays, today]).slice(-400),
-          milestones: { ...(lt.milestones ?? {}), [ranJourney]: (lt.milestones?.[ranJourney] ?? 0) + (r.milestones ?? 0) },
+          milestones: { ...(lt.milestones ?? {}), [ranJourney]: (lt.milestones?.[ranJourney] ?? 0) + (sim ? 0 : r.milestones ?? 0) },
           episodeReachedAt: (() => {
             const cur = { ...(lt.episodeReachedAt ?? {}) }
-            if (r.reachedEpisodes?.length) {
+            if (!sim && r.reachedEpisodes?.length) {
               cur[ranJourney] = { ...(cur[ranJourney] ?? {}) }
               for (const id of r.reachedEpisodes) if (!cur[ranJourney][id]) cur[ranJourney][id] = r.endedAt
             }
@@ -470,12 +497,12 @@ export const usePilgrim = create<PilgrimState>()(
           days: (() => {
             const k = dayKey(r.endedAt)
             const prev = (lt.days ?? {})[k] ?? { km: 0, sec: 0, runs: 0 }
-            return { ...(lt.days ?? {}), [k]: { km: prev.km + r.distanceKm, sec: prev.sec + r.durationSec, runs: prev.runs + 1 } }
+            return { ...(lt.days ?? {}), [k]: { km: prev.km + walkedKm, sec: prev.sec + r.durationSec, runs: prev.runs + 1 } }
           })(),
           weeks: (() => {
             const k = mondayKey(r.endedAt)
             const prev = (lt.weeks ?? {})[k] ?? { km: 0, runs: 0 }
-            const next = { ...(lt.weeks ?? {}), [k]: { km: prev.km + r.distanceKm, runs: prev.runs + 1 } }
+            const next = { ...(lt.weeks ?? {}), [k]: { km: prev.km + walkedKm, runs: prev.runs + 1 } }
             // 최근 104주만 유지
             const keys = Object.keys(next).sort()
             for (const old of keys.slice(0, Math.max(0, keys.length - 104))) delete next[old]
@@ -485,6 +512,7 @@ export const usePilgrim = create<PilgrimState>()(
 
         set({
           journeyKm,
+          journeyCompletedAt,
           progress: { ...s.progress, [r.courseId]: nextProgress },
           collectedVerses,
           collectedEpisodes,
@@ -499,7 +527,7 @@ export const usePilgrim = create<PilgrimState>()(
         })
       },
 
-      resetAll: () => set({ ...seed(), admin: false, homeCompact: false, breathPrayer: false, traceRoute: false, activeJourneyId: 'jesus', progress: {}, collectedVerses: [], collectedEpisodes: [], runs: [], lifetime: emptyLifetime(), journeyKm: {}, intercessions: [], lastRunDay: undefined }),
+      resetAll: () => set({ ...seed(), admin: false, homeCompact: false, breathPrayer: false, traceRoute: false, activeJourneyId: 'jesus', progress: {}, collectedVerses: [], collectedEpisodes: [], runs: [], lifetime: emptyLifetime(), journeyKm: {}, journeyCompletedAt: {}, intercessions: [], lastRunDay: undefined }),
     }),
     {
       name: 'theway-pilgrim-v1',
@@ -512,6 +540,7 @@ export const usePilgrim = create<PilgrimState>()(
         activeCourseId: s.activeCourseId,
         activeJourneyId: s.activeJourneyId,
         journeyKm: s.journeyKm,
+        journeyCompletedAt: s.journeyCompletedAt,
         intercessions: s.intercessions,
         units: s.units,
         progress: s.progress,

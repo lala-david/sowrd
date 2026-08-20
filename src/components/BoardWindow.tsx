@@ -54,11 +54,14 @@ export default function BoardWindow({
       <span className="pointer-events-none absolute inset-x-0 bottom-0 h-16" style={{ background: 'linear-gradient(to top, rgba(247,236,213,.75), transparent)' }} />
       <span className="pointer-events-none absolute inset-0 rounded-[28px]" style={{ boxShadow: 'inset 0 0 0 1px rgba(90,58,18,.18), inset 0 0 40px rgba(90,58,18,.12)' }} />
 
-      {/* 캡션은 보드의 장 리본과 같은 형태 — 알약을 얹으면 스티커가 된다 */}
+      {/* 캡션은 보드의 장 리본과 같은 형태 — 알약을 얹으면 스티커가 된다.
+          종이색이 고정값이므로 잉크도 고정값이어야 한다(QuestBoard INK와 같은 이유 —
+          다크에서 --color-ink가 크림색으로 뒤집혀 크림 위 크림이 된 적이 있다). */}
       {caption && (
         <span
-          className="absolute bottom-3.5 left-4 max-w-[78%] truncate px-4 py-1.5 font-serif text-[12.5px] text-ink"
+          className="absolute bottom-3.5 left-4 max-w-[78%] truncate px-4 py-1.5 font-serif text-[12.5px]"
           style={{
+            color: '#2f2114',
             background: '#fbf1dc',
             clipPath: 'polygon(0 0, 100% 0, calc(100% - 8px) 50%, 100% 100%, 0 100%, 8px 50%)',
             boxShadow: '0 2px 0 rgba(90,58,18,.25)',
@@ -69,7 +72,7 @@ export default function BoardWindow({
         </span>
       )}
       {onOpen && (
-        <span className="absolute bottom-3.5 right-4 flex h-8 w-8 items-center justify-center rounded-full text-ink-soft" style={{ background: 'rgba(251,241,220,.9)', boxShadow: '0 2px 8px rgba(60,40,18,.2)' }} aria-hidden>
+        <span className="absolute bottom-3.5 right-4 flex h-8 w-8 items-center justify-center rounded-full" style={{ color: '#6b5a44', background: 'rgba(251,241,220,.9)', boxShadow: '0 2px 8px rgba(60,40,18,.2)' }} aria-hidden>
           <IconCompass size={15} />
         </span>
       )}

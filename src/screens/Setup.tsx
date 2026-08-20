@@ -204,8 +204,13 @@ export default function Setup() {
         ) : null}
       </div>
 
-      {/* 위치 권한 안내는 START보다 **먼저** 읽혀야 한다 */}
-      <p className="mt-2 px-1 text-[11px] leading-relaxed text-muted">시작하면 위치 권한을 묻습니다. 달린 거리를 재는 데만 쓰고, 위치나 경로는 저장하지도 밖으로 보내지도 않습니다.</p>
+      {/* 위치 권한 안내는 START보다 **먼저** 읽혀야 한다.
+          화면 이야기도 여기서 — 웹앱은 화면이 꺼지면 위치를 못 받는다(D7). 앱이 화면을
+          안 꺼지게 잡아 두지만, 전원 버튼으로 끄면 측정이 멈춘다는 것은 미리 말해야 한다. */}
+      <p className="mt-2 px-1 text-[11px] leading-relaxed text-muted">
+        시작하면 위치 권한을 묻습니다. 달린 거리를 재는 데만 쓰고, 위치나 경로는 저장하지도 밖으로 보내지도 않습니다.
+        달리는 동안 화면은 켠 채 두세요 — 자동으로 꺼지지 않게 잡아 두지만, 직접 끄면 측정이 멈춥니다.
+      </p>
 
       <div className="flex-1 min-h-6" />
 

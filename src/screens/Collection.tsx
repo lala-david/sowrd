@@ -112,7 +112,9 @@ export default function Collection() {
               <button
                 key={j.id}
                 onClick={() => openJourney(j.id)}
-                className="flex w-full items-center gap-3.5 rounded-2xl border border-line bg-sand-raised/40 p-3.5 text-left transition active:scale-[0.99]"
+                className="flex w-full items-center gap-3.5 rounded-2xl border bg-sand-raised/40 p-3.5 text-left transition active:scale-[0.99]"
+                /* 완주한 길은 금테 — 여권에서 완주 도장이 있는 페이지처럼 보이게 */
+                style={{ borderColor: prog.done ? 'var(--color-seal)' : 'var(--color-line)' }}
               >
                 {last && episodeArt(j.id, last.id) ? (
                   <img src={episodeArt(j.id, last.id)} alt="" loading="lazy" decoding="async" className="h-12 w-12 shrink-0 rounded-xl object-cover ring-1 ring-line" />
@@ -130,14 +132,19 @@ export default function Collection() {
                     <span className="block h-full rounded-full" style={{ width: `${(done.length / j.episodes.length) * 100}%`, background: chrome.accent }} />
                   </span>
                   <span className="mt-1.5 block truncate text-[11.5px] text-muted">
-                    {last ? (
+                    {/* 완주가 먼저다 — 예전엔 last가 있으면 완주여도 "마지막으로 닿은 자리"라
+                        완주 문장이 영원히 렌더될 수 없는 죽은 가지였다 */}
+                    {prog.done ? (
+                      <span style={{ color: 'var(--color-sun-deep)' }}>
+                        이 길을 끝까지 걸었습니다
+                        {fmtDay(pilgrim.journeyCompletedAt?.[j.id]) ? ` · ${fmtDay(pilgrim.journeyCompletedAt?.[j.id])}` : ''}
+                      </span>
+                    ) : last ? (
                       `마지막으로 닿은 자리 · ${last.place}${fmtDay(at) ? ` · ${fmtDay(at)}` : ''}`
-                    ) : prog.next ? (
+                    ) : (
                       <>
                         첫 자리 <span className="text-ink-soft">{j.episodes[1]?.place ?? j.episodes[0]?.place}</span>까지 3km
                       </>
-                    ) : (
-                      '이 길을 끝까지 걸었습니다'
                     )}
                   </span>
                 </span>

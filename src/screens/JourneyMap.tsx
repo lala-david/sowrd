@@ -150,7 +150,9 @@ export default function JourneyMap() {
 
   return (
     <div className="relative flex flex-1 flex-col" style={{ background: '#efe2c4' }}>
-      {/* ── 머리(고정) ─────────────────────────────────────────────── */}
+      {/* ── 머리(고정) ───────────────────────────────────────────────
+          배경 종이색이 고정값이므로 글자도 전부 고정 잉크다(QuestBoard INK와 같은 이유).
+          토큰을 쓰면 다크에서 잉크가 크림색으로 뒤집혀 종이 위에서 사라진다(실제 발생). */}
       <header
         className="sticky top-0 z-30"
         style={{
@@ -161,7 +163,7 @@ export default function JourneyMap() {
         }}
       >
         <div className="flex items-center gap-2 px-3">
-          <button onClick={back} aria-label="뒤로" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-soft transition active:scale-90">
+          <button onClick={back} aria-label="뒤로" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition active:scale-90" style={{ color: '#5d4a36' }}>
             <IconArrow size={17} className="rotate-180" />
           </button>
           {figure && (
@@ -170,19 +172,19 @@ export default function JourneyMap() {
             </span>
           )}
           <div className="min-w-0 flex-1">
-            <p className="truncate font-serif text-[17px] font-bold leading-tight text-ink">{journey.name}</p>
-            <p className="truncate text-[11.5px] text-muted">
+            <p className="truncate font-serif text-[17px] font-bold leading-tight" style={{ color: '#2f2114' }}>{journey.name}</p>
+            <p className="truncate text-[11.5px]" style={{ color: '#6b5a44' }}>
               {q.chapter ? `${ROMAN[q.chapter.index - 1] ?? q.chapter.index} · ${q.chapter.name}` : journey.who}
               {' · '}자리 <span className="font-display" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>{q.reachedCount}/{q.total}</span>
             </p>
           </div>
           {q.next && (
             <div className="shrink-0 pr-2 text-right">
-              <p className="font-display text-[16px] leading-none text-clay-deep" style={{ fontFeatureSettings: "'lnum' 1" }}>
+              <p className="font-display text-[16px] leading-none" style={{ color: '#a63c14', fontFeatureSettings: "'lnum' 1" }}>
                 {q.toRealKm < 10 ? q.toRealKm.toFixed(1) : Math.round(q.toRealKm)}
                 <span className="text-[10.5px]">{pilgrim.units}</span>
               </p>
-              <p className="mt-0.5 text-[10px] text-muted">{q.next.place}까지</p>
+              <p className="mt-0.5 text-[10px]" style={{ color: '#6b5a44' }}>{q.next.place}까지</p>
             </div>
           )}
         </div>
@@ -199,9 +201,9 @@ export default function JourneyMap() {
                 aria-current={on ? 'true' : undefined}
                 className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-[7px] text-[12px] transition active:scale-95"
                 style={{
-                  background: on ? 'var(--color-clay-deep)' : 'rgba(255,250,238,.8)',
-                  color: on ? 'var(--color-sand-raised)' : p.status === 'sealed' ? 'var(--color-muted)' : 'var(--color-ink-soft)',
-                  boxShadow: on ? 'none' : 'inset 0 0 0 1px var(--color-line-strong)',
+                  background: on ? '#a63c14' : 'rgba(255,250,238,.8)',
+                  color: on ? '#fbf1dc' : p.status === 'sealed' ? '#8a7a5f' : '#5d4a36',
+                  boxShadow: on ? 'none' : 'inset 0 0 0 1px rgba(90,58,18,.28)',
                 }}
               >
                 <span className="font-display">{ROMAN[p.tierIndex] ?? p.tierIndex + 1}</span>
@@ -222,8 +224,8 @@ export default function JourneyMap() {
       {zoom > 1 && (
         <button
           onClick={() => setZoom(1)}
-          className="fixed right-4 z-30 rounded-full px-3 py-2 text-[12px] text-ink shadow-[0_6px_18px_rgba(40,25,10,.3)] transition active:scale-95"
-          style={{ bottom: 'max(4.6rem, calc(env(safe-area-inset-bottom) + 3.6rem))', background: 'rgba(251,241,220,.95)' }}
+          className="fixed right-4 z-30 rounded-full px-3 py-2 text-[12px] shadow-[0_6px_18px_rgba(40,25,10,.3)] transition active:scale-95"
+          style={{ color: '#2f2114', bottom: 'max(4.6rem, calc(env(safe-area-inset-bottom) + 3.6rem))', background: 'rgba(251,241,220,.95)' }}
         >
           원래 크기
         </button>
@@ -239,7 +241,19 @@ export default function JourneyMap() {
           {journey.who} · {journey.era} · 자리 {journey.episodes.length}곳 · 내가 달릴 {Math.round(toRealKm(journey.id, journey.totalKm)).toLocaleString()}
           {pilgrim.units}
         </p>
-        {q.done && <p className="mt-3 font-serif text-[14px] text-clay-deep">이 길을 끝까지 걸었습니다.</p>}
+        {q.done && (
+          <>
+            <p className="mt-3 font-serif text-[14px] text-clay-deep">이 길을 끝까지 걸었습니다.</p>
+            {/* 길의 끝은 막다른 곳이 아니다 — 완주 다음 걸음을 여기서 잇는다(D9) */}
+            <button
+              onClick={() => go('journeys')}
+              className="mx-auto mt-4 flex items-center gap-2 rounded-full px-5 py-2.5 font-serif text-[14px] transition active:scale-95"
+              style={{ background: 'var(--color-seal)', color: '#2a1d12', boxShadow: '0 8px 20px -10px rgba(160,110,20,.55)' }}
+            >
+              다음 길 고르기 <IconArrow size={14} />
+            </button>
+          </>
+        )}
       </div>
 
       {/* 지금 자리로 */}
@@ -249,12 +263,13 @@ export default function JourneyMap() {
             const a = layout.board.next ?? layout.board.current
             if (a) centerOn(a.y)
           }}
-          className="fixed z-30 flex items-center gap-2 rounded-full px-4 py-2.5 text-[12.5px] text-ink shadow-[0_8px_24px_rgba(40,25,10,.35)] transition active:scale-95"
+          className="fixed z-30 flex items-center gap-2 rounded-full px-4 py-2.5 text-[12.5px] shadow-[0_8px_24px_rgba(40,25,10,.35)] transition active:scale-95"
           style={{
+            color: '#2f2114',
             left: '50%',
             transform: 'translateX(-50%)',
             bottom: 'max(1.25rem, env(safe-area-inset-bottom))',
-            background: 'var(--color-seal-bright)',
+            background: '#ffd868',
             maxWidth: BOARD_W - 40,
           }}
         >

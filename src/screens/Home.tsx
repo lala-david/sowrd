@@ -67,6 +67,15 @@ export default function Home() {
   const today = verseOfToday(totals.totalRuns === 0)
   const week = daysThisWeek(pilgrim)
 
+  /* 복귀(D9) — 2주 넘게 쉬었다 돌아온 사람에게 죄책감 대신 한 문장.
+   * 스트릭을 지운 이유와 같은 이유로, 여기도 숫자("14일 만이에요")를 세지 않는다.
+   * 길이 기다렸다는 사실 하나만 말하고 비킨다. */
+  const returning = (() => {
+    if (!pilgrim.lastRunDay || totals.totalRuns === 0) return false
+    const [y, m, dd] = pilgrim.lastRunDay.split('-').map(Number)
+    return Date.now() - new Date(y, m - 1, dd).getTime() >= 14 * 86400000
+  })()
+
   /* 한 번의 탭으로 출발한다.
    * 예전에는 홈 → Setup(모드 4종 + GPS 확인 + 품은 사람) → 다시 "달리기 시작"이었다.
    * 매번 설정 화면을 통과해야 하면 그 행위는 의식이 아니라 서류가 된다. 기본값으로 바로 뛰고,
@@ -115,6 +124,11 @@ export default function Home() {
             onOpen={() => openMap(journey.id)}
             caption={questCall(q, units, totals.totalRuns === 0, nextMileRealKm)}
           />
+          {returning && (
+            <p className="mt-2.5 px-1.5 text-[12.5px] leading-relaxed text-muted">
+              돌아오셨네요 — 길은 그 자리에서 기다리고 있었어요.
+            </p>
+          )}
         </section>
 
         {/* ② 바로 달리기 — 오늘의 부름을 버튼 안에 넣는다. 왜 달리는지가 버튼에 적혀 있어야 한다. */}

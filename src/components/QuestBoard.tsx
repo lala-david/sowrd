@@ -256,11 +256,11 @@ export default function QuestBoard({ journey, journeyKm, onSelectNode, selectedI
         {board.panels.map((p) => {
           const art = worldArt(journey.id, p.tierIndex)
           return (
-            <div key={p.tier.id} className="absolute left-0 w-full overflow-hidden" style={{ top: p.y, height: p.height }}>
-              {art ? (
+            /* 그라데이션을 패널 바닥에 항상 깔아 둔다 — 그림이 디코드되기 전 한 박자 동안
+               빈 흰 창이 아니라 양피지가 보이게(첫 진입에서 실제로 비어 보였다). */
+            <div key={p.tier.id} className="absolute left-0 w-full overflow-hidden" style={{ top: p.y, height: p.height, background: 'linear-gradient(165deg,#f4e6c6,#e7d3a8)' }}>
+              {art && (
                 <img src={art} alt="" aria-hidden draggable={false} className="h-full w-full select-none object-cover" decoding="async" loading={p.tierIndex < 2 ? 'eager' : 'lazy'} />
-              ) : (
-                <div className="h-full w-full" style={{ background: 'linear-gradient(165deg,#f4e6c6,#e7d3a8)' }} />
               )}
             </div>
           )

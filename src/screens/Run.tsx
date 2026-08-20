@@ -66,9 +66,15 @@ export default function Run() {
   }
   const tRef = useRef<number | null>(null)
 
-  // 시작
+  // 시작 — #run으로 바로 들어오면(새로고침·딥링크) configure가 없었으므로
+  // 스토어 기본값(베드로) 대신 지금 걷는 길로 맞춘 뒤 출발한다.
   useEffect(() => {
-    if (status === 'idle') run.start()
+    if (status !== 'idle') return
+    if (!useRun.getState()._configured) {
+      const p = usePilgrim.getState()
+      run.configure({ mode: 'guided', courseId: p.activeCourseId, journeyId: p.activeJourneyId })
+    }
+    run.start()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

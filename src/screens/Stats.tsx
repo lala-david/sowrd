@@ -91,7 +91,9 @@ export default function Stats() {
         </div>
       </div>
 
-      {/* 주인공 숫자 — 이 기간의 거리. 뒤에는 recraft로 그린 길(돌 이정표가 선 언덕길)이 깔린다 */}
+      {/* 주인공 숫자 — 이 기간의 거리. 뒤에는 recraft로 그린 길(돌 이정표가 선 언덕길)이 깔린다.
+          그림 위 베일이 고정 종이색이므로, 그림이 있을 때는 잉크도 고정값이어야 한다 —
+          토큰을 쓰면 다크에서 크림 글자가 크림 베일 위에서 사라진다. */}
       <div className="relative mt-3 overflow-hidden px-7 py-6">
         {extraArt('stats-hero') && (
           <>
@@ -100,18 +102,18 @@ export default function Stats() {
             <span className="pointer-events-none absolute inset-x-0 bottom-0 h-10" style={{ background: 'linear-gradient(to top, var(--color-sand), transparent)' }} />
           </>
         )}
-        <p className="relative font-display text-[54px] leading-none text-ink" style={{ fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>
+        <p className="relative font-display text-[54px] leading-none" style={{ color: extraArt('stats-hero') ? '#2a1d12' : 'var(--color-ink)', fontFeatureSettings: "'lnum' 1, 'tnum' 1" }}>
           {fmtDistance(sum.km, units, sum.km >= 100 ? 0 : 1)}
-          <span className="ml-1.5 text-[18px] text-clay-deep">{u}</span>
+          <span className="ml-1.5 text-[18px]" style={{ color: extraArt('stats-hero') ? '#a63c14' : 'var(--color-clay-deep)' }}>{u}</span>
         </p>
-        <p className="relative mt-1.5 text-[12.5px] text-ink-soft">
+        <p className="relative mt-1.5 text-[12.5px]" style={{ color: extraArt('stats-hero') ? '#5d4a36' : 'var(--color-ink-soft)' }}>
           {sum.prevKm > 0 || sum.km > 0 ? (
             delta === 0 ? (
               '지난 기간과 같습니다'
             ) : (
               <>
                 지난 {period === 'week' ? '주' : period === 'month' ? '달' : '해'}보다{' '}
-                <span className="font-display" style={{ fontFeatureSettings: "'lnum' 1", color: delta > 0 ? 'var(--color-clay-deep)' : 'var(--color-muted)' }}>
+                <span className="font-display" style={{ fontFeatureSettings: "'lnum' 1", color: delta > 0 ? '#a63c14' : '#75603f' }}>
                   {delta > 0 ? '+' : '−'}
                   {fmtDistance(Math.abs(delta), units, 1)}
                 </span>
