@@ -571,6 +571,26 @@ body::after {
   from { transform: translate3d(0, 0, 0); }
   to { transform: translate3d(68px, -4px, 0); }
 }
+/* 승리 컷 1 — 대치를 붙잡는 느린 줌(components/AdversaryVictory) */
+.adv-holdimg {
+  animation: advHoldZoom 1.6s ease-out forwards;
+}
+@keyframes advHoldZoom {
+  from { transform: scale(1); }
+  to { transform: scale(1.06); }
+}
+/* 승리 비트 — 폭풍의 마지막 번개 한 번 */
+.adv-flash-once {
+  background: #fff6e2;
+  animation: advFlashOnce 0.7s ease-out forwards;
+}
+@keyframes advFlashOnce {
+  0% { opacity: 0; }
+  12% { opacity: 0.75; }
+  30% { opacity: 0.12; }
+  45% { opacity: 0.4; }
+  100% { opacity: 0; }
+}
 /* 승리 — 갈라지는 틈의 빛(components/AdversaryVictory). 벌어지며 스러진다 */
 .adv-seam {
   background: #fff6e2;

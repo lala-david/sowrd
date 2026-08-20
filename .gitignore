@@ -18,3 +18,5 @@ vite-*.err
 expo-shell/expo-*.out
 expo-shell/expo-*.log
 expo-shell/node_modules
+
+showcase/

@@ -16,7 +16,7 @@ function VictoryDemo({ advId }: { advId: string }) {
     <div>
       <div className="relative h-[240px] overflow-hidden rounded-2xl ring-1 ring-line-strong">
         {base && <img src={base} alt="" className="h-full w-full object-cover" />}
-        <AdversaryVictory key={run} advId={adv.id} kind={adv.kind} />
+        <AdversaryVictory key={run} adv={adv} />
       </div>
       <div className="mt-2 flex items-center justify-between">
         <p className="text-[12px] text-muted">{adv.victory}</p>

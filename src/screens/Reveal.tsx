@@ -267,7 +267,7 @@ export default function Reveal() {
         />
         {/* 대적을 넘은 자리 — 대치 그림(막아선 바다)이 갈라지며 밑의 승리 그림이 드러난다.
             key=moment.key: 페이저로 되돌아오면 다시 걷힌다(인장 스프링과 같은 규칙). */}
-        {moment?.adv && <AdversaryVictory key={moment.key} advId={moment.adv.id} kind={moment.adv.kind} />}
+        {moment?.adv && <AdversaryVictory key={moment.key} adv={moment.adv} />}
         <div className="pointer-events-none absolute inset-0" style={{ background: moment?.glow ? `radial-gradient(60% 50% at 50% 40%, ${moment.glow}, transparent)` : 'none' }} />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28" style={{ background: 'linear-gradient(to top, var(--color-sand), transparent)' }} />
 
