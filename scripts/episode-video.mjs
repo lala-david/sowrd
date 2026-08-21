@@ -89,10 +89,20 @@ for (const s of SCENES.filter((x) => !only.length || only.includes(x.id))) {
       graph += dt(capFile(`${s.id}-en`, `${s.placeEn} — ${s.titleEn}`), 22, '0xb9a884', 66, 'h-104', fio('0.8'))
     }
     if (f.verse) {
-      // 영어 본문이 저장소 데이터에 없는 자리는 한글만 — 번역을 지어내지 않는다
-      graph += dt(capFile(`${s.id}-verse`, s.verse), 34, '0xfff6e2', '(w-text_w)/2', s.verseEn ? 'h-300' : 'h-220', fio('0.7'), 14)
-      if (s.verseEn) graph += dt(capFile(`${s.id}-verse-en`, s.verseEn), 22, '0xd8c9ae', '(w-text_w)/2', 'h-176', fio('0.8'), 8)
-      graph += dt(capFile(`${s.id}-ref`, s.ref), 18, '0xb9a884', '(w-text_w)/2', 'h-92', fio('0.9'))
+      /* 아래에서 위로 쌓아 올린다(출처 → 영어 → 한글) — 고정 y를 쓰면 3줄 말씀에서
+         한글 꼬리가 영어 머리를 덮는다(겟세마네에서 실측). 줄 수로 높이를 계산한다.
+         영어 본문이 저장소 데이터에 없는 자리는 한글만 — 번역을 지어내지 않는다. */
+      // 실측 줄높이 ≈ 폰트크기 × 1.3 + spacing — 명목치로 재면 3줄에서 겹친다
+      const koLines = s.verse.split('\n').length
+      const koH = koLines * 46 + (koLines - 1) * 12
+      const enLines = s.verseEn ? s.verseEn.split('\n').length : 0
+      const enH = enLines * 30 + (enLines - 1) * 6
+      const refTop = 110
+      const enTop = refTop + 16 + enH
+      const koTop = (s.verseEn ? enTop : refTop) + 20 + koH
+      graph += dt(capFile(`${s.id}-verse`, s.verse), 34, '0xfff6e2', '(w-text_w)/2', `h-${koTop}`, fio('0.7'), 14)
+      if (s.verseEn) graph += dt(capFile(`${s.id}-verse-en`, s.verseEn), 22, '0xd8c9ae', '(w-text_w)/2', `h-${enTop}`, fio('0.8'), 8)
+      graph += dt(capFile(`${s.id}-ref`, s.ref), 18, '0xb9a884', '(w-text_w)/2', `h-${refTop}`, fio('0.9'))
     }
     graph += `,format=yuv420p[v${i}];`
   })
