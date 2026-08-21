@@ -1,5 +1,6 @@
 import manifest from '../data/episode-videos.json'
 import { SectionLabel } from './ui'
+import FilmPlayer from './FilmPlayer'
 
 /* 이 자리의 길 — 자리 시네마틱(도착의 5컷, scripts/episode-video.mjs).
  *
@@ -22,16 +23,11 @@ export default function EpisodeFilm({
   return (
     <div className="mt-8">
       <SectionLabel>이 자리의 길</SectionLabel>
-      <video
-        className="mt-2 w-full overflow-hidden rounded-2xl ring-1 ring-line"
-        style={{ aspectRatio: '1 / 1', background: '#191108' }}
+      {/* 보이면 자동 재생·루프, 탭이면 멈춤/재생 — 네이티브 컨트롤 없음(FilmPlayer) */}
+      <FilmPlayer
+        className="mt-2"
         src={`${import.meta.env.BASE_URL}media/episodes/${journeyId}/${episodeId}.mp4`}
         poster={poster}
-        preload="none"
-        controls
-        playsInline
-        muted
-        loop
       />
     </div>
   )

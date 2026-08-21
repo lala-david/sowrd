@@ -9,24 +9,17 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import { ADVERSARIES, type Adversary } from './data/adversaries'
 import AdversaryBanner from './components/AdversaryBanner'
+import FilmPlayer from './components/FilmPlayer'
 import { adversaryArt } from './assets/art'
 import { journeyById } from './data/geo/journeys'
 
-/* 무대 = 시네마틱 영상(scripts/adversary-video.mjs · public/media/adversaries).
- * preload="none" + 포스터(대치 아트) — 탭하기 전엔 한 바이트도 안 받는다(모바일 데이터).
- * 무음이라 controls 재생이 모바일 정책에도 안전하다. */
+/* 무대 = 시네마틱 영상 — 보이면 자동 재생·루프(FilmPlayer, 네이티브 컨트롤 없음) */
 function VideoStage({ adv }: { adv: Adversary }) {
   return (
-    <video
-      className="mt-3 w-full overflow-hidden rounded-2xl ring-1 ring-line-strong"
-      style={{ aspectRatio: '1 / 1', background: '#191108' }}
+    <FilmPlayer
+      className="mt-3"
       src={`${import.meta.env.BASE_URL}media/adversaries/${adv.id}.mp4`}
       poster={adversaryArt(adv.id)}
-      preload="none"
-      controls
-      playsInline
-      muted
-      loop
     />
   )
 }

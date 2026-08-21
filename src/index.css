@@ -571,6 +571,15 @@ body::after {
   from { transform: translate3d(0, 0, 0); }
   to { transform: translate3d(68px, -4px, 0); }
 }
+/* 시네마틱 재생 단추 — 종이 링이 숨쉰다(FilmPlayer). reduced-motion이면 전역 규칙이 끈다 */
+.film-play {
+  animation: filmBreathe 2.6s ease-in-out infinite;
+}
+@keyframes filmBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.07); }
+}
+
 /* 승리 컷 1 — 대치를 붙잡는 느린 줌(components/AdversaryVictory) */
 .adv-holdimg {
   animation: advHoldZoom 1.6s ease-out forwards;
