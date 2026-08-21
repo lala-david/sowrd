@@ -8,6 +8,7 @@ import { peopleOf } from '../data/people'
 import { sceneArt, episodeArt } from '../assets/art'
 import { sceneFocus, sceneForEpisode } from '../lib/scene'
 import { SectionLabel } from '../components/ui'
+import EpisodeFilm from '../components/EpisodeFilm'
 import { IconArrow, IconHeld, IconSeal, IconScroll, IconPilgrim } from '../components/icons'
 
 /* 에피소드 상세 = 말씀 읽기.
@@ -184,6 +185,10 @@ export default function EpisodeDetail() {
           <SectionLabel>묵상</SectionLabel>
           <p className="mt-2 max-w-[34ch] text-[15px] leading-[1.8] text-ink-soft">{ep.reflection}</p>
         </div>
+
+        {/* 이 자리의 길 — 시네마틱. 본문과 같은 규칙으로 도달과 무관하게 열린다.
+            영상이 없는 자리는 블록 자체가 없다(episode-videos.json). */}
+        <EpisodeFilm journeyId={journey.id} episodeId={ep.id} poster={art ?? sceneArt(scene)} />
 
         <details className="mt-6 group">
           <summary className="flex cursor-pointer items-center gap-2 py-1 text-[12.5px] text-muted">

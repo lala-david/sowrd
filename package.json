@@ -8,8 +8,8 @@
     "dev:https": "cross-env VITE_HTTPS=1 vite --host",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "predev": "node scripts/sync-maplibre.mjs",
-    "prebuild": "node scripts/sync-maplibre.mjs"
+    "predev": "node scripts/sync-maplibre.mjs && node scripts/sync-episode-videos.mjs",
+    "prebuild": "node scripts/sync-maplibre.mjs && node scripts/sync-episode-videos.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

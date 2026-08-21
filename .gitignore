@@ -20,3 +20,6 @@ expo-shell/expo-*.log
 expo-shell/node_modules
 
 showcase/
+
+# 비밀 키 — 절대 커밋 금지
+.env

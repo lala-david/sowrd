@@ -82,8 +82,8 @@ export default defineConfig(({ command }) => ({
             },
           },
           {
-            // 전시실 영상 — 프리캐시 밖(mp4는 globPatterns에 없음). 한 번 본 영상은 보관
-            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.includes('/media/adversaries/'),
+            // 영상(전시실 대적 + 자리 시네마틱) — 프리캐시 밖. 한 번 본 영상은 보관
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.includes('/media/'),
             handler: 'CacheFirst',
             options: {
               cacheName: 'adv-media',
