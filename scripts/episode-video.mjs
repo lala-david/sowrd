@@ -18,7 +18,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import ffmpeg from 'ffmpeg-static'
-import { SCENES } from './episode-scenes.mjs'
+import { SCENES } from './episode-scenes-index.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const ART = path.join(ROOT, 'src/assets/art')
@@ -89,8 +89,9 @@ for (const s of SCENES.filter((x) => !only.length || only.includes(x.id))) {
       graph += dt(capFile(`${s.id}-en`, `${s.placeEn} — ${s.titleEn}`), 22, '0xb9a884', 66, 'h-104', fio('0.8'))
     }
     if (f.verse) {
-      graph += dt(capFile(`${s.id}-verse`, s.verse), 34, '0xfff6e2', '(w-text_w)/2', 'h-300', fio('0.7'), 14)
-      graph += dt(capFile(`${s.id}-verse-en`, s.verseEn), 22, '0xd8c9ae', '(w-text_w)/2', 'h-176', fio('0.8'), 8)
+      // 영어 본문이 저장소 데이터에 없는 자리는 한글만 — 번역을 지어내지 않는다
+      graph += dt(capFile(`${s.id}-verse`, s.verse), 34, '0xfff6e2', '(w-text_w)/2', s.verseEn ? 'h-300' : 'h-220', fio('0.7'), 14)
+      if (s.verseEn) graph += dt(capFile(`${s.id}-verse-en`, s.verseEn), 22, '0xd8c9ae', '(w-text_w)/2', 'h-176', fio('0.8'), 8)
       graph += dt(capFile(`${s.id}-ref`, s.ref), 18, '0xb9a884', '(w-text_w)/2', 'h-92', fio('0.9'))
     }
     graph += `,format=yuv420p[v${i}];`

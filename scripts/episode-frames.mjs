@@ -7,7 +7,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
-import { SCENES, SCAFFOLD } from './episode-scenes.mjs'
+import { SCENES, SCAFFOLD } from './episode-scenes-index.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const OUT = path.join(ROOT, 'scripts/video-frames/ep')
