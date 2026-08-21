@@ -4,36 +4,30 @@
  * 앱 IA에는 연결하지 않는다 — 홈에 입구를 내면 "달려서 만나는 것"의 무게가 빠진다.
  * 링크를 아는 사람(개발·공유·소개)에게만 열리는 전시실이다.
  * 어휘는 순례(D3): 화면 어디에도 게임 어휘를 쓰지 않는다. */
-import { StrictMode, useEffect, useState } from 'react'
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { ADVERSARIES, type Adversary } from './data/adversaries'
 import AdversaryBanner from './components/AdversaryBanner'
-import AdversaryVictory from './components/AdversaryVictory'
-import { episodeArt } from './assets/art'
+import { adversaryArt } from './assets/art'
 import { journeyById } from './data/geo/journeys'
 
-function VictoryStage({ adv }: { adv: Adversary }) {
-  const [run, setRun] = useState(0)
-  /* 자동 재생 — 전시실은 손대지 않아도 살아 있어야 한다. 8초마다 다시 걷힌다.
-     reduced-motion이면 연출 자체가 페이드로 줄므로 그대로 둔다. */
-  useEffect(() => {
-    const id = setInterval(() => setRun((n) => n + 1), 8000)
-    return () => clearInterval(id)
-  }, [])
-  const base = episodeArt(adv.journeyId, adv.episodeId)
+/* 무대 = 시네마틱 영상(scripts/adversary-video.mjs · public/media/adversaries).
+ * preload="none" + 포스터(대치 아트) — 탭하기 전엔 한 바이트도 안 받는다(모바일 데이터).
+ * 무음이라 controls 재생이 모바일 정책에도 안전하다. */
+function VideoStage({ adv }: { adv: Adversary }) {
   return (
-    <div className="relative mt-3 overflow-hidden rounded-2xl ring-1 ring-line-strong" style={{ aspectRatio: '4 / 3' }}>
-      {base && <img src={base} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />}
-      <AdversaryVictory key={run} adv={adv} />
-      <button
-        onClick={() => setRun((n) => n + 1)}
-        className="absolute bottom-3 right-3 rounded-xl px-3 py-1.5 text-[12px] backdrop-blur-sm transition active:scale-95"
-        style={{ background: 'rgba(25,17,8,0.55)', color: '#f0e6d4', boxShadow: 'inset 0 0 0 1px rgba(240,230,212,0.25)' }}
-      >
-        다시 보기
-      </button>
-    </div>
+    <video
+      className="mt-3 w-full overflow-hidden rounded-2xl ring-1 ring-line-strong"
+      style={{ aspectRatio: '1 / 1', background: '#191108' }}
+      src={`${import.meta.env.BASE_URL}media/adversaries/${adv.id}.mp4`}
+      poster={adversaryArt(adv.id)}
+      preload="none"
+      controls
+      playsInline
+      muted
+      loop
+    />
   )
 }
 
@@ -48,7 +42,7 @@ function Card({ adv }: { adv: Adversary }) {
       {/* 대치 중 러닝 화면에 뜨는 그 사건의 본문 */}
       <p className="mt-3 font-serif text-[13.5px] leading-[1.75] text-ink-soft">“{adv.verseKr}”</p>
       <p className="mt-1 text-[11px] text-muted">{adv.verseRef}</p>
-      <VictoryStage adv={adv} />
+      <VideoStage adv={adv} />
       <p className="mt-2.5 font-serif text-[14px] leading-relaxed text-ink">{adv.victory}</p>
     </section>
   )

@@ -82,6 +82,17 @@ export default defineConfig(({ command }) => ({
             },
           },
           {
+            // 전시실 영상 — 프리캐시 밖(mp4는 globPatterns에 없음). 한 번 본 영상은 보관
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.includes('/media/adversaries/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'adv-media',
+              expiration: { maxEntries: 8, maxAgeSeconds: 60 * 60 * 24 * 180 },
+              cacheableResponse: { statuses: [0, 200] },
+              rangeRequests: true,
+            },
+          },
+          {
             /* 지도 라이브러리 — 프리캐시에서 뺀 몫(mjs는 globPatterns에 없고 css는 globIgnores).
                public/maplibre/의 원형 3파일 + 번들된 css. 한 번 지도를 연 뒤엔 오프라인에서도 열린다 */
             urlPattern: ({ url, sameOrigin }) =>
