@@ -42,6 +42,9 @@ export default defineConfig(({ command }) => ({
          → 자리 그림은 assets/st/ 로 빼서 프리캐시에서 제외하고, 처음 볼 때 받아 캐시한다.
            한 번 본 자리는 그 뒤로 오프라인에서도 열린다. 셸·히어로·씬·문장은 그대로 프리캐시. */
       workbox: {
+        /* SW의 navigateFallback(기본 index.html)이 모든 내비게이션을 앱으로 돌린다 —
+           실측: preview에서 /dev/map.html이 앱 셸로 바뀌어 나왔다. 전시실은 예외로 뺀다. */
+        navigateFallbackDenylist: [/showcase\.html/],
         globPatterns: ['**/*.{js,css,html,webp,svg,woff2}'],
         /* maplibre 청크(raw 983KB)도 자리 그림과 같은 논리로 프리캐시에서 뺀다 —
            지도를 한 번도 안 연 사람에게 설치 시점에 1MB를 안기지 않는다.
@@ -155,16 +158,15 @@ export default defineConfig(({ command }) => ({
     // VITE_TARGET: 번들 문제 격리용 임시 스위치(예: VITE_TARGET=esnext) — 평소엔 안 쓴다
     target: process.env.VITE_TARGET ? [process.env.VITE_TARGET] : ['es2020', 'safari15'],
     rollupOptions: {
-      /* VITE_DEV_PAGES=1 이면 dev 미리보기 페이지를 함께 빌드한다 — **프로덕션 번들에서**
+      /* showcase.html은 배포에 포함되는 대적 전시실(러닝 없이 연출을 본다 — 앱 IA엔 미연결).
+         VITE_DEV_PAGES=1 이면 dev 미리보기 페이지도 함께 빌드한다 — **프로덕션 번들에서**
          지도·연출을 검증하기 위한 스위치다(dev 서버는 프리번들이 달라 증거가 안 된다.
-         실제로 dev에서만 잡히는 워커 고장이 있었다). 배포 빌드에는 절대 켜지 않는다. */
-      input: process.env.VITE_DEV_PAGES
-        ? {
-            main: path.resolve(__dirname, 'index.html'),
-            map: path.resolve(__dirname, 'dev/map.html'),
-            adv: path.resolve(__dirname, 'dev/adv.html'),
-          }
-        : undefined,
+         실제로 dev에서만 잡히는 워커 고장이 있었다). dev 페이지는 배포 빌드에 절대 안 켠다. */
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        showcase: path.resolve(__dirname, 'showcase.html'),
+        ...(process.env.VITE_DEV_PAGES ? { map: path.resolve(__dirname, 'dev/map.html') } : {}),
+      },
       output: {
         /* 자리 그림만 assets/st/ 로 모은다 — SW가 프리캐시에서 골라낼 수 있어야 하는데,
            기본 설정은 모든 에셋을 assets/ 에 평평하게 쏟아서 구분할 방법이 없다. */

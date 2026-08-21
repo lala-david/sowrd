@@ -53,7 +53,8 @@
 4. **폰 화면은 세로로만 움직인다.** 보드·칩·시트 어느 것도 문서를 옆으로 밀면 안 된다
    (`scrollIntoView` 대신 컨테이너 scrollLeft).
 5. 개발 중 폰 프레임으로 보려면 `dev/phone.html?to=map?j=jesus` (배포물에 안 들어간다).
-   대적(보스전) 연출은 `dev/adv.html` — 대치 배너 5종(살아 있는 그림)과 승리 걷힘을
-   러닝 없이 재생·반복해 본다. 실제 앱에서 보려면 GPS 스텁 + `theway-pilgrim-v1`의
+   대적(보스전) 연출은 **`/showcase.html`** — 대치 배너 5종(살아 있는 그림)과 승리 걷힘을
+   러닝 없이 자동 재생. **배포에도 포함**되는 전시실이다(앱 IA엔 미연결, SW
+   navigateFallback 예외 필수). 실제 앱 플로우로 보려면 GPS 스텁 + `theway-pilgrim-v1`의
    `journeyKm`(**실제 km 단위**)를 대적 직전으로 시드: 홍해 = exodus 22.0 (도달점 22.5).
 6. 배포: `npm run build` → `dist/`를 `gh-pages` 브랜치로 push → https://lala-david.github.io/sowrd/
