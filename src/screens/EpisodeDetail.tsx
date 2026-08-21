@@ -118,6 +118,11 @@ export default function EpisodeDetail() {
           </div>
         )}
 
+        {/* 이 자리의 길 — 시네마틱. 화면을 열면 바로 보이는 첫 블록(본문 위) —
+            묵상 아래 묻었더니 있는 줄도 몰랐다. 본문과 같은 규칙으로 도달과 무관하게
+            열리고, 탭 전엔 0바이트(poster). 영상이 없는 자리는 블록 자체가 없다. */}
+        <EpisodeFilm journeyId={journey.id} episodeId={ep.id} poster={art ?? sceneArt(scene)} />
+
         {/* 예수 자리 — 개역한글 / KJV 전 절 */}
         {jp && (
           <div className="mt-7">
@@ -185,10 +190,6 @@ export default function EpisodeDetail() {
           <SectionLabel>묵상</SectionLabel>
           <p className="mt-2 max-w-[34ch] text-[15px] leading-[1.8] text-ink-soft">{ep.reflection}</p>
         </div>
-
-        {/* 이 자리의 길 — 시네마틱. 본문과 같은 규칙으로 도달과 무관하게 열린다.
-            영상이 없는 자리는 블록 자체가 없다(episode-videos.json). */}
-        <EpisodeFilm journeyId={journey.id} episodeId={ep.id} poster={art ?? sceneArt(scene)} />
 
         <details className="mt-6 group">
           <summary className="flex cursor-pointer items-center gap-2 py-1 text-[12.5px] text-muted">
