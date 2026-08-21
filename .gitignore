@@ -23,3 +23,10 @@ showcase/
 
 # 비밀 키 — 절대 커밋 금지
 .env
+
+# 로컬 로그·임시 산출물
+*.log
+*.out
+*.out2
+*.err
+.tmp/
