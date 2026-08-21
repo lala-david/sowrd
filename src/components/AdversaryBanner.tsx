@@ -1,5 +1,7 @@
+import { useReducedMotion } from 'motion/react'
 import type { Adversary } from '../data/adversaries'
 import { adversaryArt } from '../assets/art'
+import AdvTurbulence, { turbulenceFor } from './AdvTurbulence'
 
 /* 대치(對峙) 배너 — 막아선 것의 이름과 얼굴.
  *
@@ -11,9 +13,22 @@ import { adversaryArt } from '../assets/art'
  * 러닝 화면(다크 고정)과 dev 미리보기가 같이 쓴다. 그림이 없으면 이름만 남는다. */
 export default function AdversaryBanner({ adv, className = '' }: { adv: Adversary; className?: string }) {
   const art = adversaryArt(adv.id)
+  /* reduced-motion이면 defs가 없다 — 그때 filter:url(#없는 id)를 걸면 그림째 사라진다 */
+  const reduce = useReducedMotion()
   return (
     <div className={`adv-live relative h-14 overflow-hidden rounded-xl ring-1 ring-line-strong ${className}`}>
-      {art && <img src={art} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />}
+      <AdvTurbulence />
+      {/* 변위 필터 — 바다·폭풍은 픽셀이 물결치고, 광야·기근은 공기가 왜곡된다(AdvTurbulence) */}
+      {art && (
+        <img
+          src={art}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{ filter: reduce ? undefined : turbulenceFor(adv.kind) }}
+        />
+      )}
       <div className={`adv-fx adv-fx-${adv.kind}`} aria-hidden />
       <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
       <div className="absolute inset-y-0 left-3 flex flex-col justify-center">

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useReducedMotion } from 'motion/react'
 import type { Adversary } from '../data/adversaries'
 import { adversaryArt } from '../assets/art'
+import AdvTurbulence, { turbulenceFor } from './AdvTurbulence'
 
 /* 승리의 순간 — 컷 편집 시퀀스. 대치가 걷히며 그 자리의 그림이 드러난다.
  *
@@ -35,8 +36,13 @@ export default function AdversaryVictory({ adv }: { adv: Adversary }) {
   const ease = 'cubic-bezier(0.55, 0, 0.25, 1)'
   const move = reduce ? 'opacity 0.8s ease' : `transform 1.9s ${ease}, opacity 1.9s ease`
 
+  /* 변위 필터 — 대치를 붙잡고 있는 동안 그림 자체가 일렁인다. 걷히기 시작하면 뗀다
+     (갈라지는 이동에 왜곡까지 겹치면 소음이고, 필터 없는 쪽이 트랜지션도 가볍다). */
+  const warp = reduce || open ? undefined : turbulenceFor(adv.kind)
+
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      <AdvTurbulence />
       {parted ? (
         <>
           {/* 좌우 반쪽 — 반쪽 안에 전체 폭 그림을 넣어 한 장의 cover처럼 이어 보이게 한다 */}
@@ -44,13 +50,13 @@ export default function AdversaryVictory({ adv }: { adv: Adversary }) {
             className="absolute inset-y-0 left-0 w-1/2 overflow-hidden"
             style={{ transform: open ? 'translateX(-104%)' : 'none', transition: move }}
           >
-            <img src={art} alt="" className="absolute left-0 top-0 h-full w-[200%] max-w-none object-cover" />
+            <img src={art} alt="" className="absolute left-0 top-0 h-full w-[200%] max-w-none object-cover" style={{ filter: warp }} />
           </div>
           <div
             className="absolute inset-y-0 right-0 w-1/2 overflow-hidden"
             style={{ transform: open ? 'translateX(104%)' : 'none', transition: move }}
           >
-            <img src={art} alt="" className="absolute top-0 h-full w-[200%] max-w-none object-cover" style={{ left: '-100%' }} />
+            <img src={art} alt="" className="absolute top-0 h-full w-[200%] max-w-none object-cover" style={{ left: '-100%', filter: warp }} />
           </div>
         </>
       ) : (
@@ -62,6 +68,7 @@ export default function AdversaryVictory({ adv }: { adv: Adversary }) {
             transform: open && !reduce && adv.kind === 'storm' ? 'translateY(-14%) scale(1.1)' : undefined,
             opacity: open ? 0 : 1,
             transition: move,
+            filter: warp,
           }}
         />
       )}
